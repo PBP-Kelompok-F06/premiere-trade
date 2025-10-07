@@ -70,4 +70,4 @@ Data pemain dan klub yang digunakan dalam proyek ini mengacu pada informasi yang
 ## Tautan Proyek
 
 * **Link PWS:** https://walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id/
-* **Link Figma:** https://www.figma.com/design/I6KMf3j7b4tI8y5NRLraYK/Premiere-Trade?node-id=1-3&t=UrIrTUKhAFMVi6QD-1
+* **Link Figma:** https://www.figma.com/design/I6KMf3j7b4tI8y5NRLraYK/Premiere-Trade
