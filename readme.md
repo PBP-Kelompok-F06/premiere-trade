@@ -38,24 +38,24 @@ Proyek ini memiliki tiga jenis pengguna dengan hak akses yang berbeda:
 
 ## Modul
 
-#### 1. Modul `Main` (Players & Clubs)
+#### 1. Modul `Players`
 * **Backend**: Mengelola model dan data untuk `Player` dan `Club`. Data pemain akan diimpor dari dataset.
 * **Frontend**: Menampilkan halaman daftar pemain dan klub yang dapat diakses publik.
 
-#### 2. Modul `Account`
+#### 2. Modul `Accounts`
 * **Backend**: Menangani proses Login, Registrasi (khusus `Fan Account`), pembuatan `Admin Club` secara manual (hardcode), dan manajemen otorisasi untuk setiap jenis pengguna.
 * **Frontend**: Menyediakan antarmuka untuk halaman Login dan Registrasi.
 * **Kalo ada waktu**: Fitur untuk mengedit informasi akun.
 
-#### 3. Modul `Transfer List`
+#### 3. Modul `Transfers`
 * **Backend**: Menyediakan logika untuk memfilter dan mengambil data pemain yang sedang dijual untuk ditampilkan di halaman bursa transfer.
 * **Frontend**: Merender halaman bursa transfer yang menampilkan semua pemain yang tersedia untuk dibeli.
 
-#### 4. Modul `Jual Pemain`
+#### 4. Modul `Sell`
 * **Backend**: Mengimplementasikan logika untuk menambahkan pemain ke bursa transfer dan memproses persetujuan atau penolakan tawaran yang masuk.
 * **Frontend**: Menyediakan halaman khusus bagi `Admin Club` untuk memilih pemain yang akan dijual dan mengelola tawaran.
 
-#### 5. Modul `Beli Pemain`
+#### 5. Modul `Buy`
 * **Backend**: Mengimplementasikan logika untuk mengajukan penawaran (*bid*) terhadap pemain yang ada di bursa transfer.
 * **Frontend**: Menyediakan antarmuka bagi `Admin Club` untuk mengajukan penawaran pada halaman bursa transfer.
 
