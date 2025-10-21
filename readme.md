@@ -38,26 +38,51 @@ Proyek ini memiliki tiga jenis pengguna dengan hak akses yang berbeda:
 
 ## Modul
 
-#### 1. Modul `Players`
-* **Backend**: Mengelola model dan data untuk `Player` dan `Club`. Data pemain akan diimpor dari dataset.
-* **Frontend**: Menampilkan halaman daftar pemain dan klub yang dapat diakses publik.
+#### 0. Modul `main`
+* Menyediakan homepage, template dasar (`base.html`), dan mengelola data master untuk `Club` dan `Player`.
+* **CRUD**:
+    * **Create**: (Data Awal) Mengimpor data pemain dari dataset.
+    * **Read**: Menampilkan halaman daftar klub dan daftar pemain yang bisa dilihat oleh semua pengguna.
 
-#### 2. Modul `Accounts`
-* **Backend**: Menangani proses Login, Registrasi (khusus `Fan Account`), pembuatan `Admin Club` secara manual (hardcode), dan manajemen otorisasi untuk setiap jenis pengguna.
-* **Frontend**: Menyediakan antarmuka untuk halaman Login dan Registrasi.
-* **Kalo ada waktu**: Fitur untuk mengedit informasi akun.
+#### 1. Modul `accounts`
+* Mengelola otentikasi dan profil pengguna.
+* **CRUD**:
+    * **Create**: Registrasi untuk `Fan Account`.
+    * **Read**: Melihat halaman profil.
+    * **Update**: Mengedit informasi profil.
+    * **Delete**: Menghapus akun.
 
-#### 3. Modul `Transfers`
-* **Backend**: Menyediakan logika untuk memfilter dan mengambil data pemain yang sedang dijual untuk ditampilkan di halaman bursa transfer.
-* **Frontend**: Merender halaman bursa transfer yang menampilkan semua pemain yang tersedia untuk dibeli.
+#### 2. Modul `transactions`
+* Mengelola seluruh alur bursa transfer.
+* **CRUD**:
+    * **Create**: `Admin Club` membuat `TransferListing` (menjual pemain) dan `Offer` (menawar pemain).
+    * **Read**: Semua pengguna melihat bursa transfer. `Admin Club` melihat detail tawaran masuk/keluar.
+    * **Update**: `Admin Club` menerima/menolak `Offer`. Status pemain diperbarui setelah transfer.
+    * **Delete**: `Admin Club` membatalkan `TransferListing` atau `Offer`.
 
-#### 4. Modul `Sell`
-* **Backend**: Mengimplementasikan logika untuk menambahkan pemain ke bursa transfer dan memproses persetujuan atau penolakan tawaran yang masuk.
-* **Frontend**: Menyediakan halaman khusus bagi `Admin Club` untuk memilih pemain yang akan dijual dan mengelola tawaran.
+#### 3. Modul `best_eleven`
+* Fitur bagi `Fan Account` untuk membuat formasi 11 pemain terbaik.
+* **CRUD**:
+    * **Create**: `Fan Account` membuat formasi baru.
+    * **Read**: `Fan Account` melihat formasi yang telah disimpan.
+    * **Update**: `Fan Account` mengubah pemain dalam formasi mereka.
+    * **Delete**: `Fan Account` menghapus formasi.
 
-#### 5. Modul `Buy`
-* **Backend**: Mengimplementasikan logika untuk mengajukan penawaran (*bid*) terhadap pemain yang ada di bursa transfer.
-* **Frontend**: Menyediakan antarmuka bagi `Admin Club` untuk mengajukan penawaran pada halaman bursa transfer.
+#### 4. Modul `rumors`
+* Platform bagi `Fan Account` untuk memposting dan membahas rumor transfer.
+* **CRUD**:
+    * **Create**: `Fan Account` membuat postingan rumor baru.
+    * **Read**: Semua pengguna membaca daftar rumor.
+    * **Update**: Pengguna mengedit postingan rumor milik mereka.
+    * **Delete**: Pengguna menghapus postingan rumor milik mereka.
+
+#### 5. Modul `komunitas`
+* Forum diskusi umum bagi `Fan Account`.
+* **CRUD**:
+    * **Create**: `Fan Account` membuat topik (`Thread`) atau balasan (`Post`) baru.
+    * **Read**: Semua pengguna membaca forum.
+    * **Update**: Pengguna mengedit `Thread` atau `Post` milik mereka.
+    * **Delete**: Pengguna menghapus `Thread` atau `Post` milik mereka.
 
 ---
 
