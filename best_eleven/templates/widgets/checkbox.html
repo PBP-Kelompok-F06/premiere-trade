@@ -1,0 +1,15 @@
+<ul class="{{ widget.attrs.class }}">
+  {% for option in widget.optgroups %}
+    {% for choice in option.1 %}
+      <li class="block">
+        <label for="{{ choice.id_for_label }}" class="flex items-center p-2 rounded-md hover:bg-indigo-50 cursor-pointer transition-colors">
+          <input type="checkbox" name="{{ widget.name }}" value="{{ choice.value }}"
+                 id="{{ choice.id_for_label }}"
+                 class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 mr-3"
+                 {% if choice.value in widget.value %} checked{% endif %}>
+          <span class="text-gray-800">{{ choice.label }}</span>
+        </label>
+      </li>
+    {% endfor %}
+  {% endfor %}
+</ul>
