@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premiere Trade</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f4f4f4; border-bottom: 1px solid #ddd; }
+        .navbar .logo { font-size: 24px; font-weight: bold; }
+        .navbar .auth-links a { margin-left: 15px; text-decoration: none; padding: 8px 12px; border-radius: 4px; }
+        .navbar .auth-links .login { background-color: #007bff; color: white; }
+        .navbar .auth-links .register { background-color: #28a745; color: white; }
+        .navbar .user-info .logout { background-color: #dc3545; color: white; }
+        
+        .content { padding: 20px; max-width: 900px; margin: 0 auto; }
+        .content h1, .content p { text-align: center; }
+
+        .club-list { margin-top: 30px; }
+        .club-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .club-card h3 { background-color: #f9f9f9; padding: 15px 20px; margin: 0; border-bottom: 1px solid #eee; }
+        .club-card ul { list-style-type: none; padding: 0 20px 15px 20px; }
+        .club-card li { padding: 8px 0; border-bottom: 1px dashed #f0f0f0; }
+        .club-card li:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Premiere Trade</div>
+        
+        <div class="auth-links">
+            {% if user.is_authenticated %}
+                <span class="user-info">
+                    Halo, <strong>{{ user.username }}</strong>
+                    {% if user.is_club_admin %}
+                        (Admin Club)
+                    {% elif user.is_fan %}
+                        (Fan)
+                    {% endif %}
+                    <a href="{% url 'accounts:logout_user' %}" class="logout">Logout</a>
+                </span>
+            {% else %}
+                <a href="{% url 'accounts:login_page' %}" class="login">Login</a>
+                <a href="{% url 'accounts:register_page' %}" class="register">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="content">
+        <h1>Selamat Datang di Premiere Trade</h1>
+        <p>Website bursa transfer pemain terkeren.</p>
+        <hr>
+        
+        <h2>Daftar Klub dan Pemain</h2>
+        <div class="club-list">
+            {% for club in clubs %}
+                <div class="club-card">
+                    <h3>
+                        <img src="{{ club.logo_url|default:'https://placehold.co/20x20/eee/aaa?text=?' }}" alt="logo" height="20" style="vertical-align: middle; margin-right: 8px;">
+                        {{ club.name }} ({{ club.country }})
+                    </h3>
+                    <ul>
+                        <!-- 
+                          Kita bisa langsung pakai 'club.players.all' 
+                          karena kita set related_name='players' di model Player 
+                        -->
+                        {% for player in club.players.all %}
+                            <li>
+                                <strong>{{ player.name }}</strong> ({{ player.position }}) - 
+                                <em>Market Value: €{{ player.market_value|floatformat:2 }} Juta</em>
+                            </li>
+                        {% empty %}
+                            <li>Belum ada pemain terdaftar di klub ini.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% empty %}
+                <p style="text-align: center;">Belum ada klub di database. Jalankan *management command* untuk impor data.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</body>
+</html>
+
+

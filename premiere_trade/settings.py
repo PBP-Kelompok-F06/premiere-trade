@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "main",
     "community",
+    "accounts",
 ]   
 
 MIDDLEWARE = [
@@ -107,7 +108,8 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-
+    
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
