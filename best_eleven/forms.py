@@ -1,24 +1,19 @@
-# best_eleven/forms.py
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import BestEleven, Player
 
-# Ini adalah class untuk styling checkbox Tailwind
 class TailwindCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
-    # Kita override template bawaan Django
-    # untuk membungkus tiap checkbox dengan div
     template_name = 'widgets/checkbox.html'
     
     # Ini untuk styling <li>
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('attrs', {})
-        kwargs['attrs']['class'] = 'space-y-2' # Memberi jarak antar checkbox
+        kwargs['attrs']['class'] = 'space-y-2'
         super().__init__(*args, **kwargs)
 
 
 class BestElevenForm(forms.ModelForm):
     
-    # Definisikan field di sini agar kita bisa override widget-nya
     name = forms.CharField(
         label='Nama Formasi',
         widget=forms.TextInput(attrs={
@@ -48,8 +43,7 @@ class BestElevenForm(forms.ModelForm):
 
     def clean_players(self):
         selected_players = self.cleaned_data.get('players')
-        
-        # Tambahkan 'if selected_players' untuk keamanan
+
         if selected_players and selected_players.count() != 11:
             raise ValidationError("Harap pilih tepat 11 pemain.")
             
