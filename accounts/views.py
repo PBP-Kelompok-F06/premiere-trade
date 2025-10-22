@@ -6,24 +6,16 @@ from django.views.decorators.http import require_POST
 import json
 
 # Create your views here.
-from .models import CustomUser
+from .models import CustomUser, Profile # DIUBAH: Tambahkan Profile untuk auto-create
 
 
 def login_page(request):
-    """
-    Menampilkan halaman login.
-    Jika user sudah login, redirect ke homepage.
-    """
     if request.user.is_authenticated:
         return redirect("main:homepage")
     return render(request, "login.html")
 
 
 def register_page(request):
-    """
-    Menampilkan halaman register.
-    Jika user sudah login, redirect ke homepage.
-    """
     if request.user.is_authenticated:
         return redirect("main:homepage")
     return render(request, "register.html")
@@ -31,10 +23,6 @@ def register_page(request):
 
 @require_POST
 def register_ajax(request):
-    """
-    Menangani registrasi Fan Account via AJAX.
-    (Logika internal tidak berubah)
-    """
     try:
         data = json.loads(request.body)
         username = data.get("username")
@@ -54,17 +42,18 @@ def register_ajax(request):
                 {"status": "error", "message": "Username sudah digunakan."}, status=400
             )
 
-        # Buat user baru (is_fan default True)
         user = CustomUser.objects.create_user(username=username, password=password)
+        # Otomatis buat profile saat user register
+        Profile.objects.create(user=user) # BARU: Agar tes Profile .exists() lolos
 
-        # Langsung login-kan user
         login(request, user)
 
         return JsonResponse(
             {
                 "status": "success",
                 "message": "Registrasi berhasil! Anda akan dialihkan...",
-            }
+            },
+            status=201,  # DIUBAH: Sesuai ekspektasi tes (201 Created)
         )
 
     except Exception as e:
@@ -75,10 +64,6 @@ def register_ajax(request):
 
 @require_POST
 def login_ajax(request):
-    """
-    Menangani login via AJAX.
-    (Logika internal tidak berubah)
-    """
     try:
         data = json.loads(request.body)
         username = data.get("username")
@@ -103,7 +88,7 @@ def login_ajax(request):
         else:
             return JsonResponse(
                 {"status": "error", "message": "Username atau password salah."},
-                status=400,
+                status=401, # DIUBAH: Sesuai ekspektasi tes (401 Unauthorized)
             )
 
     except Exception as e:
@@ -113,9 +98,5 @@ def login_ajax(request):
 
 
 def logout_user(request):
-    """
-    Menangani logout.
-    """
     logout(request)
-    # Redirect kembali ke homepage
     return redirect("main:homepage")
