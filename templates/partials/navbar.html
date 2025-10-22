@@ -1,0 +1,29 @@
+{% load static %}
+<nav class="navbar">
+    
+    <div class="logo">
+        <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
+        Premiere Trade
+    </div>
+    
+    <div class="nav-menu">
+        <a href="{% url 'main:homepage' %}">Home</a>
+        <a href="{% url 'community:community_home' %}">Community</a>
+        
+        <a href="#">Rumor</a>
+        <a href="#">Transfer</a>
+    </div>
+
+    <div class="auth-links">
+        {% if user.is_authenticated %}
+            <span class="user-info">
+                Halo, <strong>{{ user.username }}</strong>
+            </span>
+            <a href="{% url 'accounts:logout_user' %}" class="logout">Logout</a>
+        {% else %}
+            <a href="{% url 'accounts:login_page' %}" class="login">Login</a>
+            <a href="{% url 'accounts:register_page' %}" class="register">Register</a>
+        {% endif %}
+    </div>
+
+</nav>
