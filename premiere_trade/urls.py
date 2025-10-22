@@ -9,7 +9,6 @@ urlpatterns = [
     path('', include('main.urls')), 
     path('community/', include('community.urls')), 
     path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('', include('main.urls', namespace='main')),
     path('best-eleven/', include('best_eleven.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 ]

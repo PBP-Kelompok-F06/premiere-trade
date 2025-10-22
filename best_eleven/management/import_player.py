@@ -5,10 +5,10 @@ from django.conf import settings
 import os
 
 class Command(BaseCommand):
-    help = 'Mengimpor data pemain dari file new_data - new_data.csv ke database'
+    help = 'Mengimpor data pemain dari file dataset - dataset.csv ke database'
 
     def handle(self, *args, **kwargs):
-        file_path = os.path.join(settings.BASE_DIR, 'new_data - new_data.csv')
+        file_path = os.path.join(settings.BASE_DIR, 'dataset - dataset.csv')
 
         position_map = {
             'Kiper': 'GK',
@@ -54,8 +54,8 @@ class Command(BaseCommand):
                         defaults={
                             'club': club_obj, # <-- Hubungkan pemain ke klub
                             'position': posisi_model
-                            # 'nationality': row.get('negara'),
-                            # 'market_value': row.get('market_value'),
+                            'nationality': row.get('negara'),
+                            'market_value': row.get('market_value'),
                             # 'profile_image_url': '...URL_FOTO_JIKA_ADA...'
                         }
                     )

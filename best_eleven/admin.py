@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import Club, Player, BestEleven 
 
-# Register your models here.
+admin.site.register(Club)
+admin.site.register(Player)
+admin.site.register(BestEleven)

@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+{% load static %} {# Memuat tag static jika kamu punya file CSS/JS/Gambar kustom #}
+
+{% block title %}Best XI Team Builder{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6"> {# Sedikit padding atas/bawah #}
+    <h1 class="text-4xl font-extrabold text-indigo-900 mb-8 text-center tracking-tight">
+        Best XI Team Builder ⚽️
+    </h1>
+
+    {# Notifikasi Global (untuk pesan sukses/error dari JS) #}
+    <div id="global-status" class="mb-4 text-center min-h-[40px]"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        {# ========================== #}
+        {# KOLOM 1: HISTORY (KIRI) #}
+        {# ========================== #}
+        <div class="lg:col-span-1 bg-white/70 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50 flex flex-col">
+            <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">
+                Saved Formations 💾
+            </h2>
+            <div id="history-list" class="space-y-3 overflow-y-auto flex-grow" style="max-height: calc(80vh - 100px);">
+                {# History items akan dimuat di sini oleh JavaScript #}
+                <p class="text-gray-500 italic text-sm p-4 text-center">Loading history...</p>
+            </div>
+            {# Tombol Clear dipindah ke bawah lapangan nanti #}
+        </div>
+
+        {# ============================== #}
+        {# KOLOM 2: VISUALIZER (TENGAH) #}
+        {# ============================== #}
+        <div class="lg:col-span-2 bg-green-700 p-4 rounded-xl shadow-inner border border-green-800/50 relative flex flex-col"
+             style="background: linear-gradient(rgba(0, 80, 0, 0.7), rgba(0, 50, 0, 0.8)), url('{% static 'images/pitch_texture.png' %}'); background-size: cover; background-position: center;">
+             {# Ganti 'images/pitch_texture.png' jika kamu punya gambar lapangan, atau hapus style background-image jika tidak ada #}
+             {# Fallback background hijau solid jika gambar tidak ada #}
+             {# style="background-color: #166534;" #}
+
+
+             {# Area Lapangan untuk Slot Pemain #}
+             <div id="pitch-visualizer" class="flex-grow aspect-[7/10] relative grid grid-cols-5 items-stretch justify-items-center text-white mb-4 p-2">
+                 {# Slot pemain akan digambar di sini oleh JavaScript berdasarkan layout #}
+                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none"> {# pointer-events-none agar tidak menghalangi klik #}
+                     <p id="pitch-placeholder" class="text-center text-yellow-300 bg-black/60 p-3 rounded-lg text-sm font-semibold">
+                         Select a layout below to start building
+                     </p>
+                 </div>
+             </div>
+
+             {# Kontrol Formasi & Simpan #}
+             <div class="mt-auto p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md border border-white/50">
+                 <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+                     {# Input Nama Tim #}
+                     <div class="flex-grow">
+                         <label for="formation-name" class="block text-sm font-medium text-gray-700 mb-1">Team Name:</label>
+                         <input type="text" id="formation-name" placeholder="Enter team name..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                     </div>
+                     {# Pilihan Layout #}
+                     <div class="flex-shrink-0 w-full sm:w-auto">
+                         <label for="formation-layout-select" class="block text-sm font-medium text-gray-700 mb-1">Layout:</label>
+                         <select id="formation-layout-select"
+                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm appearance-none pr-8 bg-no-repeat bg-right"
+                                 style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1.5em 1.5em;">
+                             {# Pilihan default ditambah agar user memilih #}
+                             <option value="">-- Select Layout --</option>
+                             <option value="4-3-3">4-3-3</option>
+                             <option value="4-4-2">4-4-2</option>
+                             <option value="3-5-2">3-5-2</option>
+                             <option value="4-2-3-1">4-2-3-1</option>
+                         </select>
+                     </div>
+                     {# Tombol Clear & Save #}
+                     <div class="flex space-x-2">
+                         <button id="clear-formation-btn" title="Clear current selection" class="bg-gray-400 hover:bg-gray-500 text-white font-bold p-2 rounded-lg shadow transition duration-300 aspect-square flex items-center justify-center disabled:opacity-50" disabled>
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                         </button>
+                         <button id="save-formation-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition duration-300 disabled:opacity-50" disabled>
+                             Save Team
+                         </button>
+                     </div>
+                 </div>
+                 {# Status messages dipindah ke div global di atas #}
+             </div>
+        </div>
+
+        {# ============================== #}
+        {# KOLOM 3: PLAYER PICKER (KANAN) #}
+        {# ============================== #}
+        <div class="lg:col-span-1 bg-white/70 backdrop-blur-sm p-5 rounded-xl shadow-lg border border-white/50 flex flex-col">
+            <h2 class="text-xl font-semibold text-indigo-800 mb-4 border-b border-indigo-200 pb-2">Select Players 🧑‍🤝‍🧑</h2>
+            <div class="mb-4">
+                <label for="club-select" class="block text-sm font-medium text-gray-700 mb-1">Filter by Club:</label>
+                <select id="club-select"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm appearance-none pr-8 bg-no-repeat bg-right"
+                        style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22%236b7280%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M5.293%207.293a1%201%200%20011.414%200L10%2010.586l3.293-3.293a1%201%200%20111.414%201.414l-4%204a1%201%200%2001-1.414%200l-4-4a1%201%200%20010-1.414z%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E'); background-position: right 0.5rem center; background-size: 1.5em 1.5em;">
+                    <option value="">-- Select a Club --</option>
+                    {# Club options akan dimuat di sini oleh JavaScript #}
+                </select>
+            </div>
+            {# Filter Posisi (akan dikontrol JS) #}
+            <div class="mb-4 text-sm font-medium text-gray-700">
+                Show:
+                <span id="position-filter-display" class="font-semibold text-indigo-700">All Players</span>
+                <button id="clear-filter-btn" class="ml-2 text-xs text-gray-500 hover:text-red-600 underline hidden">(Clear Filter)</button>
+            </div>
+            {# Container Daftar Pemain #}
+            <div id="player-list-container" class="space-y-2 overflow-y-auto flex-grow" style="max-height: calc(80vh - 180px);"> {# Tinggi disesuaikan #}
+                 <p class="text-gray-500 italic text-sm p-4 text-center" id="player-list-placeholder">Select a club to see players.</p>
+                {# Player items akan dimuat di sini oleh JavaScript #}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{# ========================== #}
+{#      JAVASCRIPT LOGIC      #}
+{# ========================== #}
+<script>
+    // --- URLs (ambil dari Django template tags) ---
+    const builderDataURL = "{% url 'best_eleven:api_builder_data' %}";
+    const getPlayersURLTemplate = "{% url 'best_eleven:api_get_players' %}"; // Akan ditambah ?club_id=X
+    const saveFormationURL = "{% url 'best_eleven:api_save_formation' %}";
+    // Template URL untuk detail formasi, pk=0 diganti nanti
+    const getFormationDetailsURLTemplate = "{% url 'best_eleven:api_get_formation_details' pk=0 %}".replace('/0/', '/'); 
+
+    // --- DOM Elements (Elemen HTML yang akan kita kontrol) ---
+    const historyList = document.getElementById('history-list');
+    const clubSelect = document.getElementById('club-select');
+    const playerListContainer = document.getElementById('player-list-container');
+    const playerListPlaceholder = document.getElementById('player-list-placeholder');
+    const pitchVisualizer = document.getElementById('pitch-visualizer');
+    const pitchPlaceholder = document.getElementById('pitch-placeholder');
+    const formationLayoutSelect = document.getElementById('formation-layout-select');
+    const formationNameInput = document.getElementById('formation-name');
+    const saveFormationBtn = document.getElementById('save-formation-btn');
+    const clearFormationBtn = document.getElementById('clear-formation-btn');
+    const globalStatusDiv = document.getElementById('global-status');
+    const positionFilterDisplay = document.getElementById('position-filter-display');
+    const clearFilterBtn = document.getElementById('clear-filter-btn');
+
+    // --- State Variables (Variabel untuk menyimpan kondisi saat ini) ---
+    let allClubs = []; // Menyimpan daftar semua klub dari API
+    let currentPlayers = []; // Menyimpan daftar pemain dari klub yang dipilih
+    let selectedFormationLayout = ''; // Menyimpan layout yang dipilih (misal: '4-3-3')
+    // Menyimpan data pemain di setiap slot, plus info posisi yg dibutuhkan slot itu
+    // Contoh: { 'slot-0': {id: 1, name: 'Neuer', ..., requiredPositionCode: 'GK', requiredLabel: 'GK'}, 'slot-1': {requiredPositionCode: 'DEF', requiredLabel: 'LB'}, ... }
+    let selectedPlayerSlots = {}; 
+    let selectedSlotId = null; // Menyimpan ID slot yg sedang aktif diklik (misal: 'slot-0')
+    let currentFilterPositionCode = null; // Menyimpan kode posisi yg sedang difilter ('GK', 'DEF', dll.)
+    let isLoading = false; // Flag untuk mencegah aksi ganda saat loading
+
+    // --- Formation Layout Definitions (Struktur Lapangan) ---
+    // Mendefinisikan posisi & koordinat grid untuk setiap formasi
+    // gridArea: 'baris-mulai / kolom-mulai / baris-akhir / kolom-akhir' (Grid 6 baris x 5 kolom)
+    const formationLayouts = {
+        '4-3-3': [ // Total 11 pemain
+            { positionCode: 'GK', label: 'GK', gridArea: '1 / 3 / 2 / 4' }, // Baris 1, Kolom 3
+            { positionCode: 'DEF', label: 'LB', gridArea: '2 / 1 / 3 / 2' }, // Baris 2, Kolom 1
+            { positionCode: 'DEF', label: 'CB', gridArea: '2 / 2 / 3 / 3' }, // Baris 2, Kolom 2
+            { positionCode: 'DEF', label: 'CB', gridArea: '2 / 4 / 3 / 5' }, // Baris 2, Kolom 4
+            { positionCode: 'DEF', label: 'RB', gridArea: '2 / 5 / 3 / 6' }, // Baris 2, Kolom 5
+            { positionCode: 'MID', label: 'CM', gridArea: '4 / 2 / 5 / 3' }, // Baris 4, Kolom 2 (Posisi CM sedikit maju)
+            { positionCode: 'MID', label: 'CM', gridArea: '4 / 3 / 5 / 4' }, // Baris 4, Kolom 3
+            { positionCode: 'MID', label: 'CM', gridArea: '4 / 4 / 5 / 5' }, // Baris 4, Kolom 4
+            { positionCode: 'FWD', label: 'LW', gridArea: '5 / 1 / 6 / 2' }, // Baris 5, Kolom 1
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 3 / 6 / 4' }, // Baris 5, Kolom 3
+            { positionCode: 'FWD', label: 'RW', gridArea: '5 / 5 / 6 / 6' }  // Baris 5, Kolom 5
+        ],
+        '4-4-2': [ // Total 11 pemain
+            { positionCode: 'GK', label: 'GK', gridArea: '1 / 3 / 2 / 4' },
+            { positionCode: 'DEF', label: 'LB', gridArea: '2 / 1 / 3 / 2' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 2 / 3 / 3' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 4 / 3 / 5' }, { positionCode: 'DEF', label: 'RB', gridArea: '2 / 5 / 3 / 6' },
+            { positionCode: 'MID', label: 'LM', gridArea: '3 / 1 / 4 / 2' }, // Baris 3 lebih ke tengah
+            { positionCode: 'MID', label: 'CM', gridArea: '3 / 2 / 4 / 3' }, 
+            { positionCode: 'MID', label: 'CM', gridArea: '3 / 4 / 4 / 5' }, 
+            { positionCode: 'MID', label: 'RM', gridArea: '3 / 5 / 4 / 6' },
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 2 / 6 / 3' }, // Baris 5
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 4 / 6 / 5' }
+        ],
+        '3-5-2': [ // Total 11 pemain
+            { positionCode: 'GK', label: 'GK', gridArea: '1 / 3 / 2 / 4' },
+            { positionCode: 'DEF', label: 'CB', gridArea: '2 / 2 / 3 / 3' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 3 / 3 / 4' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 4 / 3 / 5' },
+            { positionCode: 'MID', label: 'LWB', gridArea: '3 / 1 / 4 / 2' }, // Baris 3
+            { positionCode: 'MID', label: 'CM', gridArea: '3 / 2 / 4 / 3' }, 
+            { positionCode: 'MID', label: 'CDM', gridArea: '3 / 3 / 4 / 4' }, 
+            { positionCode: 'MID', label: 'CM', gridArea: '3 / 4 / 4 / 5' }, 
+            { positionCode: 'MID', label: 'RWB', gridArea: '3 / 5 / 4 / 6' },
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 2 / 6 / 3' }, // Baris 5
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 4 / 6 / 5' }
+        ],
+        '4-2-3-1': [ // Total 11 pemain
+            { positionCode: 'GK', label: 'GK', gridArea: '1 / 3 / 2 / 4' },
+            { positionCode: 'DEF', label: 'LB', gridArea: '2 / 1 / 3 / 2' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 2 / 3 / 3' }, { positionCode: 'DEF', label: 'CB', gridArea: '2 / 4 / 3 / 5' }, { positionCode: 'DEF', label: 'RB', gridArea: '2 / 5 / 3 / 6' },
+            { positionCode: 'MID', label: 'CDM', gridArea: '3 / 2 / 4 / 3' }, // Baris 3
+            { positionCode: 'MID', label: 'CDM', gridArea: '3 / 4 / 4 / 5' },
+            { positionCode: 'MID', label: 'LM', gridArea: '4 / 1 / 5 / 2' }, // Baris 4 (gelandang serang)
+            { positionCode: 'MID', label: 'CAM', gridArea: '4 / 3 / 5 / 4' }, 
+            { positionCode: 'MID', label: 'RM', gridArea: '4 / 5 / 5 / 6' },
+            { positionCode: 'FWD', label: 'ST', gridArea: '5 / 3 / 6 / 4' }  // Baris 5
+        ]
+    };
+
+    // --- Helper Functions (Fungsi Bantu) ---
+    function showStatus(message, isError = false, duration = 5000) {
+        // Fungsi untuk menampilkan pesan status (sukses/error) di bagian atas
+        globalStatusDiv.textContent = message;
+        // Mengubah warna background & teks berdasarkan jenis pesan
+        globalStatusDiv.className = `mb-4 text-center p-2 rounded-lg font-medium text-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} transition-opacity duration-300 opacity-100`;
+        // Hapus pesan setelah beberapa detik
+        setTimeout(() => {
+             globalStatusDiv.classList.replace('opacity-100', 'opacity-0'); // Efek fade out
+             setTimeout(() => { // Hapus teks setelah fade out selesai
+                globalStatusDiv.textContent = '';
+                globalStatusDiv.className = 'mb-4 text-center min-h-[40px]'; // Jaga tinggi div agar layout tidak lompat
+             }, 300);
+        }, duration);
+    }
+
+    function getCookie(name) { // Fungsi bantu jika nanti butuh CSRF token
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function checkFormCompletion() {
+        // Fungsi untuk mengaktifkan/menonaktifkan tombol Save & Clear
+        const name = formationNameInput.value.trim();
+        const layout = formationLayoutSelect.value;
+        // Hitung berapa slot yang sudah diisi pemain (punya 'id')
+        const filledSlots = Object.values(selectedPlayerSlots).filter(slot => slot && slot.id).length;
+
+        // Tombol Save aktif jika: nama ada, layout dipilih, dan 11 pemain terisi
+        saveFormationBtn.disabled = !(name && layout && filledSlots === 11);
+        // Tombol Clear aktif jika: layout dipilih ATAU ada pemain yang terisi
+        clearFormationBtn.disabled = !(layout || filledSlots > 0);
+    }
+
+
+    // --- API Fetch Functions (Fungsi untuk mengambil/mengirim data ke Django) ---
+    async function fetchInitialData() {
+        // Mengambil daftar klub dan history saat halaman pertama kali dibuka
+        isLoading = true; // Set flag loading
+        try {
+            const response = await fetch(builderDataURL); // Panggil API Django
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`); // Cek error
+            const data = await response.json(); // Ambil data JSON
+
+            // Isi dropdown klub
+            allClubs = data.clubs;
+            clubSelect.innerHTML = '<option value="">-- Select a Club --</option>'; // Kosongkan dulu
+            allClubs.forEach(club => {
+                const option = document.createElement('option');
+                option.value = club.id; // Nilai = ID klub
+                option.textContent = club.name; // Teks = Nama klub
+                clubSelect.appendChild(option);
+            });
+
+            // Tampilkan history
+            renderHistory(data.history);
+
+        } catch (error) {
+            console.error("Error fetching initial data:", error);
+            showStatus("😭 Failed to load initial data (Clubs/History). Please refresh.", true);
+        } finally {
+            isLoading = false; // Selesai loading
+        }
+    }
+
+    async function fetchPlayersForClub(clubId) {
+        // Mengambil daftar pemain saat klub dipilih
+        if (!clubId) { // Jika user memilih "-- Select a Club --"
+            currentPlayers = []; // Kosongkan daftar pemain
+            renderPlayerList(); // Update tampilan daftar pemain (akan menampilkan placeholder)
+            return;
+        }
+        if (isLoading) return; // Jangan fetch jika sedang loading
+        isLoading = true;
+        playerListPlaceholder.textContent = '⏳ Loading players...'; // Tampilkan pesan loading
+        playerListContainer.innerHTML = ''; // Kosongkan daftar pemain lama
+        playerListContainer.appendChild(playerListPlaceholder); // Masukkan placeholder loading
+
+        try {
+            const url = `${getPlayersURLTemplate}?club_id=${clubId}`; // Buat URL API dengan ID klub
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+            const data = await response.json();
+            currentPlayers = data.players || []; // Simpan data pemain
+
+            // Sortir pemain: Kiper dulu, lalu Bek, Gelandang, Penyerang, baru urut nama
+            currentPlayers.sort((a, b) => {
+                const posOrder = {'GK': 1, 'DEF': 2, 'MID': 3, 'FWD': 4};
+                if (posOrder[a.position_code] !== posOrder[b.position_code]) {
+                    return posOrder[a.position_code] - posOrder[b.position_code];
+                }
+                return a.name.localeCompare(b.name); // Urut nama jika posisi sama
+            });
+            renderPlayerList(); // Tampilkan daftar pemain yang baru didapat
+        } catch (error) {
+            console.error(`Error fetching players for club ${clubId}:`, error);
+            showStatus(`😭 Failed to load players for the selected club.`, true);
+            currentPlayers = []; // Kosongkan jika error
+            renderPlayerList(); // Tampilkan pesan error/kosong
+        } finally {
+             isLoading = false; // Selesai loading
+        }
+    }
+
+    async function saveFormation() {
+        // Mengirim data formasi ke API Django untuk disimpan
+        if (isLoading || saveFormationBtn.disabled) return; // Jangan simpan jika sedang loading atau tombol nonaktif
+
+        const name = formationNameInput.value.trim();
+        const layout = formationLayoutSelect.value;
+        // Ambil ID pemain dari slot yang terisi
+        const playerIds = Object.values(selectedPlayerSlots)
+                               .filter(slot => slot && slot.id) 
+                               .map(slot => slot.id);
+
+        // Validasi ulang di frontend (meskipun backend juga validasi)
+        if (!name || !layout || playerIds.length !== 11) {
+            showStatus("❌ Cannot save. Ensure team name, layout, and 11 players are selected.", true);
+            checkFormCompletion(); // Update status tombol
+            return;
+        }
+
+        isLoading = true;
+        saveFormationBtn.textContent = '💾 Saving...'; // Ubah teks tombol
+        saveFormationBtn.disabled = true; // Nonaktifkan tombol
+        showStatus("Saving formation...", false, 10000); // Tampilkan status loading (agak lama)
+
+        try {
+            const response = await fetch(saveFormationURL, {
+                method: 'POST', // Kirim sebagai POST
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'X-CSRFToken': getCookie('csrftoken') // Aktifkan jika pakai CSRF
+                },
+                // Kirim data sebagai JSON
+                body: JSON.stringify({
+                    name: name,
+                    layout: layout,
+                    player_ids: playerIds
+                })
+            });
+
+            const data = await response.json(); // Baca respons dari Django
+
+            if (!response.ok) { // Jika status error (4xx, 5xx)
+                 throw new Error(data.error || `HTTP error! Status: ${response.status}`);
+            }
+
+            // Jika sukses
+            showStatus(data.message || "Formation saved successfully! ✅", false);
+            fetchInitialData(); // Muat ulang history agar formasi baru muncul
+            // clearFormation(); // Opsional: Kosongkan form setelah simpan
+
+        } catch (error) {
+            console.error("Error saving formation:", error);
+            showStatus(`Error saving formation: ${error.message} ❌`, true);
+        } finally {
+            isLoading = false; // Selesai loading
+            saveFormationBtn.textContent = 'Save Team'; // Kembalikan teks tombol
+            checkFormCompletion(); // Aktifkan/nonaktifkan tombol sesuai kondisi
+        }
+    }
+
+    async function loadFormationDetails(formationId) {
+        // Memuat detail formasi yang sudah disimpan saat item history diklik
+        if (isLoading || !formationId) return;
+        isLoading = true;
+        showStatus("⏳ Loading formation details...", false);
+        // Beri highlight pada item history yang diklik
+        document.querySelectorAll('#history-list > div').forEach(el => {
+            el.classList.remove('bg-indigo-100', 'border-indigo-300', 'ring-2', 'ring-indigo-300'); // Hapus highlight lama
+            if (el.dataset.formationId === String(formationId)) {
+                el.classList.add('bg-indigo-100', 'border-indigo-300', 'ring-2', 'ring-indigo-300'); // Tambah highlight baru
+            }
+        });
+
+        try {
+            const url = getFormationDetailsURLTemplate + `${formationId}/`; // Buat URL API detail
+            const response = await fetch(url);
+            if (!response.ok) { // Cek error
+                 const errorData = await response.json(); // Coba baca pesan error dari JSON
+                 throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json(); // Ambil data detail (nama, layout, players[])
+
+            // --- Update tampilan dengan data yang dimuat ---
+            formationNameInput.value = data.name; // Set nama tim
+            formationLayoutSelect.value = data.layout; // Set layout
+            selectedFormationLayout = data.layout; // Update state layout
+
+            // Pasangkan pemain yang dimuat ke slot yang sesuai
+            const slotsDefinition = formationLayouts[data.layout] || [];
+            const loadedPlayers = [...data.players]; // Salin array pemain agar bisa dimodifikasi
+            selectedPlayerSlots = {}; // Kosongkan slot saat ini
+
+            slotsDefinition.forEach((slotDef, index) => {
+                const slotId = `slot-${index}`;
+                // Cari pemain pertama dari daftar yang cocok dengan kode posisi slot ini
+                let playerIndex = loadedPlayers.findIndex(p => p.position_code === slotDef.positionCode);
+
+                if (playerIndex !== -1) {
+                    // Jika ketemu, ambil pemain itu dari daftar dan masukkan ke slot
+                    const player = loadedPlayers.splice(playerIndex, 1)[0]; 
+                    selectedPlayerSlots[slotId] = { ...player, requiredPositionCode: slotDef.positionCode, requiredLabel: slotDef.label };
+                } else {
+                    // Jika tidak ada pemain yg cocok (atau sudah habis), slot tetap kosong
+                    selectedPlayerSlots[slotId] = { requiredPositionCode: slotDef.positionCode, requiredLabel: slotDef.label };
+                }
+            });
+
+            renderPitchSlots(); // Gambar ulang lapangan dengan pemain yang dimuat
+            showStatus(`✅ Loaded formation: ${data.name}`, false);
+            currentPlayers = []; // Kosongkan daftar pemain di kolom kanan
+            renderPlayerList(); // Update tampilan kolom kanan
+            clubSelect.value = ""; // Reset pilihan klub
+            checkFormCompletion(); // Update status tombol Save/Clear
+
+        } catch (error) {
+            console.error(`Error loading formation ${formationId}:`, error);
+            showStatus(`Error loading formation: ${error.message} ❌`, true);
+            // Hapus highlight jika gagal load
+            document.querySelectorAll('#history-list > div').forEach(el => {
+                 el.classList.remove('bg-indigo-100', 'border-indigo-300', 'ring-2', 'ring-indigo-300');
+            });
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    // --- UI Rendering Functions (Fungsi untuk menggambar/memperbarui tampilan HTML) ---
+    function renderHistory(historyData) {
+        // Menampilkan daftar formasi yang sudah disimpan di kolom kiri
+        historyList.innerHTML = ''; // Kosongkan dulu
+        if (historyData && historyData.length > 0) {
+            historyData.forEach(formation => {
+                const div = document.createElement('div');
+                // Styling kartu history
+                div.className = 'p-3 bg-white/50 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors border border-transparent hover:border-indigo-200 shadow-sm';
+                div.innerHTML = `
+                    <p class="font-semibold text-sm text-gray-800 truncate">${formation.name}</p>
+                    <p class="text-xs text-gray-500">${formation.layout}</p>
+                `;
+                div.dataset.formationId = formation.id; // Simpan ID di elemen untuk event click
+                div.addEventListener('click', () => loadFormationDetails(formation.id)); // Tambah event listener
+                historyList.appendChild(div);
+            });
+        } else {
+             // Tampilkan pesan jika belum ada history
+             historyList.innerHTML = '<p class="text-gray-500 italic text-sm p-4 text-center">No saved formations yet.</p>';
+        }
+    }
+
+    function renderPlayerList() {
+        // Menampilkan daftar pemain di kolom kanan, sesuai filter posisi jika ada
+        playerListContainer.innerHTML = ''; // Kosongkan dulu
+
+        // Filter pemain berdasarkan posisi slot yang aktif (currentFilterPositionCode)
+        const filteredPlayers = currentFilterPositionCode
+            ? currentPlayers.filter(player => player.position_code === currentFilterPositionCode)
+            : currentPlayers; // Jika tidak ada filter, tampilkan semua
+
+        // Update teks filter
+        positionFilterDisplay.textContent = currentFilterPositionCode ? `${currentFilterPositionCode} Players Only` : 'All Players';
+        // Tampilkan/sembunyikan tombol clear filter
+        clearFilterBtn.classList.toggle('hidden', !currentFilterPositionCode);
+
+
+        // Tampilkan placeholder jika memang belum pilih klub atau tidak ada pemain
+        if (currentPlayers.length === 0 && clubSelect.value === "") {
+            playerListPlaceholder.textContent = 'Select a club to see players.';
+            playerListContainer.appendChild(playerListPlaceholder);
+            playerListPlaceholder.classList.remove('hidden');
+            return; 
+        } else {
+            playerListPlaceholder.classList.add('hidden'); // Sembunyikan jika sudah pilih klub
+        }
+
+        // Tampilkan pesan jika hasil filter kosong
+        if (filteredPlayers.length === 0) {
+             const message = document.createElement('p');
+             message.className = 'text-gray-500 italic text-sm p-4 text-center';
+             message.textContent = currentFilterPositionCode ? `No ${currentFilterPositionCode} players found in this club.` : (clubSelect.value ? 'No players found for this club.' : 'Select a club.');
+             playerListContainer.appendChild(message);
+             return;
+        }
+
+        // Tampilkan setiap pemain yang lolos filter
+        filteredPlayers.forEach(player => {
+             // Cek apakah pemain ini sudah ada di salah satu slot di lapangan
+             const isSelected = Object.values(selectedPlayerSlots).some(slot => slot && slot.id === player.id);
+
+            const div = document.createElement('div');
+            // Styling berbeda untuk pemain yg sudah dipilih (abu-abu, tidak bisa diklik)
+            div.className = `p-2 rounded-md transition-colors border flex items-center space-x-3 text-sm ${
+                isSelected ? 'bg-gray-200 cursor-not-allowed opacity-50' : 'bg-white/60 hover:bg-indigo-50 border-transparent hover:border-indigo-200 cursor-pointer shadow-sm'
+            }`;
+            div.dataset.playerId = player.id; // Simpan ID pemain
+
+             // Gambar Profil (pakai ui-avatars jika URL kosong/error)
+             const img = document.createElement('img');
+             const placeholderAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(player.name)}&background=random&size=32&rounded=true&font-size=0.4`;
+             img.src = player.profile_image_url || placeholderAvatar;
+             img.alt = player.name;
+             img.className = 'w-8 h-8 rounded-full object-cover flex-shrink-0 border border-gray-200';
+             img.onerror = () => { img.src = placeholderAvatar; }; // Ganti ke placeholder jika gambar asli gagal dimuat
+             div.appendChild(img);
+
+            // Info Teks Pemain
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'flex-grow overflow-hidden'; // Agar teks panjang terpotong (truncate)
+            infoDiv.innerHTML = `
+                <p class="font-semibold text-gray-800 truncate">${player.name} <span class="text-xs text-gray-500">(${player.nationality})</span></p>
+                <p class="text-xs text-indigo-700">${player.position_display} <span class="text-gray-600 font-medium">| ${player.market_value}</span></p>
+            `;
+            div.appendChild(infoDiv);
+
+            // Tambahkan event click HANYA jika pemain belum terpilih
+             if (!isSelected) {
+                div.addEventListener('click', () => handlePlayerSelection(player));
+             }
+
+            playerListContainer.appendChild(div); // Tambahkan elemen pemain ke daftar
+        });
+    }
+
+    function renderPitchSlots() {
+        // Menggambar ulang semua slot pemain di lapangan berdasarkan layout dan pemain terpilih
+        pitchVisualizer.innerHTML = ''; // Kosongkan lapangan
+        pitchPlaceholder.classList.add('hidden'); // Sembunyikan placeholder awal
+
+        const slotsDefinition = formationLayouts[selectedFormationLayout]; // Ambil definisi slot untuk layout ini
+
+        // Jika layout belum dipilih, tampilkan placeholder dan reset
+        if (!slotsDefinition) {
+            pitchPlaceholder.classList.remove('hidden'); // Tampilkan placeholder
+            selectedPlayerSlots = {}; // Kosongkan data slot
+            checkFormCompletion(); // Update tombol
+            return;
+        }
+
+         // Pastikan selectedPlayerSlots punya struktur yg benar untuk layout baru
+         // (Menyimpan data pemain lama jika slotnya masih ada, mengisi placeholder jika kosong)
+        const newSlotsData = {};
+        slotsDefinition.forEach((slotDef, index) => {
+            const slotId = `slot-${index}`;
+            const existingData = selectedPlayerSlots[slotId];
+             if (existingData && existingData.id) { // Jika sudah ada pemain di slot ini sebelumnya
+                  newSlotsData[slotId] = { ...existingData, requiredPositionCode: slotDef.positionCode, requiredLabel: slotDef.label }; // Pertahankan pemain, update info posisi slot
+             } else { // Jika slot ini baru atau kosong
+                  newSlotsData[slotId] = { requiredPositionCode: slotDef.positionCode, requiredLabel: slotDef.label }; // Buat placeholder posisi
+             }
+        });
+        selectedPlayerSlots = newSlotsData; // Update state slot
+
+        // Atur jumlah baris grid CSS berdasarkan posisi pemain terjauh
+        const maxRow = Math.max(1, ...slotsDefinition.map(s => parseInt(s.gridArea.split('/')[2]))) || 6;
+        pitchVisualizer.style.gridTemplateRows = `repeat(${maxRow}, minmax(0, 1fr))`;
+        pitchVisualizer.style.gridTemplateColumns = `repeat(5, minmax(0, 1fr))`; // Kolom tetap 5
+
+        // Gambar setiap slot
+        slotsDefinition.forEach((slotDef, index) => {
+            const slotId = `slot-${index}`;
+            const slotData = selectedPlayerSlots[slotId]; // Ambil data slot (bisa pemain, bisa placeholder)
+            const hasPlayer = slotData && slotData.id; // Cek apakah ada pemain di slot ini
+
+            const slotDiv = document.createElement('div');
+            slotDiv.id = slotId; // Beri ID unik
+            slotDiv.style.gridArea = slotDef.gridArea; // Atur posisi di grid
+            // Styling dasar + styling berbeda untuk slot kosong/terisi
+            slotDiv.className = `flex flex-col items-center justify-center p-1 border-2 rounded-lg cursor-pointer transition-all duration-150 ease-in-out text-center group ${
+                hasPlayer ? 'border-solid border-yellow-400 bg-black/60 hover:bg-black/75 shadow-lg' : 'border-dashed border-white/40 hover:bg-white/20'
+            }`;
+            // Tambahkan cincin kuning jika slot ini sedang aktif dipilih
+            if (slotId === selectedSlotId) {
+                slotDiv.classList.add('ring-4', 'ring-offset-2', 'ring-offset-green-700', 'ring-yellow-300');
+            }
+
+            // Isi konten slot
+            if (!hasPlayer) { // Slot Kosong
+                slotDiv.innerHTML = `
+                    <div class="text-xs font-semibold text-white/70 group-hover:text-white">${slotData.requiredLabel}</div>
+                    <div class="text-[10px] text-white/50 group-hover:text-white/70">${slotData.requiredPositionCode}</div>
+                `;
+            } else { // Slot Terisi Pemain
+                 const playerImgSrc = slotData.profile_image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(slotData.name)}&background=random&size=40&rounded=true&font-size=0.4`;
+                 slotDiv.innerHTML = `
+                     <img src="${playerImgSrc}" alt="${slotData.name}" class="w-6 h-6 md:w-8 md:h-8 rounded-full mb-1 object-cover mx-auto border-2 border-white/50"
+                          onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(slotData.name)}&background=random&size=40&rounded=true&font-size=0.4'"> {# Fallback jika gambar error #}
+                     <div class="text-[10px] md:text-xs font-semibold text-white truncate w-full px-1">${slotData.name}</div>
+                     <div class="text-[9px] md:text-[10px] text-yellow-300/80">${slotData.position_display}</div> {# Tampilkan posisi asli pemain #}
+                 `;
+             }
+
+            // Tambahkan event click ke slot
+            slotDiv.addEventListener('click', () => handleSlotClick(slotId));
+            pitchVisualizer.appendChild(slotDiv); // Masukkan slot ke lapangan
+        });
+
+        checkFormCompletion(); // Update status tombol Save/Clear setelah menggambar
+    }
+
+    // --- Event Handlers (Fungsi yang dijalankan saat user berinteraksi) ---
+    function handleClubChange(event) {
+        // Saat user memilih klub baru di dropdown
+        const selectedClubId = event.target.value;
+        fetchPlayersForClub(selectedClubId); // Ambil pemain untuk klub itu
+        // Jika ada slot aktif, nonaktifkan (karena daftar pemain berubah)
+        if (selectedSlotId) {
+            handleSlotClick(selectedSlotId);
+        }
+    }
+
+    function handleLayoutChange(event) {
+        // Saat user memilih layout baru
+        selectedFormationLayout = event.target.value;
+        renderPitchSlots(); // Gambar ulang lapangan
+        // Nonaktifkan slot aktif dan filter posisi
+        if (selectedSlotId) {
+            handleSlotClick(selectedSlotId); 
+        }
+        currentFilterPositionCode = null; 
+        clearFilterBtn.classList.add('hidden');
+        renderPlayerList(); // Tampilkan ulang daftar pemain (tanpa filter)
+    }
+
+    function handleSlotClick(slotId) {
+        // Saat user mengklik slot di lapangan
+        const clickedSlotData = selectedPlayerSlots[slotId];
+        const hasPlayer = clickedSlotData && clickedSlotData.id;
+
+        // KASUS 1: Mengklik slot yang SUDAH AKTIF (baik kosong/terisi) -> NONAKTIFKAN
+        if (slotId === selectedSlotId) {
+            selectedSlotId = null; // Hapus status aktif
+            currentFilterPositionCode = null; // Hapus filter posisi
+            clearFilterBtn.classList.add('hidden'); // Sembunyikan tombol clear
+            renderPitchSlots(); // Gambar ulang lapangan (hilangkan cincin kuning)
+            renderPlayerList(); // Tampilkan ulang daftar pemain (tanpa filter)
+        }
+        // KASUS 2: Mengklik slot yang TERISI PEMAIN (tapi belum aktif) -> HAPUS PEMAIN & NONAKTIFKAN
+        else if (hasPlayer) {
+             selectedPlayerSlots[slotId] = { requiredPositionCode: clickedSlotData.requiredPositionCode, requiredLabel: clickedSlotData.requiredLabel }; // Kembalikan ke placeholder
+             // Jika ada slot lain yang aktif, nonaktifkan juga
+             if(selectedSlotId) { 
+                 const prevSlotEl = document.getElementById(selectedSlotId);
+                 if (prevSlotEl) prevSlotEl.classList.remove('ring-4', 'ring-offset-2', 'ring-offset-green-700', 'ring-yellow-300');
+             }
+             selectedSlotId = null; // Hapus status aktif
+             currentFilterPositionCode = null; // Hapus filter
+             clearFilterBtn.classList.add('hidden');
+             renderPitchSlots(); // Gambar ulang lapangan
+             renderPlayerList(); // Update daftar pemain (pemain yg dihapus jadi bisa dipilih lagi)
+        }
+        // KASUS 3: Mengklik slot KOSONG (dan belum aktif) -> AKTIFKAN
+        else {
+             // Nonaktifkan slot lain yang mungkin aktif sebelumnya (secara visual)
+             if (selectedSlotId) {
+                 const prevSlotEl = document.getElementById(selectedSlotId);
+                 if (prevSlotEl) prevSlotEl.classList.remove('ring-4', 'ring-offset-2', 'ring-offset-green-700', 'ring-yellow-300');
+             }
+             // Aktifkan slot yang baru diklik (secara visual dan state)
+             selectedSlotId = slotId;
+             currentFilterPositionCode = clickedSlotData.requiredPositionCode; // Set filter posisi
+             clearFilterBtn.classList.remove('hidden'); // Tampilkan tombol clear filter
+             const newSlotEl = document.getElementById(slotId);
+             if (newSlotEl) newSlotEl.classList.add('ring-4', 'ring-offset-2', 'ring-offset-green-700', 'ring-yellow-300'); // Tambah cincin kuning
+             renderPlayerList(); // Update daftar pemain (dengan filter)
+        }
+        checkFormCompletion(); // Update status tombol Save/Clear
+    }
+
+    function handlePlayerSelection(playerData) {
+        // Saat user mengklik pemain di daftar kolom kanan
+         if (!selectedSlotId) { // Jika belum ada slot yg aktif di lapangan
+             showStatus("Click an empty slot on the pitch first! 👆", true, 3000); // Beri peringatan
+             return;
+         }
+
+         // Cek apakah posisi pemain cocok dengan posisi slot yang aktif
+         const requiredPosition = selectedPlayerSlots[selectedSlotId]?.requiredPositionCode;
+         if (playerData.position_code !== requiredPosition) {
+             showStatus(`❌ Cannot place ${playerData.position_display} in a ${selectedPlayerSlots[selectedSlotId]?.requiredLabel || requiredPosition} slot.`, true, 4000);
+             return; // Hentikan jika posisi tidak cocok
+         }
+
+         // Jika cocok, masukkan data pemain ke slot yang aktif
+         selectedPlayerSlots[selectedSlotId] = { 
+             ...playerData, // Salin semua data pemain (id, name, dll.)
+             requiredPositionCode: requiredPosition, // Tambahkan info posisi slot
+             requiredLabel: selectedPlayerSlots[selectedSlotId]?.requiredLabel 
+         };
+
+         // Nonaktifkan slot dan reset filter
+         selectedSlotId = null;
+         currentFilterPositionCode = null;
+         clearFilterBtn.classList.add('hidden');
+         renderPitchSlots(); // Gambar ulang lapangan (slot terisi)
+         renderPlayerList(); // Update daftar pemain (pemain jadi abu-abu)
+         checkFormCompletion(); // Cek apakah formasi sudah lengkap (11 pemain)
+     }
+
+    function clearFormation() {
+        // Saat tombol "Clear" diklik
+        formationNameInput.value = ''; // Kosongkan nama tim
+        formationLayoutSelect.value = ''; // Reset layout dropdown
+        selectedFormationLayout = ''; // Hapus state layout
+        selectedPlayerSlots = {}; // Hapus semua pemain dari slot
+        // Nonaktifkan slot aktif jika ada
+        if (selectedSlotId) { 
+             handleSlotClick(selectedSlotId);
+        }
+        selectedSlotId = null;
+        currentFilterPositionCode = null; // Hapus filter posisi
+        clearFilterBtn.classList.add('hidden');
+        renderPitchSlots(); // Gambar ulang lapangan (kosong)
+        renderPlayerList(); // Update daftar pemain
+        // Hapus highlight dari history
+        document.querySelectorAll('#history-list > div').forEach(el => {
+            el.classList.remove('bg-indigo-100', 'border-indigo-300', 'ring-2', 'ring-indigo-300');
+        });
+        showStatus("✨ Formation cleared.", false, 3000);
+        checkFormCompletion(); // Nonaktifkan tombol Save/Clear
+    }
+
+    function handleClearFilter() {
+        // Saat tombol "(Clear Filter)" di kolom kanan diklik
+        if (selectedSlotId) {
+            handleSlotClick(selectedSlotId); // Nonaktifkan slot jika ada yg aktif
+        } else {
+             // Jika tidak ada slot aktif, cukup hapus filter dan gambar ulang daftar pemain
+             currentFilterPositionCode = null;
+             clearFilterBtn.classList.add('hidden');
+             renderPlayerList();
+        }
+    }
+
+    // --- Initialization (Kode yang berjalan saat halaman pertama kali dibuka) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Ambil data awal (klub & history) dari Django
+        fetchInitialData();
+
+        // 2. Tambahkan event listener ke elemen-elemen penting
+        clubSelect.addEventListener('change', handleClubChange);
+        formationLayoutSelect.addEventListener('change', handleLayoutChange);
+        saveFormationBtn.addEventListener('click', saveFormation);
+        clearFormationBtn.addEventListener('click', clearFormation);
+        clearFilterBtn.addEventListener('click', handleClearFilter);
+
+        // 3. Gambar lapangan awal (akan menampilkan placeholder)
+        renderPitchSlots(); 
+        // 4. Nonaktifkan tombol Save/Clear awalnya
+        checkFormCompletion(); 
+    });
+
+</script>
+{% endblock content %}
