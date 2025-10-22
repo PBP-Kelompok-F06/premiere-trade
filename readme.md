@@ -76,7 +76,7 @@ Proyek ini memiliki tiga jenis pengguna dengan hak akses yang berbeda:
     * **Update**: Pengguna mengedit postingan rumor milik mereka.
     * **Delete**: Pengguna menghapus postingan rumor milik mereka.
 
-#### 5. Modul `komunitas`
+#### 5. Modul `community`
 * Forum diskusi umum bagi `Fan Account`.
 * **CRUD**:
     * **Create**: `Fan Account` membuat topik (`Thread`) atau balasan (`Post`) baru.

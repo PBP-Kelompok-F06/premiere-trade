@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+<div class="max-w-2xl mx-auto bg-white/70 backdrop-blur-sm p-8 rounded-xl shadow-xl border border-white/50">
 
   <h2 class="text-3xl font-extrabold text-indigo-800 mb-2">
     {{ formasi.name }}
   </h2>
-  <p class="text-lg text-gray-600 mb-4">
-    Layout: <strong class="text-indigo-600">{{ formasi.layout }}</strong>
+  <p class="text-lg text-gray-700 mb-4">
+    Layout: <strong class="text-indigo-700">{{ formasi.layout }}</strong>
   </p>
   <p class="text-sm text-gray-500 mb-6">
     Dibuat oleh: {{ formasi.fan_account.username }} | 
@@ -22,7 +22,7 @@
   
   <ul class="divide-y divide-gray-200 mb-8">
     {% for player in formasi.players.all %}
-      <li class="py-3 flex justify-between items-center group hover:bg-gray-50 px-2 -mx-2 rounded-md transition-colors">
+      <li class="py-3 flex justify-between items-center group hover:bg-white/50 px-2 -mx-2 rounded-md transition-colors">
         <span class="text-gray-800 font-medium">{{ player.name }}</span>
         <span class="text-sm bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-semibold">
           {{ player.get_position_display }}
