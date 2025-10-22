@@ -1,0 +1,179 @@
+/* static/css/style.css */
+
+/* Import font Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* 1. FONT GLOBAL & BODY SETUP */
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f8fc;
+    color: #1c2a4a;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+main {
+    flex-grow: 1;
+}
+a {
+    color: #007bff;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* 2. NAVBAR (Kiri-Tengah-Kanan, Putih) */
+.navbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 30px; background-color: #ffffff;
+    border-bottom: 1px solid #ddd; position: relative;
+}
+.navbar .logo {
+    font-size: 24px; font-weight: bold; color: #142850;
+    display: flex; align-items: center;
+}
+.navbar .logo img { margin-right: 10px; }
+.nav-menu {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 20px;
+}
+.nav-menu a {
+    text-decoration: none; color: #1c2a4a; font-weight: 500;
+    padding: 8px 12px; border-radius: 4px;
+    transition: all 0.2s ease; white-space: nowrap;
+}
+.nav-menu a:hover { background-color: #f0f0f0; }
+.auth-links { display: flex; align-items: center; gap: 15px; }
+.auth-links a {
+    text-decoration: none; padding: 8px 12px; border-radius: 4px;
+    font-weight: 500; transition: all 0.2s ease; white-space: nowrap;
+}
+.auth-links .login { background-color: #007bff; color: white; }
+.auth-links .register { background-color: #28a745; color: white; }
+.auth-links .logout { background-color: #dc3545; color: white; }
+.auth-links .login:hover { background-color: #0069d9; }
+.auth-links .register:hover { background-color: #218838; }
+.auth-links .logout:hover { background-color: #c82333; }
+.auth-links .user-info { color: #1c2a4a; }
+.auth-links .user-info strong { color: #142850; }
+
+
+/* 3. HERO SECTION BARU (DENGAN GAMBAR BACKGROUND) */
+.hero-section.new-hero {
+    position: relative; padding: 8rem 1.5rem; text-align: center;
+    color: white; background-color: transparent; border-bottom: none;
+    background-image: url('../images/hero-background.png');
+    background-size: cover; background-position: center;
+}
+.hero-section.new-hero::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); z-index: 1;
+}
+.hero-section.new-hero .hero-content { position: relative; z-index: 2; }
+.hero-section.new-hero h1 {
+    font-size: 3.5rem; font-weight: 700; margin: 0;
+    color: #ffffff; text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+
+/* 4. FEATURED TEAMS SECTION */
+.teams-section {
+    max-width: 1000px; margin: 2.5rem auto; padding: 0 1.5rem;
+}
+.teams-section h2 {
+    text-align: center; color: #142850; font-weight: 700;
+    margin-bottom: 2rem; font-size: 2rem;
+}
+.team-container {
+    background-color: #ffffff; border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 2.5rem; overflow: hidden;
+}
+.team-header {
+    display: flex;
+    align-items: center; /* Vertikal tengah */
+    justify-content: space-between; /* Kiri nempel kiri, Kanan nempel kanan */
+    gap: 15px;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e0e6ed;
+}
+
+/* == STYLE BARU UNTUK BUNGKUS LOGO & NAMA == */
+.team-info {
+    display: flex;
+    align-items: center; /* Logo dan nama tim sejajar */
+    gap: 15px; /* Jarak antara logo dan nama tim */
+}
+/* ======================================= */
+
+.team-header img { height: 40px; width: 40px; }
+.team-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #142850;
+}
+
+/* == STYLE UNTUK TOMBOL "SEE ALL" DI HEADER KANAN == */
+.see-all-btn {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+.see-all-btn:hover {
+    background-color: #0069d9;
+    color: white;
+    text-decoration: none;
+}
+/* ======================================= */
+
+.player-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem; padding: 1.5rem;
+}
+@media (min-width: 768px) { .player-grid { grid-template-columns: repeat(4, 1fr); } }
+.player-card {
+    background-color: #f5f8fc; border: 1px solid #e0e6ed;
+    border-radius: 8px; text-align: center; padding: 1rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.player-card:hover { transform: translateY(-5px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.player-card img {
+    width: 100%; max-width: 150px; height: auto;
+    border-radius: 8px; background-color: #fff; margin-bottom: 1rem;
+}
+.player-card .player-name { font-weight: 600; color: #142850; margin: 0.5rem 0 0.2rem 0; }
+.player-card .player-position { font-size: 0.9rem; color: #3a506b; margin: 0; }
+
+/* 5. FOOTER (Versi Kiri-Kanan) */
+.site-footer {
+    background-color: #142850; color: #a9b4c2;
+    padding: 2rem 1.5rem; margin-top: auto;
+}
+.footer-content {
+    max-width: 1000px; margin: 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.footer-left {
+    display: flex; align-items: center; gap: 10px;
+    color: #ffffff;
+}
+.footer-left img { filter: brightness(0) invert(1); }
+.footer-right { text-align: right; }
+.footer-right ul { list-style-type: none; margin: 0; padding: 0; }
+.footer-right li { font-size: 0.9rem; margin-bottom: 5px; color: #a9b4c2; }
+.footer-right li:last-child { margin-bottom: 0; }
+@media (max-width: 768px) {
+    .footer-content { flex-direction: column; gap: 20px; }
+    .footer-right { text-align: center; }
+}   

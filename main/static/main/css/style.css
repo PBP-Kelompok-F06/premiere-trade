@@ -1,0 +1,159 @@
+/* static/css/style.css */
+
+/* Import font (Opsional tapi bikin bagus) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f5f8fc;
+    color: #1c2a4a;
+    margin: 0;
+    padding: 0;
+}
+
+/* CATATAN: 
+  Kode CSS Navbar-mu (yang putih) mungkin lebih bagus dari ini.
+  Silakan gabungin aja. Ini cuma contoh.
+*/
+.navbar {
+    background-color: #ffffff; /* Ganti jadi putih */
+    color: #1c2a4a; /* Ganti jadi teks gelap */
+    padding: 1rem 2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    /* ... (Salin sisa CSS navbar putih lu ke sini) ... */
+}
+
+.hero {
+    text-align: center;
+    padding: 3rem 1rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e6ed;
+}
+
+.hero h1 {
+    color: #142850;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.hero p {
+    color: #3a506b;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem; /* Kurangi margin */
+}
+
+/* === INI BAGIAN PENTINGNYA (MENU GRID) === */
+.menu-section {
+    max-width: 900px;
+    margin: 2.5rem auto; /* Jarak atas-bawah */
+    padding: 0 1rem;
+}
+
+.menu-section h2 {
+    text-align: center;
+    color: #142850;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.menu-grid {
+    display: grid;
+    /* Bikin 2 kolom di HP, 4 kolom di desktop */
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 1.5rem;
+}
+/* Media query untuk layar lebih besar (desktop) */
+@media (min-width: 768px) {
+    .menu-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+
+.menu-card {
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: #1c2a4a;
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.menu-card h3 {
+    margin: 0.5rem 0 0.3rem 0;
+    color: #142850;
+}
+.menu-card p {
+    font-size: 0.9rem;
+    color: #3a506b;
+    margin: 0;
+}
+
+/* Warna aksen berdasarkan fitur */
+.menu-card.transaksi { border-top: 5px solid #1e90ff; }
+.menu-card.best-eleven { border-top: 5px solid #4db6ac; }
+.menu-card.rumor { border-top: 5px solid #ffa500; }
+.menu-card.komunitas { border-top: 5px solid #7a5cf3; }
+
+/* === BAGIAN DAFTAR KLUB (DARI CSS LAMA LU) === */
+.content { 
+    padding: 20px; 
+    max-width: 900px; 
+    margin: 2.5rem auto; 
+}
+
+.content-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.content-header h2 {
+    color: #142850;
+    font-weight: 600;
+}
+
+.club-list { 
+    margin-top: 30px; 
+}
+
+.club-card { 
+    border: 1px solid #e0e6ed; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+.club-card h3 { 
+    background-color: #f9f9f9; 
+    padding: 15px 20px; 
+    margin: 0; 
+    border-bottom: 1px solid #e0e6ed;
+    color: #142850;
+}
+.club-card ul { 
+    list-style-type: none; 
+    padding: 0 20px 15px 20px;
+    margin: 0;
+}
+.club-card li { 
+    padding: 10px 0; 
+    border-bottom: 1px dashed #f0f0f0; 
+    display: flex;
+    justify-content: space-between;
+}
+.club-card li:last-child { border-bottom: none; }
+.club-card li em { /* Market Value */
+    color: #3a506b;
+    font-style: normal;
+}

@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Premiere Trade{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% include 'partials/navbar.html' %}
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            
+            <div class="footer-left">
+                <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
+                <strong>Premiere Trade</strong>
+            </div>
+
+            <div class="footer-right">
+                <ul>
+                    <li>Walyul'ahdi Maulana Ramadhan - 2406426012</li>
+                    <li>Muhammad Indi Ryan Pratama - 2406432160</li>
+                    <li>Salsabila Salimah - 2406432734</li>
+                    <li>Aryandana Pascua Patiung - 2406438214</li>
+                    <li>Adryan Muhammad Rasyad - 2406430451</li>
+                </ul>
+            </div>
+
+        </div>
+    </footer>
+    </body>
+</html>

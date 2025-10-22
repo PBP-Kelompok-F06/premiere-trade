@@ -1,5 +1,5 @@
+import uuid
 from django.db import models
-from models import uuid
 
 # Create your models here.
 class Club(models.Model):
@@ -19,16 +19,16 @@ class Player(models.Model):
         Club, on_delete=models.CASCADE, related_name="players"
     )
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    nama_pemain = models.CharField(max_length=255)
+    nama_pemain = models.CharField(max_length=255, default="")
     position = models.CharField(max_length=50)
-    umur = models.IntegerField()
-    market_value = models.IntegerField()
-    negara = models.CharField(max_length=255)
-    jumlah_goal = models.IntegerField()
-    jumlah_asis = models.IntegerField()
-    jumlah_match = models.IntegerField()
+    umur = models.IntegerField(default=0)
+    market_value = models.IntegerField(default=0)
+    negara = models.CharField(max_length=255, default="")
+    jumlah_goal = models.IntegerField(default=0)
+    jumlah_asis = models.IntegerField(default=0)
+    jumlah_match = models.IntegerField(default=0)
     thumbnail = models.URLField(blank=True, null=True)
-    sedang_dijual = models.BooleanField()
+    sedang_dijual = models.BooleanField(default=False)
     
     def __str__(self):
         return self.nama_pemain
