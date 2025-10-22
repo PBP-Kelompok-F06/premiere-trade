@@ -1,5 +1,5 @@
 from django.db import models
-
+from models import uuid
 
 # Create your models here.
 class Club(models.Model):
@@ -27,10 +27,8 @@ class Player(models.Model):
     jumlah_goal = models.IntegerField()
     jumlah_asis = models.IntegerField()
     jumlah_match = models.IntegerField()
+    thumbnail = models.URLField(blank=True, null=True)
     sedang_dijual = models.BooleanField()
     
     def __str__(self):
         return self.nama_pemain
-
-    def __str__(self):
-        return self.name
