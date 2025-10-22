@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 
 
@@ -18,12 +19,19 @@ class Player(models.Model):
     current_club = models.ForeignKey(
         Club, on_delete=models.CASCADE, related_name="players"
     )
-
-    name = models.CharField(max_length=100)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nama_pemain = models.CharField(max_length=255, default="")
     position = models.CharField(max_length=50)
-    # max_digits = total angka, decimal_places = angka di belakang koma
-    # Ini cocok untuk menyimpan market value (misal: 150.50 juta)
-    market_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    umur = models.IntegerField(default=0)
+    market_value = models.IntegerField(default=0)
+    negara = models.CharField(max_length=255, default="")
+    jumlah_goal = models.IntegerField(default=0)
+    jumlah_asis = models.IntegerField(default=0)
+    jumlah_match = models.IntegerField(default=0)
+    sedang_dijual = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.nama_pemain
 
     def __str__(self):
         return self.name

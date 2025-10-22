@@ -49,7 +49,6 @@
 
     <div class="content">
         <h1>Selamat Datang di Premiere Trade</h1>
-        <p>Website bursa transfer pemain terkeren.</p>
         <hr>
         
         <h2>Daftar Klub dan Pemain</h2>
@@ -61,10 +60,6 @@
                         {{ club.name }} ({{ club.country }})
                     </h3>
                     <ul>
-                        <!-- 
-                          Kita bisa langsung pakai 'club.players.all' 
-                          karena kita set related_name='players' di model Player 
-                        -->
                         {% for player in club.players.all %}
                             <li>
                                 <strong>{{ player.name }}</strong> ({{ player.position }}) - 
@@ -76,7 +71,7 @@
                     </ul>
                 </div>
             {% empty %}
-                <p style="text-align: center;">Belum ada klub di database. Jalankan *management command* untuk impor data.</p>
+                <p style="text-align: center;">Belum ada klub di database.</p>
             {% endfor %}
         </div>
     </div>
