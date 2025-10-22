@@ -18,12 +18,19 @@ class Player(models.Model):
     current_club = models.ForeignKey(
         Club, on_delete=models.CASCADE, related_name="players"
     )
-
-    name = models.CharField(max_length=100)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nama_pemain = models.CharField(max_length=255)
     position = models.CharField(max_length=50)
-    # max_digits = total angka, decimal_places = angka di belakang koma
-    # Ini cocok untuk menyimpan market value (misal: 150.50 juta)
-    market_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    umur = models.IntegerField()
+    market_value = models.IntegerField()
+    negara = models.CharField(max_length=255)
+    jumlah_goal = models.IntegerField()
+    jumlah_asis = models.IntegerField()
+    jumlah_match = models.IntegerField()
+    sedang_dijual = models.BooleanField()
+    
+    def __str__(self):
+        return self.nama_pemain
 
     def __str__(self):
         return self.name
