@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Forum Diskusi - Premiere Trade{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'community/css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <h1>Forum Diskusi Premiere Trade</h1>
+
+    <button class="add-forum-btn" id="toggleBtn">+ Tambah Forum</button>
+
+    <div id="addForumForm" class="hidden">
+        <form id="forumForm" method="POST"> 
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Judul forum..." required>
+            <textarea name="description" placeholder="Tulis deskripsi atau pandanganmu..." required></textarea>
+            
+            <input type="text" name="image_url" placeholder="Tempel URL gambar di sini (opsional)">
+            
+            <button type="submit">Kirim</button>
+        </form>
+    </div>
+
+    <div class="forum-list">
+        {% for post in posts %}
+        <div class="forum-card">
+            
+            {% if post.image_url %}
+                <img src="{{ post.image_url }}" alt="{{ post.title }}">
+            {% endif %}
+            
+            <div class="forum-content">
+                <h2>{{ post.title }}</h2>
+                <p>{{ post.description }}</p>
+                <small>Dibuat oleh {{ post.author }} • {{ post.created_at|date:"d M Y, H:i" }}</small>
+                
+                <button class="reply-btn" data-target-form="reply-form-{{ post.id }}">
+                    💬 Reply ({{ post.replies.count }}) </button>
+
+                <div class="reply-form-container hidden" id="reply-form-{{ post.id }}">
+                    <form action="{% url 'community:add_reply' post.id %}" method="POST" class="reply-form">
+                        {% csrf_token %}
+                        <textarea name="content" placeholder="Tulis balasanmu..." rows="3" required></textarea>
+                        <button type="submit">Kirim Balasan</button>
+                    </form>
+                </div>
+
+                <div class="replies-list">
+                    {% for reply in post.replies.all %}
+                        <div class="reply-card">
+                            <strong>{{ reply.author.username }}</strong>
+                            <p>{{ reply.content }}</p>
+                        </div>
+                    {% empty %}
+                        <small class="no-replies">Belum ada balasan.</small>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty-msg">Belum ada forum. Jadilah yang pertama membuat diskusi!</p>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // Script 1: Toggle Form "Tambah Forum"
+    const btn = document.getElementById("toggleBtn");
+    const form = document.getElementById("addForumForm");
+    
+    if (btn && form) { 
+        btn.addEventListener("click", () => {
+            form.classList.toggle("hidden");
+        });
+    }
+
+    // Script 2: Toggle Form "Reply"
+    const allReplyButtons = document.querySelectorAll(".reply-btn");
+    
+    allReplyButtons.forEach(button => {
+        button.addEventListener("click", () => {
+            const formId = button.getAttribute("data-target-form");
+            const replyForm = document.getElementById(formId);
+            
+            if (replyForm) {
+                replyForm.classList.toggle("hidden");
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

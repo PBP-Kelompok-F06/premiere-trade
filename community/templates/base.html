@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Premiere Trade{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'community/style.css' %}">
+</head>
+<body>
+        {% include 'partials/navbar.html' %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Premiere Trade</p>
+    </footer>
+</body>
+</html>
