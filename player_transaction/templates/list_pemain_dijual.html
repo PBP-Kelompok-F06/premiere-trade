@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transfer Market - Premiere Trade{% endblock %}
+
+{% block content %}
+
+<div class="transfer-container">
+    <h1 class="transfer-title">Transfer Market</h1>
+    <p class="transfer-subtitle">Lihat semua pemain yang sedang dijual oleh klub lain</p>
+
+    <table class="transfer-table">
+    <thead>
+        <tr>
+        <th></th>
+        <th>Nama Pemain</th>
+        <th>Club Asal</th>
+        <th>Posisi</th>
+        <th>Umur</th>
+        <th>Negara</th>
+        <th>Match</th>
+        <th>Goal</th>
+        <th>Asis</th>
+        <th>Market Value</th>
+        <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for player in pemain_list %}
+        <tr data-player-id="{{ player.id }}">
+        <td><img src="{{ player.thumbnail }}" class="foto-pemain"></td>
+        <td>{{ player.nama_pemain }}</td>
+        <td>{{ player.current_club.name }}</td>
+        <td>{{ player.position }}</td>
+        <td>{{ player.umur }}</td>
+        <td>{{ player.negara }}</td>
+        <td>{{ player.jumlah_match }}</td>
+        <td>{{ player.jumlah_goal }}</td>
+        <td>{{ player.jumlah_asis }}</td>
+
+        <td>Rp{{ player.market_value|floatformat:0 }}</td>
+
+        <td class="aksi-cell">
+            <div class="meatball-menu">
+            <button class="menu-trigger">⋮</button>
+            <div class="menu-dropdown">
+                {% if player.current_club == user.profile.managed_club %}
+                <button class="menu-item cancel-sale" data-id="{{ player.id }}">Batal Jual</button>
+                {% else %}
+                <button class="menu-item buy-player" data-id="{{ player.id }}">Beli</button>
+                <button class="menu-item nego-player" data-id="{{ player.id }}">Negosiasi</button>
+                {% endif %}
+            </div>
+            </div>
+        </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+</div>
+
+<style>
+.transfer-container {
+    margin: 50px auto;
+    padding: 20px;
+    width: 90%;
+    max-width: 1200px;
+    background-color: #fdfdfd;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.transfer-title {
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 28px;
+    color: #333;
+}
+
+.transfer-subtitle {
+    text-align: center;
+    color: gray;
+    margin-bottom: 25px;
+}
+
+.transfer-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.transfer-table th {
+    background-color: #1c2a4a;
+    color: white;
+    padding: 12px;
+}
+
+.transfer-table td {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.transfer-table tr:hover {
+    background-color: #f4f8ff;
+}
+
+.foto-pemain {
+    width: 50px;
+    height: auto;
+    border-radius: 8px;
+}
+
+.buy-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.buy-button:hover {
+    background-color: #27ae60;
+}
+
+.own-player {
+    color: #888;
+    font-style: italic;
+}
+
+.cancel-sell-button {
+    background-color: white;
+    color: #ff3838;
+    border: 1.5px solid #ff3838;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.cancel-sell-button:hover {
+    background-color: #ff3838;
+    color: white;
+}
+
+.meatball-menu {
+  position: relative;
+  display: inline-block;
+  width: 25px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.meatball-menu:hover {
+  position: relative;
+  display: inline-block;
+  background-color: rgb(215, 215, 215);
+  border-radius: 10px;
+}
+
+
+.menu-trigger {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #444;
+}
+
+.menu-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  background-color: white;
+  min-width: 150px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  border-radius: 6px;
+  z-index: 5;
+  border: 1px solid #ccc;
+}
+
+.menu-item {
+  display: block;
+  padding: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background-color: #f1f1f1;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const csrfToken = "{{ csrf_token }}";
+
+    document.querySelectorAll(".buy-button").forEach(button => {
+        button.addEventListener("click", function() {
+            const playerId = this.dataset.playerId;
+            const row = this.closest("tr");
+            const nama = row.children[1].innerText;
+
+            if (confirm(`Beli pemain ${nama}?`)) {
+                fetch(`/player_transaction/beli/${playerId}/`, {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`✅ ${data.message}`);
+                        row.remove(); // hapus pemain dari tabel
+                    } else {
+                        alert("❌ Gagal membeli pemain.");
+                    }
+                })
+                .catch(() => alert("Terjadi kesalahan pada server."));
+            }
+        });
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+  const csrfToken = "{{ csrf_token }}";
+
+  // Toggle dropdown
+  document.querySelectorAll(".menu-trigger").forEach((btn) => {
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      const dropdown = this.nextElementSibling;
+      document.querySelectorAll(".menu-dropdown").forEach((m) => {
+        if (m !== dropdown) m.style.display = "none";
+      });
+      dropdown.style.display =
+        dropdown.style.display === "block" ? "none" : "block";
+    });
+  });
+
+  // Tutup menu kalau klik di luar
+  window.addEventListener("click", () =>
+    document
+      .querySelectorAll(".menu-dropdown")
+      .forEach((m) => (m.style.display = "none"))
+  );
+
+  // --------------- FUNGSI: BATAL JUAL ---------------
+  document.querySelectorAll(".cancel-sale").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const playerId = this.dataset.id;
+      if (!confirm("Yakin ingin membatalkan penjualan pemain ini?")) return;
+
+      fetch(`/player_transaction/batal-jual/${playerId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          alert(data.message);
+          location.reload();
+        });
+    });
+  });
+
+  // --------------- FUNGSI: BELI PEMAIN ---------------
+  document.querySelectorAll(".buy-player").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const playerId = this.dataset.id;
+      if (!confirm("Beli pemain ini dengan harga yang ditentukan?")) return;
+
+      fetch(`/player_transaction/beli/${playerId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          alert(data.message);
+          location.reload();
+        });
+    });
+  });
+
+  // --------------- FUNGSI: NEGOSIASI ---------------
+  document.querySelectorAll(".nego-player").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const playerId = this.dataset.id;
+      const harga = prompt("Masukkan harga penawaran (Rp):");
+      if (!harga) return;
+
+      fetch(`/player_transaction/send-negotiation/${playerId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({ offered_price: harga }),
+      })
+        .then((res) => res.json())
+        .then((data) => alert(data.message));
+    });
+  });
+});
+
+</script>
+
+{% endblock %}

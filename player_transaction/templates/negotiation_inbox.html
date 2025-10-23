@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inbox Negosiasi - Premiere Trade{% endblock %}
+
+{% block content %}
+<div class="negotiation-container">
+  <h1>📨 Inbox Negosiasi - {{ club.name }}</h1>
+
+  <h2>Tawaran Masuk</h2>
+  {% if received_offers %}
+  <table class="inbox-table">
+    <thead>
+      <tr>
+        <th>Dari Klub</th>
+        <th>Pemain</th>
+        <th>Harga Ditawar</th>
+        <th>Status</th>
+        <th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for nego in received_offers %}
+      <tr>
+        <td>{{ nego.from_club.name }}</td>
+        <td>{{ nego.player.nama_pemain }}</td>
+        <td>Rp{{ nego.offered_price|floatformat:0 }}</td>
+        <td>{{ nego.status|title }}</td>
+        <td>
+          {% if nego.status == 'pending' %}
+          <button class="accept-btn" data-id="{{ nego.id }}">Accept</button>
+          <button class="reject-btn" data-id="{{ nego.id }}">Reject</button>
+          {% else %}
+          <span class="status">{{ nego.status|title }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Tidak ada tawaran masuk.</p>
+  {% endif %}
+
+  <hr style="margin: 30px 0;">
+
+  <h2>Tawaran Dikirim</h2>
+  {% if sent_offers %}
+  <table class="inbox-table">
+    <thead>
+      <tr>
+        <th>Kepada Klub</th>
+        <th>Pemain</th>
+        <th>Harga Ditawar</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for nego in sent_offers %}
+      <tr>
+        <td>{{ nego.to_club.name }}</td>
+        <td>{{ nego.player.nama_pemain }}</td>
+        <td>Rp{{ nego.offered_price|floatformat:0 }}</td>
+        <td>{{ nego.status|title }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Belum ada tawaran dikirim.</p>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".accept-btn, .reject-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const negoId = btn.dataset.id;
+      const action = btn.classList.contains("accept-btn") ? "accept" : "reject";
+
+      fetch(`/player_transaction/negotiation/${negoId}/${action}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        location.reload();
+      });
+    });
+  });
+});
+</script>
+
+<style>
+.negotiation-container {
+  margin: 60px;
+  color: #333;
+}
+h1, h2 {
+  margin-bottom: 15px;
+}
+.inbox-table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+}
+th {
+  background: #1c2a4a;
+  color: white;
+  padding: 10px;
+}
+td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+.accept-btn, .reject-btn {
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+.accept-btn { background: #28a745; }
+.reject-btn { background: #dc3545; }
+</style>
+{% endblock %}

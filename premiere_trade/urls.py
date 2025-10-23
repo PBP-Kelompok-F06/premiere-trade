@@ -9,4 +9,5 @@ urlpatterns = [
     path('', include('main.urls')), 
     path('community/', include('community.urls')), 
     path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('player_transaction/', include('player_transaction.urls')),
 ]
