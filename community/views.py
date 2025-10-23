@@ -1,12 +1,15 @@
 # community/views.py
 
+import json # <--- TAMBAHKAN IMPORT INI
 from django.shortcuts import render, get_object_or_404, redirect
-# Tambahin import ini
-from django.http import HttpResponseNotAllowed, HttpResponseForbidden 
+# Ganti HttpResponseNotAllowed dengan JsonResponse
+from django.http import HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse 
 from .models import Post, Reply
 from django.contrib.auth.decorators import login_required
+# TAMBAHKAN DECORATOR INI
+from django.views.decorators.http import require_POST
 
-# View UTAMA untuk /community/
+# View UTAMA (Tetap sama)
 @login_required
 def community_index(request):
     if request.method == "POST":
@@ -21,14 +24,12 @@ def community_index(request):
                 description=description,
                 image_url=image_url,          
             )
-            # Redirect ke halaman ini lagi setelah sukses
             return redirect('community:community_home') 
 
-    # Tampilkan semua post
     posts = Post.objects.all().order_by('-created_at')
     return render(request, 'community/index.html', {'posts': posts})
 
-# View untuk nambah reply (udah bener)
+# View reply (Tetap sama)
 @login_required
 def add_reply(request, post_id):
     post = get_object_or_404(Post, id=post_id)
@@ -43,45 +44,53 @@ def add_reply(request, post_id):
         return redirect('community:community_home')
     return HttpResponseNotAllowed(['POST'])
 
-# --- VIEW BARU UNTUK EDIT POST ---
+# --- VIEW EDIT POST (VERSI AJAX) ---
 @login_required
+@require_POST  # <-- HANYA izinkan method POST
 def edit_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
-    # Cek Kepemilikan: Cuma author yang boleh edit
+    # Cek Kepemilikan
     if post.author != request.user:
         return HttpResponseForbidden("You are not allowed to edit this post.")
 
-    if request.method == "POST":
-        # Ambil data baru dari form
-        post.title = request.POST.get('title', post.title)
-        post.description = request.POST.get('description', post.description)
-        post.image_url = request.POST.get('image_url', post.image_url)
+    try:
+        # Ambil data dari body request (JSON)
+        data = json.loads(request.body)
+        
+        # Ambil data baru dari JSON
+        post.title = data.get('title', post.title)
+        post.description = data.get('description', post.description)
+        post.image_url = data.get('image_url', post.image_url)
         
         # Simpan perubahan
         post.save()
-        # Balik ke halaman forum
-        return redirect('community:community_home')
-    
-    # Kalau method GET: Tampilkan form edit yang udah diisi data lama
-    context = {'post': post}
-    # Kita perlu bikin template baru: 'community/edit_post.html'
-    return render(request, 'community/edit_post.html', context)
+        
+        # Kembalikan data post yang sudah di-update
+        return JsonResponse({
+            'success': True,
+            'message': 'Post berhasil diupdate!',
+            'post': {
+                'id': post.id,
+                'title': post.title,
+                'description': post.description,
+                'image_url': post.image_url,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
-# --- VIEW BARU UNTUK DELETE POST ---
+
+# --- VIEW DELETE POST (Tetap sama) ---
 @login_required
 def delete_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
 
-    # Cek Kepemilikan: Cuma author yang boleh delete
     if post.author != request.user:
         return HttpResponseForbidden("You are not allowed to delete this post.")
 
-    # Hapus hanya jika method POST (lebih aman)
     if request.method == "POST":
         post.delete()
-        # Balik ke halaman forum
         return redirect('community:community_home')
     
-    # Kalau bukan POST, tolak
     return HttpResponseNotAllowed(['POST'])

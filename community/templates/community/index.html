@@ -25,28 +25,27 @@
 
     <div class="forum-list">
         {% for post in posts %}
-        <div class="forum-card">
-
-            {% if post.image_url %}
-                <img src="{{ post.image_url }}" alt="{{ post.title }}">
+        <div class="forum-card" id="post-card-{{ post.id }}"> {% if post.image_url %}
+                <img src="{{ post.image_url }}" alt="{{ post.title }}" id="post-image-{{ post.id }}">
             {% endif %}
 
             <div class="forum-content">
-                <h2>{{ post.title }}</h2>
-                <p>{{ post.description }}</p>
+                <h2 id="post-title-{{ post.id }}">{{ post.title }}</h2>
+                <p id="post-desc-{{ post.id }}">{{ post.description }}</p>
                 <small>Dibuat oleh {{ post.author }} • {{ post.created_at|date:"d M Y, H:i" }}</small>
 
-                <!-- Grup Tombol Aksi -->
                 <div class="post-actions">
-                    <!-- Tombol Reply tetap di kiri -->
                     <button class="reply-btn" data-target-form="reply-form-{{ post.id }}">
                         💬 Reply ({{ post.replies.count }})
                     </button>
 
-                    <!-- == BUNGKUS BARU UNTUK EDIT & DELETE == -->
                     <div class="author-actions">
                         {% if post.author == user %}
-                            <a href="{% url 'community:edit_post' post.id %}" class="edit-btn">✏️ Edit</a>
+                            <button class="edit-btn edit-btn-ajax" 
+                                    data-target-form="edit-form-{{ post.id }}"
+                                    data-edit-url="{% url 'community:edit_post' post.id %}">
+                                ✏️ Edit
+                            </button>
                           
                             <form action="{% url 'community:delete_post' post.id %}" method="POST" class="delete-form" onsubmit="return confirm('Yakin mau hapus post ini?');">
                                 {% csrf_token %}
@@ -54,11 +53,19 @@
                             </form>
                         {% endif %}
                     </div>
-                    <!-- ===================================== -->
                 </div>
                 
+                <div class="edit-form-container hidden" id="edit-form-{{ post.id }}">
+                    <form class="edit-form" data-post-id="{{ post.id }}">
+                        <input type="text" name="title" value="{{ post.title }}" required>
+                        <textarea name="description" rows="4" required>{{ post.description }}</textarea>
+                        <input type="text" name="image_url" value="{{ post.image_url|default_if_none:'' }}" placeholder="URL Gambar (opsional)">
+                        <button type="submit">Simpan</button>
+                        <button type="button" class="cancel-edit-btn" data-target-form="edit-form-{{ post.id }}">Batal</button>
+                    </form>
+                </div>
 
-                <!-- Form Reply (Hidden) -->
+
                 <div class="reply-form-container hidden" id="reply-form-{{ post.id }}">
                     <form action="{% url 'community:add_reply' post.id %}" method="POST" class="reply-form">
                         {% csrf_token %}
@@ -67,7 +74,6 @@
                     </form>
                 </div>
 
-                <!-- Daftar Reply -->
                 <div class="replies-list">
                     {% for reply in post.replies.all %}
                         <div class="reply-card">
@@ -88,17 +94,105 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Ambil CSRF Token dari form utama
+    const csrfToken = document.querySelector('#forumForm [name=csrfmiddlewaretoken]').value;
+
+    // Toggle form "Tambah Forum"
     const btn = document.getElementById("toggleBtn");
     const form = document.getElementById("addForumForm");
     if (btn && form) {
         btn.addEventListener("click", () => { form.classList.toggle("hidden"); });
     }
+
+    // Toggle form "Reply"
     const allReplyButtons = document.querySelectorAll(".reply-btn");
     allReplyButtons.forEach(button => {
         button.addEventListener("click", () => {
             const formId = button.getAttribute("data-target-form");
             const replyForm = document.getElementById(formId);
             if (replyForm) { replyForm.classList.toggle("hidden"); }
+        });
+    });
+
+    // --- SCRIPT AJAX BARU UNTUK EDIT ---
+
+    // 1. Toggle form "Edit"
+    document.querySelectorAll(".edit-btn-ajax").forEach(button => {
+        button.addEventListener("click", () => {
+            const formId = button.dataset.targetForm;
+            const editForm = document.getElementById(formId);
+            if (editForm) { editForm.classList.toggle("hidden"); }
+        });
+    });
+
+    // 2. Toggle Batal Edit
+    document.querySelectorAll(".cancel-edit-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const formId = button.dataset.targetForm;
+            const editForm = document.getElementById(formId);
+            if (editForm) { editForm.classList.add("hidden"); }
+        });
+    });
+
+    // 3. Handle Submit Form Edit (AJAX)
+    document.querySelectorAll(".edit-form").forEach(editForm => {
+        editForm.addEventListener("submit", function(event) {
+            event.preventDefault(); // Stop form submit biasa
+
+            const postId = this.dataset.postId;
+            const editUrl = document.querySelector(`.edit-btn-ajax[data-target-form="edit-form-${postId}"]`).dataset.editUrl;
+            
+            // Ambil data dari form
+            const formData = {
+                title: this.querySelector('[name="title"]').value,
+                description: this.querySelector('[name="description"]').value,
+                image_url: this.querySelector('[name="image_url"]').value
+            };
+
+            fetch(editUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update tampilan di halaman (DOM)
+                    document.getElementById(`post-title-${postId}`).textContent = data.post.title;
+                    document.getElementById(`post-desc-${postId}`).textContent = data.post.description;
+                    
+                    // Update gambar (jika ada)
+                    const imgElement = document.getElementById(`post-image-${postId}`);
+                    if (data.post.image_url) {
+                        if (imgElement) {
+                            imgElement.src = data.post.image_url;
+                        } else {
+                            // Jika sebelumnya tidak ada gambar, tambahkan element img
+                            const card = document.getElementById(`post-card-${postId}`);
+                            const newImg = document.createElement('img');
+                            newImg.id = `post-image-${postId}`;
+                            newImg.src = data.post.image_url;
+                            newImg.alt = data.post.title;
+                            card.prepend(newImg); // Tambah di awal card
+                        }
+                    } else if (imgElement) {
+                        // Jika gambar dihapus
+                        imgElement.remove();
+                    }
+
+                    // Sembunyikan form edit
+                    this.parentElement.classList.add("hidden");
+                } else {
+                    alert("Gagal update: " + data.message);
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("Terjadi kesalahan. Coba lagi.");
+            });
         });
     });
 });
