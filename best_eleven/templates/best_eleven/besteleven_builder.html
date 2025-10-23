@@ -6,297 +6,332 @@
 {% block content %}
 
 <style>
-    h1,
-    h2 {
-        color: #EDF2F7;
-        /* text-gray-100 - Lebih Putih */
+    :root {
+        --primary-purple: #6B46C1;
+        --secondary-purple: #f5f8fc;
+        --accent-pink: #D946A6;
+        --dark-bg: #f5f8fc;
+        --card-bg: #f5f8fc;
+        --card-border: #4A2C7C;
+        --text-light: #4A2C7C;
+        --card-border: #D946A6;
+        --text-muted: rgb(46, 15, 50);
+        --success-green: #10B981;
+        --pitch-green: #1A5F1A;
     }
 
-    h1.text-indigo-900 {
-        /* Override judul utama */
-        color: #041424 !important;
+    body {
+        background: linear-gradient(135deg, #f5f8fc 0%, #f2f1f3 100%);
+        min-height: 100vh;
     }
 
-    label,
-    .text-sm {
-        color: #CBD5E0;
-        /* text-gray-300 - Lebih Terang */
+    /* ===== TYPOGRAPHY ===== */
+    h1, h2, h3 {
+        color: var(--text-light);
+        font-weight: 700;
     }
 
-    /* Default text color - Lebih Terang */
-    .sidebar-column,
-    .sidebar-column *,
-    /* Ganti .lg\:col-span-1 */
-    #player-list p,
-    #history-list p,
-    select,
-    input {
-        color: #EDF2F7;
-        /* text-gray-100 - Lebih Putih */
+    .main-title {
+        background: linear-gradient(135deg, #A78BFA 0%, #D946A6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.5rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        letter-spacing: -0.02em;
+        animation: fadeInDown 0.6s ease;
     }
 
-    /* [KIRI & KANAN] Kolom samping (Sidebar) */
-    .sidebar-column {
-        /* Ganti .lg\:col-span-1 */
-        background-color: #1A202C;
-        /* bg-gray-900 */
-        border: 1px solid #4A5568;
-        /* border-gray-700 */
-        border-radius: 0.75rem;
-        /* rounded-xl */
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        /* shadow-lg */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ===== SIDEBAR CARDS ===== */
+    .sidebar-card {
+        background: var(--card-bg);
+        border: 2px solid var(--card-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(105, 70, 193, 0.2);
         display: flex;
         flex-direction: column;
-        padding: 1.25rem;
-        /* p-5 */
+        height: 100%;
+        animation: fadeInUp 0.6s ease;
     }
 
-    .sidebar-column h2 {
-        /* Judul kolom */
-        color: #EDF2F7 !important;
-        border-bottom: 1px solid #4A5568 !important;
-        /* border-b */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .sidebar-card h2 {
+        color: var(--text-light);
+        font-size: 1.5rem;
         margin-bottom: 1rem;
-        /* mb-4 */
-        padding-bottom: 0.5rem;
-        /* pb-2 */
-        font-size: 1.25rem;
-        /* text-xl */
-        font-weight: 600;
-        /* font-semibold */
-    }
-
-    /* Pastikan list di kiri/kanan bisa scroll */
-    #history-list,
-    #player-list {
-        overflow-y: auto;
-        flex-grow: 1;
-        /* Agar list mengisi sisa ruang */
-        /* max-height diset di HTML inline style */
-    }
-
-
-    /* [TENGAH] Lapangan */
-    .pitch-column {
-        /* Ganti .lg\:col-span-2 */
-        background-color: #1A361A;
-        /* Hijau gelap fallback */
-        border: 1px solid #2F4D2F;
-        border-radius: 0.75rem;
-        /* rounded-xl */
-        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
-        /* shadow-inner */
-        padding: 1rem;
-        /* p-4 */
-        /* Background Image Dipasang Langsung Di Sini */
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
-
-    /* [KIRI] History Item */
-    #history-list .history-item {
-        /* Tambah class */
-        background-color: #2D3748;
-        /* bg-gray-800 */
-        border: 1px solid #4A5568;
-        /* border */
-        border-radius: 0.5rem;
-        /* rounded-lg */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        /* shadow-sm */
-        cursor: pointer;
-        padding: 0.75rem;
-        /* p-3 */
-    }
-
-    #history-list .history-item:hover {
-        background-color: #4A5568;
-        /* bg-gray-700 */
-    }
-
-    #history-list h4 {
-        color: #BEE3F8;
-        /* text-blue-200 - Lebih terang */
-        font-weight: 600;
-        /* font-semibold */
-    }
-
-    #history-list p {
-        /* Layout text */
-        color: #CBD5E0;
-        /* text-gray-300 */
-    }
-
-    #history-list .history-item.highlighted {
-        /* Ganti .bg-indigo-100 */
-        background-color: #4C51BF !important;
-        /* Indigo yang lebih kuat */
-        border-color: #A3BFFA !important;
-        box-shadow: 0 0 0 2px #A3BFFA;
-        /* ring-2 */
-    }
-
-    #history-list .text-gray-500 {
-        /* 'Loading/Empty' text */
-        color: #A0AEC0;
-    }
-
-
-    /* [KANAN] Dropdown & Input */
-    #club-select,
-    #formation-layout-select,
-    #formation-name {
-        background-color: #2D3748;
-        /* bg-gray-800 */
-        color: #EDF2F7;
-        /* Lebih putih */
-        border: 1px solid #718096;
-        /* border + Border lebih terang */
-        border-radius: 0.375rem;
-        /* rounded-md */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        /* shadow-sm */
-        padding: 0.5rem 0.75rem;
-        /* py-2 px-3 */
-        width: 100%;
-        /* Pastikan full width */
-    }
-
-    #club-select option {
-        background-color: #2D3748;
-        color: #EDF2F7;
-    }
-
-    #filter-position-label {
-        color: #BEE3F8 !important;
-        /* text-blue-200 */
-        font-weight: 500;
-        /* font-medium */
-    }
-
-    label[for="club-select"] {
-        color: #CBD5E0 !important;
-        /* text-gray-300 */
-        font-weight: 500;
-        /* font-medium */
-        margin-bottom: 0.25rem;
-        /* mb-1 */
-        display: block;
-        /* Agar label di atas select */
-    }
-
-
-    /* [KANAN] Player Item */
-    #player-list .player-item {
-        /* Tambah class */
-        background-color: #2D3748;
-        /* bg-gray-800 */
-        border: 1px solid #4A5568;
-        /* border */
-        border-radius: 0.5rem;
-        /* rounded-lg */
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        /* shadow-sm */
-        transition: all 0.2s ease;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--card-border);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0.75rem;
-        /* p-3 */
+        justify-content: space-between; 
+        gap: 0.5rem;
+    }
+
+    /* ===== HISTORY LIST (Left Sidebar) ===== */
+    #history-list {
+        overflow-y: auto;
+        flex-grow: 1;
+        max-height: calc(80vh - 120px);
+    }
+
+    #history-list::-webkit-scrollbar,
+    #player-list::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #history-list::-webkit-scrollbar-track,
+    #player-list::-webkit-scrollbar-track {
+        background: var(--dark-bg);
+        border-radius: 4px;
+    }
+
+    #history-list::-webkit-scrollbar-thumb,
+    #player-list::-webkit-scrollbar-thumb {
+        background: var(--primary-purple);
+        border-radius: 4px;
+    }
+
+    .history-item {
+        background: linear-gradient(135deg, #f5f8fc 0%, #f5f8fc 100%);
+        border: 2px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
         cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }
 
-    #player-list .player-item:hover {
-        background-color: #4A5568;
-        /* bg-gray-700 */
-        transform: scale(1.02);
+    .history-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, var(--primary-purple), var(--accent-pink));
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }
 
-    #player-list .font-bold {
-        /* Nama Pemain */
-        color: #EDF2F7 !important;
-        /* text-gray-100 */
+    .history-item:hover {
+        border-color: var(--accent-pink);
+        transform: translateX(5px);
+        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.3);
+    }
+
+    .history-item:hover::before {
+        opacity: 1;
+    }
+
+    .history-item.highlighted {
+        background: linear-gradient(135deg, #9c89c7 0%, #D946A6 100%);
+        border-color: var(--accent-pink);
+        box-shadow: 0 0 20px rgba(217, 70, 166, 0.5);
+    }
+
+    .history-item.highlighted::before {
+        opacity: 1;
+    }
+
+    .history-item h4 {
+        color: var(--text-light);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
         font-weight: 600;
-        /* font-semibold */
     }
 
-    #player-list .text-sm {
-        /* Negara & Value Wrapper */
-        color: #CBD5E0 !important;
-        /* text-gray-300 */
+    .history-item p {
+        color: var(--text-muted);
+        font-size: 0.9rem;
     }
 
-    #player-list span.font-medium {
-        /* Market Value */
-        color: #9AE6B4 !important;
-        /* text-green-300 - Lebih terang */
-        font-weight: 600;
-        /* font-semibold */
+    /* ===== PITCH CONTAINER (Center) ===== */
+    .pitch-container {
+        background: var(--card-bg);
+        border: 2px solid var(--card-border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 10px 30px rgba(105, 70, 193, 0.2);
+        animation: fadeInUp 0.6s ease 0.2s both;
     }
 
-    #player-list .player-position-badge {
-        /* Ganti .bg-gray-200 etc */
-        background-color: #4A5568 !important;
-        /* bg-gray-700 */
-        color: #EDF2F7 !important;
-        /* Lebih putih */
-        font-weight: 600;
-        /* font-semibold */
-        border-radius: 0.375rem;
-        /* rounded-md */
-        padding: 0.125rem 0.5rem;
-        /* px-2 py-1 */
-        font-size: 0.875rem;
-        /* text-sm */
-        flex-shrink: 0;
-        /* Agar tidak mengecil */
+    .formation-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #e3dcef;
+        border-radius: 0.75rem;
+        backdrop-filter: blur(10px);
     }
 
-    #player-list .text-gray-500,
-    /* 'Loading/No players' text */
-    #player-list p.p-4 {
-        color: #A0AEC0;
+    @media (min-width: 768px) {
+        .formation-controls {
+            flex-direction: row;
+        }
     }
 
+    .formation-controls input,
+    .formation-controls select {
+        flex: 1;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        border: 2px solid var(--card-border);
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
 
-    /* [TENGAH] Lapangan & Slot Pemain */
+    .formation-controls input:focus,
+    .formation-controls select:focus {
+        outline: none;
+        border-color: var(--primary-purple);
+        box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.2);
+    }
+
+    .formation-controls input::placeholder {
+        color: var(--text-muted);
+    }
+
+    /* ===== PITCH FIELD ===== */
+    #pitch {
+        background-image: url('{% static 'images/lapangan.jpg' %}');
+        background-size: cover;
+        background-position: center;
+        border-radius: 0.75rem;
+        position: relative;
+        display: grid;
+        grid-template-rows: repeat(5, 1fr);
+        grid-template-columns: repeat(5, 1fr);
+        padding: 10px 0;
+        height: 450px;
+        box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    }
+
+    @media (min-width: 768px) {
+        #pitch {
+            height: 550px;
+        }
+    }
+
     .pitch-slot {
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         cursor: pointer;
-        transition: all 0.2s ease-in-out;
-        border-radius: 9999px;
+        transition: all 0.3s ease;
     }
 
-    .pitch-slot .player-name {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: white;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-        background-color: rgba(0, 0, 0, 0.5);
-        padding: 1px 6px;
-        border-radius: 8px;
-        margin-top: 3px;
-        text-align: center;
-        max-width: 90px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .pitch-slot.empty .slot-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(107, 70, 193, 0.3);
+        border: 3px dashed rgba(167, 139, 250, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
     }
 
-    .pitch-slot.empty:hover {
+    @media (min-width: 768px) {
+        .pitch-slot.empty .slot-circle {
+            width: 80px;
+            height: 80px;
+        }
+    }
+
+    .pitch-slot.empty:hover .slot-circle {
+        background: rgba(107, 70, 193, 0.5);
+        border-color: var(--accent-pink);
         transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(217, 70, 166, 0.5);
+    }
+
+    .pitch-slot.empty span {
+        font-weight: 700;
+        color: white;
+        font-size: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    @media (min-width: 768px) {
+        .pitch-slot.empty span {
+            font-size: 1.25rem;
+        }
+    }
+
+    .pitch-slot.filled img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--primary-purple);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    @media (min-width: 768px) {
+        .pitch-slot.filled img {
+            width: 80px;
+            height: 80px;
+        }
     }
 
     .pitch-slot.filled:hover img {
-        transform: scale(1.1);
-        box-shadow: 0 0 15px rgba(255, 255, 100, 0.7);
+        transform: scale(1.15);
+        border-color: var(--accent-pink);
+        box-shadow: 0 0 25px rgba(217, 70, 166, 0.8);
     }
 
-    .pitch-slot.selected {
+    .pitch-slot .player-name {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+        background: linear-gradient(135deg, rgba(107, 70, 193, 0.9), rgba(217, 70, 166, 0.9));
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+    }
+
+    .pitch-slot.selected .slot-circle {
+        background: rgba(217, 70, 166, 0.5) !important;
+        border-color: var(--accent-pink) !important;
+        border-style: solid !important;
         animation: pulse 1.5s infinite;
     }
 
@@ -304,551 +339,340 @@
         display: none;
     }
 
-    .pitch-slot.selected div:first-child {
-        background-color: rgba(255, 255, 100, 0.3);
-        border-color: rgba(255, 255, 100, 0.7);
-        border-style: solid;
-        /* Tambah border-style */
-    }
-
-    .pitch-slot.empty span {
-        /* Tulisan GK, LB di slot kosong */
-        font-weight: 700;
-        /* font-bold */
-        color: white;
-        font-size: 1.125rem;
-        /* text-lg */
-        line-height: 1;
-    }
-
     @keyframes pulse {
-
-        0%,
-        100% {
+        0%, 100% {
             opacity: 1;
             transform: scale(1);
         }
-
         50% {
             opacity: 0.7;
             transform: scale(1.1);
         }
     }
 
-    /* POSISI SLOT PEMAIN (GRID) */
-    #pitch {
-        display: grid;
-        grid-template-rows: repeat(5, 1fr);
-        grid-template-columns: repeat(5, 1fr);
-        padding: 10px 0;
-        /* Kurangi padding atas bawah */
+    /* Grid Positions */
+    .GK { grid-area: 5 / 3 / 6 / 4; }
+    .LB { grid-area: 4 / 1 / 5 / 2; }
+    .LCB { grid-area: 4 / 2 / 5 / 3; }
+    .RCB { grid-area: 4 / 4 / 5 / 5; }
+    .RB { grid-area: 4 / 5 / 5 / 6; }
+    .layout-4-3-3 .LCM { grid-area: 3 / 2 / 4 / 3; }
+    .layout-4-3-3 .CM { grid-area: 3 / 3 / 4 / 4; }
+    .layout-4-3-3 .RCM { grid-area: 3 / 4 / 4 / 5; }
+    .layout-4-3-3 .LW { grid-area: 2 / 1 / 3 / 2; }
+    .layout-4-3-3 .ST { grid-area: 2 / 3 / 3 / 4; }
+    .layout-4-3-3 .RW { grid-area: 2 / 5 / 3 / 6; }
+    .layout-4-4-2 .LM { grid-area: 3 / 1 / 4 / 2; }
+    .layout-4-4-2 .LCM { grid-area: 3 / 2 / 4 / 3; }
+    .layout-4-4-2 .RCM { grid-area: 3 / 4 / 4 / 5; }
+    .layout-4-4-2 .RM { grid-area: 3 / 5 / 4 / 6; }
+    .layout-4-4-2 .LST { grid-area: 2 / 2 / 3 / 3; }
+    .layout-4-4-2 .RST { grid-area: 2 / 4 / 3 / 5; }
+    .layout-3-5-2 .LCB { grid-area: 4 / 2 / 5 / 3; }
+    .layout-3-5-2 .CB { grid-area: 4 / 3 / 5 / 4; }
+    .layout-3-5-2 .RCB { grid-area: 4 / 4 / 5 / 5; }
+    .layout-3-5-2 .LWB { grid-area: 3 / 1 / 4 / 2; }
+    .layout-3-5-2 .LCM { grid-area: 3 / 2 / 4 / 3; }
+    .layout-3-5-2 .CAM { grid-area: 3 / 3 / 4 / 4; }
+    .layout-3-5-2 .RCM { grid-area: 3 / 4 / 4 / 5; }
+    .layout-3-5-2 .RWB { grid-area: 3 / 5 / 4 / 6; }
+    .layout-3-5-2 .LST { grid-area: 2 / 2 / 3 / 3; }
+    .layout-3-5-2 .RST { grid-area: 2 / 4 / 3 / 5; }
+    .layout-4-2-3-1 .LDM { grid-area: 3 / 2 / 4 / 3; }
+    .layout-4-2-3-1 .RDM { grid-area: 3 / 4 / 4 / 5; }
+    .layout-4-2-3-1 .LAM { grid-area: 2 / 1 / 3 / 2; }
+    .layout-4-2-3-1 .CAM { grid-area: 2 / 3 / 3 / 4; }
+    .layout-4-2-3-1 .RAM { grid-area: 2 / 5 / 3 / 6; }
+    .layout-4-2-3-1 .ST { grid-area: 1 / 3 / 2 / 4; }
+
+    /* ===== ACTION BUTTONS ===== */
+    .action-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--card-border);
+        gap: 1rem;
+    }
+
+    .btn {
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        border: none;
+        cursor: pointer;
         transition: all 0.3s ease;
-        /* UKURAN LAPANGAN DIKECILKAN DI SINI */
-        height: 450px;
-        /* Tinggi dasar */
-        position: relative;
-        /* Tambahkan ini agar slot tidak keluar */
-        width: 100%;
-        /* Pastikan lebar penuh */
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
-    /* Responsif ukuran lapangan */
-    @media (min-width: 768px) {
-
-        /* md */
-        #pitch {
-            height: 550px;
-        }
+    .btn-clear {
+        background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+        color: white;
     }
 
-    /* Posisi Grid Area */
-    .GK {
-        grid-area: 5 / 3 / 6 / 4;
+    .btn-clear:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(220, 38, 38, 0.4);
     }
 
-    .LB {
-        grid-area: 4 / 1 / 5 / 2;
+    .btn-save {
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-pink) 100%);
+        color: white;
+        flex: 1;
     }
 
-    .LCB {
-        grid-area: 4 / 2 / 5 / 3;
+    .btn-save:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.4);
     }
 
-    .RCB {
-        grid-area: 4 / 4 / 5 / 5;
+    .btn-save:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    .RB {
-        grid-area: 4 / 5 / 5 / 6;
-    }
-
-    .layout-4-3-3 .LCM {
-        grid-area: 3 / 2 / 4 / 3;
-    }
-
-    .layout-4-3-3 .CM {
-        grid-area: 3 / 3 / 4 / 4;
-    }
-
-    .layout-4-3-3 .RCM {
-        grid-area: 3 / 4 / 4 / 5;
-    }
-
-    .layout-4-3-3 .LW {
-        grid-area: 2 / 1 / 3 / 2;
-    }
-
-    .layout-4-3-3 .ST {
-        grid-area: 2 / 3 / 3 / 4;
-    }
-
-    .layout-4-3-3 .RW {
-        grid-area: 2 / 5 / 3 / 6;
-    }
-
-    .layout-4-4-2 .LM {
-        grid-area: 3 / 1 / 4 / 2;
-    }
-
-    .layout-4-4-2 .LCM {
-        grid-area: 3 / 2 / 4 / 3;
-    }
-
-    .layout-4-4-2 .RCM {
-        grid-area: 3 / 4 / 4 / 5;
-    }
-
-    .layout-4-4-2 .RM {
-        grid-area: 3 / 5 / 4 / 6;
-    }
-
-    .layout-4-4-2 .LST {
-        grid-area: 2 / 2 / 3 / 3;
-    }
-
-    .layout-4-4-2 .RST {
-        grid-area: 2 / 4 / 3 / 5;
-    }
-
-    .layout-3-5-2 .LCB {
-        grid-area: 4 / 2 / 5 / 3;
-    }
-
-    .layout-3-5-2 .CB {
-        grid-area: 4 / 3 / 5 / 4;
-    }
-
-    .layout-3-5-2 .RCB {
-        grid-area: 4 / 4 / 5 / 5;
-    }
-
-    .layout-3-5-2 .LWB {
-        grid-area: 3 / 1 / 4 / 2;
-    }
-
-    .layout-3-5-2 .LCM {
-        grid-area: 3 / 2 / 4 / 3;
-    }
-
-    .layout-3-5-2 .CAM {
-        grid-area: 3 / 3 / 4 / 4;
-    }
-
-    .layout-3-5-2 .RCM {
-        grid-area: 3 / 4 / 4 / 5;
-    }
-
-    .layout-3-5-2 .RWB {
-        grid-area: 3 / 5 / 4 / 6;
-    }
-
-    .layout-3-5-2 .LST {
-        grid-area: 2 / 2 / 3 / 3;
-    }
-
-    .layout-3-5-2 .RST {
-        grid-area: 2 / 4 / 3 / 5;
-    }
-
-    .layout-4-2-3-1 .LDM {
-        grid-area: 3 / 2 / 4 / 3;
-    }
-
-    .layout-4-2-3-1 .RDM {
-        grid-area: 3 / 4 / 4 / 5;
-    }
-
-    .layout-4-2-3-1 .LAM {
-        grid-area: 2 / 1 / 3 / 2;
-    }
-
-    .layout-4-2-3-1 .CAM {
-        grid-area: 2 / 3 / 3 / 4;
-    }
-
-    .layout-4-2-3-1 .RAM {
-        grid-area: 2 / 5 / 3 / 6;
-    }
-
-    .layout-4-2-3-1 .ST {
-        grid-area: 1 / 3 / 2 / 4;
-    }
-
-    /* Status Message Colors (Dark Mode) */
-    .bg-red-900\/50 {
-        background-color: rgba(155, 44, 44, 0.7);
-    }
-
-    /* Red Lebih Pekat */
-    .text-red-300 {
-        color: #FEB2B2;
-    }
-
-    /* Merah Muda Terang */
-    .bg-green-900\/50 {
-        background-color: rgba(30, 77, 43, 0.7);
-    }
-
-    /* Green Lebih Pekat */
-    .text-green-300 {
-        color: #C6F6D5;
-    }
-
-    /* Hijau Muda Terang */
-
-    /* Tombol */
-    button {
-        transition: background-color 0.2s ease;
-    }
-
-    .text-red-400 {
-        color: #FC8181;
-    }
-
-    /* Warna tombol clear filter */
-    .hover\:text-red-600:hover {
-        color: #E53E3E;
-    }
-
-    /* Utility */
-    .space-y-3>:not([hidden])~:not([hidden]) {
-        margin-top: 0.75rem;
-    }
-
-    .mb-4 {
+    /* ===== PLAYER LIST (Right Sidebar) ===== */
+    .club-filter {
         margin-bottom: 1rem;
     }
 
-    .mb-8 {
-        margin-bottom: 2rem;
+    .club-filter label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
     }
 
-    .text-center {
-        text-align: center;
+    .club-filter select {
+        width: 100%;
+        background: var(--dark-bg);
+        color: var(--text-light);
+        border: 2px solid var(--card-border);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
     }
 
-    .min-h-\[40px\] {
-        min-height: 40px;
+    .club-filter select:focus {
+        outline: none;
+        border-color: var(--primary-purple);
+        box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.2);
     }
 
-    .font-semibold {
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .filter-label {
+        color: var(--text-light);
+        font-size: 0.9rem;
         font-weight: 600;
     }
 
-    .p-2 {
-        padding: 0.5rem;
+    .clear-filter-btn {
+        background: none;
+        border: none;
+        color: #F87171;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0.25rem 0.5rem;
     }
 
-    .rounded-md {
-        border-radius: 0.375rem;
+    .clear-filter-btn:hover {
+        color: #DC2626;
+        text-decoration: underline;
+    }
+    
+    /* --- MODIFIED STYLE FOR NEW BUTTON --- */
+    .btn-new-formation {
+        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-pink) 100%); /* Solid gradient */
+        color: white; /* White text */
+        border: none; /* No border */
+        font-size: 0.9rem; /* Slightly larger */
+        font-weight: 700; /* Bolder */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0.4rem 0.9rem; /* Adjusted padding */
+        border-radius: 0.5rem;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .btn-new-formation:hover {
+        color: white;
+        box-shadow: 0 5px 15px rgba(217, 70, 166, 0.4); /* Stronger hover shadow */
+        transform: translateY(-2px); /* Pop effect */
+    }
+    /* --- END MODIFIED STYLE --- */
+
+    #player-list {
+        overflow-y: auto;
+        flex-grow: 1;
+        max-height: calc(80vh - 250px);
     }
 
-    .gap-6 {
+    .player-item {
+        background: linear-gradient(135deg, #f5f8fc 0%, #f5f8fc 100%);
+        border: 2px solid var(--card-border);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+    }
+
+    .player-item:hover {
+        border-color: var(--accent-pink);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.3);
+    }
+
+    .player-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .player-item img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--primary-purple);
+        flex-shrink: 0;
+    }
+
+    .player-details {
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .player-name {
+        color: var(--text-light);
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .player-meta {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .player-value {
+        color: var(--success-green);
+        font-weight: 600;
+    }
+
+    .player-position-badge {
+        background: linear-gradient(135deg, var(--primary-purple), var(--accent-pink));
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+
+    /* ===== STATUS MESSAGE ===== */
+    #global-status {
+        min-height: 40px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .status-error {
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.2));
+        border: 2px solid #DC2626;
+        color: #FCA5A5;
+    }
+
+    .status-success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+        border: 2px solid var(--success-green);
+        color: #6EE7B7;
+    }
+
+    /* ===== RESPONSIVE GRID ===== */
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .grid-layout {
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 1.5rem;
     }
 
-    .border-b {
-        border-bottom-width: 1px;
+    @media (min-width: 1024px) {
+        .grid-layout {
+            grid-template-columns: 1fr 2fr 1fr;
+        }
     }
 
-    .pb-2 {
-        padding-bottom: 0.5rem;
-    }
-
-    .mb-1 {
-        margin-bottom: 0.25rem;
-    }
-
-    .mb-2 {
-        margin-bottom: 0.5rem;
-    }
-
+    /* ===== UTILITY CLASSES ===== */
     .hidden {
         display: none;
     }
 
-    .items-center {
-        align-items: center;
-    }
-
-    .justify-between {
-        justify-content: space-between;
-    }
-
-    .mt-4 {
-        margin-top: 1rem;
-    }
-
-    .font-bold {
-        font-weight: 700;
-    }
-
-    .font-extrabold {
-        font-weight: 800;
-    }
-
-    .py-2 {
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .px-4 {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-
-    .px-5 {
-        padding-left: 1.25rem;
-        padding-right: 1.25rem;
-    }
-
-    .rounded-lg {
-        border-radius: 0.5rem;
-    }
-
-    .shadow-md {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    .opacity-50 {
-        opacity: 0.5;
-    }
-
-    .cursor-not-allowed {
-        cursor: not-allowed;
-    }
-
-    .transform {
-        /* Enable transforms */
-    }
-
-    .hover\:scale-105:hover {
-        transform: scale(1.05);
-    }
-
-    .bg-red-600 {
-        background-color: #E53E3E;
-    }
-
-    .hover\:bg-red-700:hover {
-        background-color: #C53030;
-    }
-
-    .bg-indigo-600 {
-        background-color: #5A67D8;
-    }
-
-    .hover\:bg-indigo-700:hover {
-        background-color: #4C51BF;
-    }
-
-    .text-white {
-        color: #FFFFFF;
-    }
-
-    .text-xs {
-        font-size: 0.75rem;
-    }
-
-    .hover\:text-red-800:hover {
-        color: #9B2C2C;
-    }
-
-    .tracking-tight {
-        letter-spacing: -0.025em;
-    }
-
-    /* Responsive Grid */
-    @media (min-width: 1024px) {
-
-        /* lg */
-        .lg\:grid-cols-4 {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-
-        .lg\:col-span-1 {
-            grid-column: span 1 / span 1;
-        }
-
-        .lg\:col-span-2 {
-            grid-column: span 2 / span 2;
-        }
-    }
-
-    @media (min-width: 768px) {
-
-        /* md */
-        .md\:flex-row {
-            flex-direction: row;
-        }
-
-        .md\:w-auto {
-            width: auto;
-        }
-
-        .md\:w-16 {
-            width: 4rem;
-        }
-
-        .md\:h-16 {
-            height: 4rem;
-        }
-
-        .md\:text-xl {
-            font-size: 1.25rem;
-        }
-    }
-
-    .w-full {
-        width: 100%;
-    }
-
-    .flex-grow {
-        flex-grow: 1;
-    }
-
-    .w-12 {
-        width: 3rem;
-    }
-
-    .h-12 {
-        height: 3rem;
-    }
-
-    .rounded-full {
-        border-radius: 9999px;
-    }
-
-    .object-cover {
-        object-fit: cover;
-    }
-
-    .border-4 {
-        border-width: 4px;
-    }
-
-    .border-white {
-        border-color: #FFFFFF;
-    }
-
-    .shadow-lg {
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    .bg-black\/20 {
-        background-color: rgba(0, 0, 0, 0.2);
-    }
-
-    .bg-black\/30 {
-        background-color: rgba(0, 0, 0, 0.3);
-    }
-
-    /* Untuk kontrol formasi */
-    .backdrop-blur-sm {
-        backdrop-filter: blur(4px);
-    }
-
-    /* Blur di kontrol formasi */
-    .border-dashed {
-        border-style: dashed;
-    }
-
-    .border-white\/50 {
-        border-color: rgba(255, 255, 255, 0.5);
-    }
-
-    .flex {
-        display: flex;
-    }
-
-    .text-lg {
-        font-size: 1.125rem;
-    }
-
-    .space-x-3>:not([hidden])~:not([hidden]) {
-        margin-left: 0.75rem;
-    }
-
-    .overflow-hidden {
-        overflow: hidden;
-    }
-
-    .border-indigo-400 {
-        border-color: #A3BFFA;
-    }
-
-    .border-2 {
-        border-width: 2px;
-    }
-
-    .flex-shrink-0 {
-        flex-shrink: 0;
-    }
-
-    .truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .relative {
-        position: relative;
-    }
-
-    .pt-4 {
-        padding-top: 1rem;
-    }
-
-    .border-t {
-        border-top-width: 1px;
-    }
-
-    .border-gray-700 {
-        border-color: #4A5568;
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--text-muted);
+        font-style: italic;
     }
 </style>
 
-<div class="container mx-auto px-4 py-6">
-    <h1 class="text-4xl font-extrabold text-indigo-900 mb-8 text-center tracking-tight">
-        Best XI Team Builder ⚽️
-    </h1>
+<div class="container">
+    <h1 class="main-title">Best XI Team Builder</h1>
 
-    <div id="global-status" class="mb-4 text-center min-h-[40px]"></div>
+    <div id="global-status"></div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-
-        <div class="lg:col-span-1 sidebar-column">
-            <h2>Saved Formations 💾</h2>
-            <div id="history-list" class="space-y-3" style="max-height: calc(80vh - 100px);">
-                <p class="italic text-sm p-4 text-center">Loading history...</p>
+    <div class="grid-layout">
+        <div class="sidebar-card" style="animation-delay: 0s;">
+            <h2>
+                <span>💾 Saved Formations</span>
+                <button id="new-formation-btn" class="btn-new-formation">
+                    + NEW
+                </button>
+            </h2>
+            <div id="history-list">
+                <p class="empty-state">Loading history...</p>
             </div>
         </div>
 
-        <div class="lg:col-span-2 pitch-column" style="background-image: url('{% static 'images/lapangan.jpg' %}')">
-
-            <div class="flex flex-col md:flex-row gap-4 mb-4 p-2 bg-black/40 rounded-lg backdrop-blur-sm">
-                <input type="text" id="formation-name" placeholder="Nama Formasi (Misal: Tim Impian)" class="flex-grow w-full px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-indigo-400">
-                <select id="formation-layout-select" class="w-full md:w-auto px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        <div class="pitch-container">
+            <div class="formation-controls">
+                <input type="text" id="formation-name" placeholder="✏️ Formation Name (e.g., Dream Team)">
+                <select id="formation-layout-select">
                     <option value="4-3-3">4-3-3</option>
                     <option value="4-4-2">4-4-2</option>
                     <option value="3-5-2">3-5-2</option>
@@ -856,39 +680,37 @@
                 </select>
             </div>
 
-            <div id="pitch" class="relative w-full">
-                {/* Hapus kelas tinggi dari sini */}
-                {/* Slots akan di-render oleh JavaScript */}
-            </div>
+            <div id="pitch" class="relative w-full"></div>
 
-            <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
-                <button id="clear-formation-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 transform hover:scale-105">
-                    Clear
+            <div class="action-buttons">
+                <button id="clear-formation-btn" class="btn btn-clear">
+                    🗑️ Clear
                 </button>
-                <button id="save-formation-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed" disabled>
-                    Simpan Formasi
+                <button id="save-formation-btn" class="btn btn-save" disabled>
+                    💾 Save Formation
                 </button>
             </div>
         </div>
 
-        <div class="lg:col-span-1 sidebar-column">
-            <h2>Player List 📋</h2>
-            <div class="mb-4">
-                <label for="club-select">Filter by Club</label>
-                <select id="club-select" class="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="sidebar-card" style="animation-delay: 0.2s;">
+            <h2><span>📋 Player List</span></h2>
+            
+            <div class="club-filter">
+                <label for="club-select">🏆 Filter by Club</label>
+                <select id="club-select">
                     <option value="">Loading clubs...</option>
                 </select>
             </div>
-            <div class="flex justify-between items-center mb-2">
-                <span id="filter-position-label" class="text-sm font-medium">Pilih Klub (atau slot)</span>
-                <button id="clear-filter-btn" class="text-xs text-red-400 hover:text-red-600 hidden">&times; Hapus Filter Posisi</button>
+
+            <div class="filter-header">
+                <span id="filter-position-label" class="filter-label">Select club or position</span>
+                <button id="clear-filter-btn" class="clear-filter-btn hidden">✕ Clear Filter</button>
             </div>
 
-            <div id="player-list" class="space-y-3" style="max-height: calc(80vh - 200px);">
-                <p class="italic text-sm p-4 text-center">Loading players...</p>
+            <div id="player-list">
+                <p class="empty-state">Loading players...</p>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -897,8 +719,6 @@
     let allClubs = [];
     let allHistory = [];
     let currentPlayers = [];
-    
-    // --- PERUBAHAN STATE UTAMA ---
     let currentSquad = []; 
     let selectedPlayers = []; 
     let selectedSlotId = null;
@@ -918,6 +738,7 @@
     const clearFilterBtn = document.getElementById('clear-filter-btn');
     const globalStatus = document.getElementById('global-status');
     const filterPositionLabel = document.getElementById('filter-position-label');
+    const newFormationBtn = document.getElementById('new-formation-btn'); 
 
     // --- Layout Definitions ---
     const formationLayouts = {
@@ -927,7 +748,6 @@
         '4-2-3-1': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LDM', 'RDM', 'LAM', 'CAM', 'RAM', 'ST']
     };
 
-    // KAMUS 1: Slot Lapangan -> Peran yang Dibutuhkan
     const slotPositionMap = {
         'GK': 'Kiper',
         'LB': 'Bek-Kiri', 'LWB': 'Bek-Kiri',
@@ -940,7 +760,6 @@
         'LST': 'Penyerang', 'ST': 'Penyerang', 'RST': 'Penyerang'
     };
 
-    // KAMUS 2: Posisi Pemain -> Daftar Peran [Array] yang BISA DIA ISI
     const indonesianToRoleMap = {
         'Kiper': ['Kiper'],
         'Bek-Tengah': ['Bek-Tengah'],
@@ -973,7 +792,6 @@
     const csrftoken = getCookie('csrftoken');
 
     // --- AJAX Functions ---
-    // fetchInitialData & fetchPlayers tidak berubah
     async function fetchInitialData() {
         showStatus("Mengambil data klub & histori...", true);
         try {
@@ -986,7 +804,6 @@
             renderClubSelect();
             renderHistoryList();
             await fetchPlayers();
-            // Panggil reAssignPlayersToPitch setelah data siap, untuk inisialisasi awal
             reAssignPlayersToPitch(); 
             showStatus("Siap! Pilih slot di lapangan.", false, 3000);
         } catch (error) {
@@ -1007,7 +824,7 @@
             const data = await response.json();
             if (data.error) throw new Error(data.error);
             currentPlayers = data.players;
-            renderPlayerList(); // Render ulang daftar pemain di kanan
+            renderPlayerList();
             showStatus("Daftar pemain diperbarui.", false, 2000);
         } catch (error) {
             console.error("Error fetchPlayers:", error);
@@ -1015,7 +832,6 @@
         }
     }
 
-    // saveFormation: Menyimpan MASTER SQUAD (currentSquad)
     async function saveFormation() {
         const formationName = formationNameInput.value.trim();
         if (currentSquad.length !== 11 || !formationName) {
@@ -1040,7 +856,7 @@
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'Gagal menyimpan');
             showStatus(result.message || "Formasi berhasil disimpan!", false, 3000);
-            if (currentFormationId) { // Update history jika ini update
+            if (currentFormationId) {
                 const index = allHistory.findIndex(f => f.id === currentFormationId);
                 if (index > -1) allHistory[index] = result.formation;
             } else {
@@ -1053,11 +869,10 @@
             console.error("Error saveFormation:", error);
             showStatus(`Error: ${error.message}.`, true);
         } finally {
-            checkFormCompletion(); // Re-enable tombol save
+            checkFormCompletion();
         }
     }
 
-    // loadFormation: Memuat ke MASTER SQUAD (currentSquad) lalu memanggil reAssign
     async function loadFormation(formationId) {
         showStatus("Memuat formasi...", true);
         try {
@@ -1067,25 +882,20 @@
             const data = await response.json(); 
             if (data.error) throw new Error(data.error);
 
-            // 1. Reset state dulu (tapi JANGAN panggil clearFormation karena itu reset layout)
             currentSquad = [];
             selectedPlayers = [];
             currentFormationId = data.id;
-            currentLayout = data.layout; // Set layout sesuai yg di-load
+            currentLayout = data.layout;
             formationNameInput.value = data.name;
             formationLayoutSelect.value = data.layout;
 
-            // 2. Isi MASTER SQUAD (currentSquad) dari data yg di-load
             currentSquad = data.players.map(p => ({
                 player: p, 
                 originalSlotId: p.slotId 
             }));
 
-            // 3. Panggil fungsi pintar untuk menempatkan pemain ke lapangan
             reAssignPlayersToPitch();
-
-            // 4. Update UI lainnya
-            await fetchPlayers(clubSelect.value); // Ambil data pemain (jika perlu update)
+            await fetchPlayers(clubSelect.value);
             renderPlayerList();
             checkFormCompletion();
             showStatus(`Formasi "${data.name}" dimuat.`, false, 3000);
@@ -1094,26 +904,20 @@
         } catch (error) {
             console.error("Error loadFormation:", error);
             showStatus(`Error: ${error.message}. (Pastikan API kirim 'slotId'!).`, true);
-            // Jika error, reset ke state awal yg bersih
             clearFormation(false);
-            currentLayout = '4-3-3'; // Reset layout
+            currentLayout = '4-3-3';
             formationLayoutSelect.value = '4-3-3';
-            reAssignPlayersToPitch(); // Coba assign ulang (mungkin jadi kosong)
+            reAssignPlayersToPitch();
             checkFormCompletion();
         }
     }
 
-    // --- FUNGSI BARU (INTI LOGIKA) ---
-    // Menempatkan pemain dari `currentSquad` ke `selectedPlayers` sesuai `currentLayout`
     function reAssignPlayersToPitch() {
         const newSlots = formationLayouts[currentLayout];
-        let unassignedSquadMembers = [...currentSquad]; // Copy dari master
-        let newSelectedPlayers = []; // Hasil penempatan di lapangan
+        let unassignedSquadMembers = [...currentSquad];
+        let newSelectedPlayers = [];
+        let remainingNewSlots = [];
 
-        // --- LOGIKA "BEST-FIT" DENGAN 3 PUTARAN ---
-        let remainingNewSlots = []; // Slot yg belum terisi
-
-        // PUTARAN 1: "PULANG KAMPUNG" (Slot asli = slot baru)
         newSlots.forEach(newSlotId => {
             const playerIndex = unassignedSquadMembers.findIndex(s => s.originalSlotId === newSlotId);
             if (playerIndex > -1) {
@@ -1124,7 +928,6 @@
             }
         });
 
-        // PUTARAN 2: "PERAN UTAMA" (Peran[0] cocok)
         let remainingNewSlots2 = [];
         remainingNewSlots.forEach(newSlotId => {
             const requiredRole = slotPositionMap[newSlotId];
@@ -1141,7 +944,6 @@
             }
         });
 
-        // PUTARAN 3: "PERAN SEKUNDER" (.includes() cocok)
         remainingNewSlots2.forEach(newSlotId => {
             const requiredRole = slotPositionMap[newSlotId];
             if (!requiredRole) return;
@@ -1154,28 +956,27 @@
                 newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
             }
         });
-        // --- AKHIR LOGIKA 3-PUTARAN ---
 
-        selectedPlayers = newSelectedPlayers; // Update pemain di lapangan
-        renderPitchSlots(); // Gambar ulang lapangan
+        selectedPlayers = newSelectedPlayers;
+        renderPitchSlots();
     }
 
     // --- RENDER Functions ---
-    // renderPitchSlots & renderPlayerList tidak perlu diubah lagi
     function renderPitchSlots() {
         pitch.innerHTML = '';
         pitch.className = `relative w-full layout-${currentLayout}`;
-        pitch.style.height = '450px'; if (window.innerWidth >= 768) { pitch.style.height = '550px'; }
         const slots = formationLayouts[currentLayout];
         slots.forEach(slotId => {
             const slotEl = document.createElement('div');
-            slotEl.id = `slot-${slotId}`; slotEl.className = `pitch-slot ${slotId}`; slotEl.dataset.slotId = slotId;
-            const playerInSlot = selectedPlayers.find(p => p.slotId === slotId); // Cari di pemain lapangan
+            slotEl.id = `slot-${slotId}`;
+            slotEl.className = `pitch-slot ${slotId}`;
+            slotEl.dataset.slotId = slotId;
+            const playerInSlot = selectedPlayers.find(p => p.slotId === slotId);
             if (playerInSlot) {
-                slotEl.innerHTML = `<img src="${playerInSlot.player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${playerInSlot.player.name}" class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-4 border-white shadow-lg"><div class="player-name">${playerInSlot.player.name}</div>`;
+                slotEl.innerHTML = `<img src="${playerInSlot.player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${playerInSlot.player.name}"><div class="player-name">${playerInSlot.player.name}</div>`;
                 slotEl.classList.add('filled');
             } else {
-                slotEl.innerHTML = `<div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-black/20 border-4 border-dashed border-white/50 flex items-center justify-center"><span class="font-bold text-white text-lg md:text-xl">${slotId}</span></div><div class="player-name">(Kosong)</div>`;
+                slotEl.innerHTML = `<div class="slot-circle"><span>${slotId}</span></div><div class="player-name">(Empty)</div>`;
                 slotEl.classList.add('empty');
             }
             if (slotId === selectedSlotId) slotEl.classList.add('selected');
@@ -1189,44 +990,81 @@
         let filteredPlayers = [...currentPlayers];
         if (currentFilterPositionCode) {
             filteredPlayers = filteredPlayers.filter(p => {
-                const playerRoles = indonesianToRoleMap[p.position]; return playerRoles && playerRoles.includes(currentFilterPositionCode);
+                const playerRoles = indonesianToRoleMap[p.position];
+                return playerRoles && playerRoles.includes(currentFilterPositionCode);
             });
-            filterPositionLabel.textContent = `Filter: ${currentFilterPositionCode}`; clearFilterBtn.classList.remove('hidden');
+            filterPositionLabel.textContent = `Filter: ${currentFilterPositionCode}`;
+            clearFilterBtn.classList.remove('hidden');
         } else {
-            filterPositionLabel.textContent = 'Pilih Klub (atau slot)'; clearFilterBtn.classList.add('hidden');
+            filterPositionLabel.textContent = 'Select club or position';
+            clearFilterBtn.classList.add('hidden');
         }
-        const selectedPlayerIds = selectedPlayers.map(p => p.player.id); // Filter yg sudah DI LAPANGAN
+        const selectedPlayerIds = selectedPlayers.map(p => p.player.id);
         filteredPlayers = filteredPlayers.filter(p => !selectedPlayerIds.includes(p.id));
-        if (filteredPlayers.length === 0) { playerListContainer.innerHTML = '<p class="p-4 text-center">Tidak ada pemain yang cocok.</p>'; return; }
+        if (filteredPlayers.length === 0) {
+            playerListContainer.innerHTML = '<p class="empty-state">No matching players found.</p>';
+            return;
+        }
         filteredPlayers.forEach(player => {
-            const playerEl = document.createElement('div'); playerEl.className = "player-item"; playerEl.dataset.playerId = player.id;
-            let formattedValue; try { const v = parseFloat(player.market_value); if (isNaN(v)) throw new Error(); formattedValue = v >= 1e12 ? (v / 1e12).toFixed(2) + " T" : v >= 1e9 ? (v / 1e9).toFixed(1) + " M" : (v / 1e6).toFixed(1) + " Jt"; } catch (e) { formattedValue = 'N/A'; }
-            playerEl.innerHTML = `<div class="flex items-center space-x-3 overflow-hidden"><img src="${player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${player.name}" class="w-10 h-10 rounded-full object-cover border-2 border-indigo-400 flex-shrink-0"><div class="overflow-hidden"><p class="font-bold truncate">${player.name}</p><p class="text-sm">${player.nationality} | <span class="font-medium">${formattedValue}</span></p></div></div><div class="player-position-badge">${player.position}</div>`;
+            const playerEl = document.createElement('div');
+            playerEl.className = "player-item";
+            playerEl.dataset.playerId = player.id;
+            let formattedValue;
+            try {
+                const v = parseFloat(player.market_value);
+                if (isNaN(v)) throw new Error();
+                formattedValue = v >= 1e12 ? (v / 1e12).toFixed(2) + " T" : v >= 1e9 ? (v / 1e9).toFixed(1) + " M" : (v / 1e6).toFixed(1) + " Jt";
+            } catch (e) {
+                formattedValue = 'N/A';
+            }
+            playerEl.innerHTML = `
+                <div class="player-info">
+                    <img src="${player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${player.name}">
+                    <div class="player-details">
+                        <div class="player-name">${player.name}</div>
+                        <div class="player-meta">
+                            <span>${player.nationality}</span>
+                            <span>•</span>
+                            <span class="player-value">${formattedValue}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-position-badge">${player.position}</div>
+            `;
             playerEl.addEventListener('click', () => handlePlayerSelect(player.id));
             playerListContainer.appendChild(playerEl);
         });
     }
 
     function renderClubSelect() {
-        clubSelect.innerHTML = '<option value="">Semua Klub</option>';
-        allClubs.forEach(club => { const o = document.createElement('option'); o.value = club.id; o.textContent = club.name; clubSelect.appendChild(o); });
+        clubSelect.innerHTML = '<option value="">All Clubs</option>';
+        allClubs.forEach(club => {
+            const o = document.createElement('option');
+            o.value = club.id;
+            o.textContent = club.name;
+            clubSelect.appendChild(o);
+        });
     }
 
     function renderHistoryList() {
         historyListContainer.innerHTML = '';
-        if (allHistory.length === 0) { historyListContainer.innerHTML = '<p class="italic text-sm p-4 text-center">Belum ada formasi tersimpan.</p>'; return; }
+        if (allHistory.length === 0) {
+            historyListContainer.innerHTML = '<p class="empty-state">No saved formations yet.</p>';
+            return;
+        }
         allHistory.forEach(formation => {
-            const h = document.createElement('div'); h.className = "history-item"; h.dataset.formationId = formation.id;
-            h.innerHTML = `<h4 class="font-semibold">${formation.name}</h4><p class="text-sm">Layout: ${formation.layout}</p>`;
+            const h = document.createElement('div');
+            h.className = "history-item";
+            h.dataset.formationId = formation.id;
+            h.innerHTML = `<h4>${formation.name}</h4><p>Layout: ${formation.layout}</p>`;
             h.addEventListener('click', () => loadFormation(formation.id));
             historyListContainer.appendChild(h);
         });
-        highlightCurrentHistoryItem(); // Highlight setelah render ulang
+        highlightCurrentHistoryItem();
     }
 
-    // Fungsi helper baru untuk highlight history
     function highlightCurrentHistoryItem() {
-         document.querySelectorAll('#history-list > div.history-item').forEach(el => {
+        document.querySelectorAll('#history-list > div.history-item').forEach(el => {
             el.classList.remove('highlighted');
             if (currentFormationId && el.dataset.formationId == currentFormationId) {
                 el.classList.add('highlighted');
@@ -1235,124 +1073,140 @@
     }
 
     // --- Event Handlers ---
-
-    // handleSlotClick: Hapus dari currentSquad & selectedPlayers
     function handleSlotClick(slotId) {
         const playerInSlot = selectedPlayers.find(p => p.slotId === slotId);
         if (playerInSlot) {
             selectedPlayers = selectedPlayers.filter(p => p.slotId !== slotId);
-            currentSquad = currentSquad.filter(s => s.player.id !== playerInSlot.player.id); // Hapus dari master
-            selectedSlotId = null; currentFilterPositionCode = null;
+            currentSquad = currentSquad.filter(s => s.player.id !== playerInSlot.player.id);
+            selectedSlotId = null;
+            currentFilterPositionCode = null;
             showStatus(`Pemain ${playerInSlot.player.name} dihapus.`);
-            reAssignPlayersToPitch(); // PENTING: Assign ulang sisa pemain
-            renderPlayerList(); // Update daftar pemain kanan
+            reAssignPlayersToPitch();
+            renderPlayerList();
         } else {
-            if (selectedSlotId === slotId) { selectedSlotId = null; currentFilterPositionCode = null; }
-            else { selectedSlotId = slotId; currentFilterPositionCode = slotPositionMap[slotId]; showStatus(`Memilih pemain untuk ${slotId} (${currentFilterPositionCode})`); }
-            renderPitchSlots(); // Update highlight slot saja
-            renderPlayerList(); // Update filter pemain kanan
+            if (selectedSlotId === slotId) {
+                selectedSlotId = null;
+                currentFilterPositionCode = null;
+            } else {
+                selectedSlotId = slotId;
+                currentFilterPositionCode = slotPositionMap[slotId];
+                showStatus(`Memilih pemain untuk ${slotId} (${currentFilterPositionCode})`);
+            }
+            renderPitchSlots();
+            renderPlayerList();
         }
         checkFormCompletion();
     }
 
-    // handlePlayerSelect: Tambah ke currentSquad & selectedPlayers
     function handlePlayerSelect(playerId) {
-        if (!selectedSlotId) { showStatus("Pilih slot dulu!", true); return; }
-        if (currentSquad.length >= 11) { showStatus("Squad sudah penuh (11 pemain).", true); return; } // Batasi 11
-        
+        if (!selectedSlotId) {
+            showStatus("Pilih slot dulu!", true);
+            return;
+        }
+        if (currentSquad.length >= 11) {
+            showStatus("Squad sudah penuh (11 pemain).", true);
+            return;
+        }
         const player = currentPlayers.find(p => p.id === playerId);
         const expectedRole = slotPositionMap[selectedSlotId];
         const playerRoles = indonesianToRoleMap[player.position];
-        if (!playerRoles || !playerRoles.includes(expectedRole)) { showStatus(`Posisi tidak cocok! Slot ${selectedSlotId} butuh ${expectedRole} (Pemain: ${player.position}).`, true); return; }
-
-        // Cek duplikat di master squad
-        if (currentSquad.find(s => s.player.id === player.id)) { showStatus(`${player.name} sudah ada di squad.`, true); return; }
-
-        // Tambah ke Master Squad
+        if (!playerRoles || !playerRoles.includes(expectedRole)) {
+            showStatus(`Posisi tidak cocok! Slot ${selectedSlotId} butuh ${expectedRole} (Pemain: ${player.position}).`, true);
+            return;
+        }
+        if (currentSquad.find(s => s.player.id === player.id)) {
+            showStatus(`${player.name} sudah ada di squad.`, true);
+            return;
+        }
         currentSquad.push({ player: player, originalSlotId: selectedSlotId });
-        // Tambah ke Pemain di Lapangan
         selectedPlayers.push({ player: player, slotId: selectedSlotId });
-
         showStatus(`${player.name} ke slot ${selectedSlotId}.`);
-        selectedSlotId = null; currentFilterPositionCode = null;
+        selectedSlotId = null;
+        currentFilterPositionCode = null;
         renderPitchSlots();
         renderPlayerList();
         checkFormCompletion();
     }
 
-    // handleLayoutChange: Hanya update layout & panggil reAssign
     function handleLayoutChange(event) {
         currentLayout = event.target.value;
-        if (selectedSlotId) { selectedSlotId = null; currentFilterPositionCode = null; }
-        reAssignPlayersToPitch(); // Panggil fungsi pintar
-        renderPlayerList(); // Update daftar pemain (karena selectedPlayers berubah)
+        if (selectedSlotId) {
+            selectedSlotId = null;
+            currentFilterPositionCode = null;
+        }
+        reAssignPlayersToPitch();
+        renderPlayerList();
         checkFormCompletion();
     }
 
-    // handleClubChange tidak berubah
     function handleClubChange() {
         const clubId = clubSelect.value;
         fetchPlayers(clubId);
-        if (selectedSlotId) { document.getElementById(`slot-${selectedSlotId}`).classList.remove('selected'); selectedSlotId = null; }
+        if (selectedSlotId) {
+            selectedSlotId = null;
+        }
         currentFilterPositionCode = null;
-        renderPitchSlots(); // Mungkin tidak perlu, tapi aman
+        renderPitchSlots();
     }
 
-    // handleClearFilter tidak berubah
     function handleClearFilter() {
-        if (selectedSlotId) { document.getElementById(`slot-${selectedSlotId}`).classList.remove('selected'); selectedSlotId = null; }
+        if (selectedSlotId) {
+            selectedSlotId = null;
+        }
         currentFilterPositionCode = null;
         renderPitchSlots();
         renderPlayerList();
     }
 
-    // clearFormation: Mengosongkan currentSquad & selectedPlayers
     function clearFormation(showMsg = true) {
-        selectedPlayers = []; currentSquad = []; // Kosongkan keduanya
-        selectedSlotId = null; currentFilterPositionCode = null; currentFormationId = null;
+        selectedPlayers = [];
+        currentSquad = [];
+        selectedSlotId = null;
+        currentFilterPositionCode = null;
+        currentFormationId = null;
         formationNameInput.value = '';
-        formationLayoutSelect.value = '4-3-3'; currentLayout = '4-3-3'; // Reset layout
-        reAssignPlayersToPitch(); // Akan render pitch kosong
+        formationLayoutSelect.value = '4-3-3';
+        currentLayout = '4-3-3';
+        reAssignPlayersToPitch();
         renderPlayerList();
         checkFormCompletion();
-        highlightCurrentHistoryItem(); // Hapus highlight
+        highlightCurrentHistoryItem();
         if (showMsg) showStatus("Formasi dibersihkan.", false, 3000);
     }
 
-    // checkFormCompletion: Mengecek currentSquad
     function checkFormCompletion() {
         const isComplete = currentSquad.length === 11 && formationNameInput.value.trim() !== '';
         saveFormationBtn.disabled = !isComplete;
-        saveFormationBtn.classList.toggle('opacity-50', !isComplete);
-        saveFormationBtn.classList.toggle('cursor-not-allowed', !isComplete);
-        if (isComplete) { saveFormationBtn.textContent = currentFormationId ? 'Update' : 'Simpan'; }
-        else { saveFormationBtn.textContent = currentSquad.length !== 11 ? `Pilih ${11 - currentSquad.length} lagi` : 'Beri Nama'; }
+        if (isComplete) {
+            saveFormationBtn.textContent = currentFormationId ? '✅ Update' : '💾 Save Formation';
+        } else {
+            saveFormationBtn.textContent = currentSquad.length !== 11 ? `⚽ Pick ${11 - currentSquad.length} more` : '✏️ Add Name';
+        }
     }
 
-    // --- Utility Functions ---
-    // showStatus tidak berubah
     function showStatus(message, isError = false, duration = 4000) {
         globalStatus.textContent = message;
-        let className = 'mb-4 text-center min-h-[40px] font-semibold p-2 rounded-md';
-        if (document.body.classList.contains('bg-gray-900')) { // Dark mode assumed
-             className += isError ? ' text-red-300 bg-red-900/50' : ' text-green-300 bg-green-900/50';
-        } else { // Light mode fallback
-             className += isError ? ' text-red-600 bg-red-100' : ' text-green-700 bg-green-100';
+        globalStatus.className = isError ? 'status-error' : 'status-success';
+        if (!isError) {
+            setTimeout(() => {
+                if (globalStatus.textContent === message) {
+                    globalStatus.textContent = '';
+                    globalStatus.className = '';
+                }
+            }, duration);
         }
-         globalStatus.className = className;
-        if (!isError) { setTimeout(() => { if (globalStatus.textContent === message) { globalStatus.textContent = ''; globalStatus.className = 'mb-4 text-center min-h-[40px]'; } }, duration); }
     }
 
     // --- Initial Setup ---
     document.addEventListener('DOMContentLoaded', () => {
-        fetchInitialData(); // Panggil AJAX
+        fetchInitialData();
         clubSelect.addEventListener('change', handleClubChange);
         formationLayoutSelect.addEventListener('change', handleLayoutChange);
         saveFormationBtn.addEventListener('click', saveFormation);
         clearFormationBtn.addEventListener('click', () => clearFormation(true));
         clearFilterBtn.addEventListener('click', handleClearFilter);
+        newFormationBtn.addEventListener('click', () => clearFormation(true)); 
         formationNameInput.addEventListener('input', checkFormCompletion);
-        // renderPitchSlots(); // Dihapus, dipanggil oleh reAssign di fetchInitialData
         checkFormCompletion();
         window.addEventListener('resize', renderPitchSlots);
     });
