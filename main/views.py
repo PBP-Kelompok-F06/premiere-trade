@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .models import Club
+from .models import Club, Player
 
 # Create your views here.
 def homepage(request):
@@ -17,3 +17,10 @@ def homepage(request):
         'clubs': clubs, # Kirim data klub ke template
     }
     return render(request, 'homepage.html', context)
+
+def show_players(request):
+    players = Player.objects.all()  # ambil semua pemain dari database
+    context = {
+        'players': players
+    }
+    return render(request, 'players.html', context)

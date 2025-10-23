@@ -1,7 +1,6 @@
 import uuid
 from django.db import models
 
-
 # Create your models here.
 class Club(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -28,10 +27,8 @@ class Player(models.Model):
     jumlah_goal = models.IntegerField(default=0)
     jumlah_asis = models.IntegerField(default=0)
     jumlah_match = models.IntegerField(default=0)
+    thumbnail = models.URLField(blank=True, null=True)
     sedang_dijual = models.BooleanField(default=False)
     
     def __str__(self):
         return self.nama_pemain
-
-    def __str__(self):
-        return self.name

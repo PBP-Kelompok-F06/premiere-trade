@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {# ... meta, script tailwind, title ... #}
 </head>
 <body class="bg-gradient-to-br ...">
 
-    {# Navbar (jika ada) #}
     {% include 'partials/navbar.html' %} 
 
     <main class="p-4 md:p-8"> {# Pastikan hanya ada satu tag <main> #}
         {% block content %}
-        {# Konten dari builder akan masuk di sini #}
         {% endblock content %}
     </main>
 

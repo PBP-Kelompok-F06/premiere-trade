@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "main",
     "community",
     "accounts",
+    'player_transaction',
 ]   
 
 MIDDLEWARE = [
