@@ -9,17 +9,20 @@
     <div class="nav-menu">
         <a href="{% url 'main:homepage' %}">Home</a>
         <a href="{% url 'community:community_home' %}">Community</a>
-        
+        <a href="#">My Club</a>
         <a href="#">Rumor</a>
         <a href="#">Transfer</a>
         <a href="{% url 'best_eleven:team_builder' %}"">Best XI</a>
 
+        {% if user.is_club_admin %}
+            <a href="#">Inbox</a>
+        {% endif %}
     </div>
 
     <div class="auth-links">
         {% if user.is_authenticated %}
             <span class="user-info">
-                Halo, <strong>{{ user.username }}</strong>
+                <strong>{{ user.username }}</strong>
             </span>
             <a href="{% url 'accounts:logout_user' %}" class="logout">Logout</a>
         {% else %}
