@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %} {# Load humanize untuk format angka #}
+
+{% block title %}Daftar Pemain - {{ club.name }}{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .player-table-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .player-table-container h1 {
+            color: #142850;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .player-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .player-table th, .player-table td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .player-table th {
+            background-color: #142850; /* Warna biru header */
+            color: white;
+            font-weight: 600;
+        }
+        .player-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9; /* Warna zebra */
+        }
+        .player-table tbody tr:hover {
+            background-color: #f1f1f1; /* Highlight pas hover */
+        }
+        .player-table img {
+            max-height: 40px;
+            max-width: 40px;
+            vertical-align: middle;
+            border-radius: 4px; /* Sedikit rounded */
+        }
+        .no-players-msg {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="player-table-container">
+    <h1>Daftar Pemain - {{ club.name }}</h1>
+
+    <table class="player-table">
+        <thead>
+            <tr>
+                <th>Foto</th>
+                <th>Nama Pemain</th>
+                <th>Posisi</th>
+                <th>Umur</th>
+                <th>Market Value</th>
+                <th>Negara</th>
+                <th>Goal</th>
+                <th>Asis</th>
+                <th>Match</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+            <tr>
+                <td>
+                    {% if player.thumbnail %}
+                        <img src="{{ player.thumbnail }}" alt="{{ player.nama_pemain }}">
+                    {% else %}
+                        <img src="{% static 'images/player-placeholder.png' %}" alt="{{ player.nama_pemain }}">
+                    {% endif %}
+                </td>
+                <td>{{ player.nama_pemain }}</td>
+                <td>{{ player.position }}</td>
+                <td>{{ player.umur }}</td>
+                <td>€{{ player.market_value|floatformat:0|intcomma }}</td>
+                <td>{{ player.negara }}</td>
+                <td>{{ player.jumlah_goal }}</td>
+                <td>{{ player.jumlah_asis }}</td>
+                <td>{{ player.jumlah_match }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="no-players-msg">Belum ada pemain yang terdaftar di klub ini.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
