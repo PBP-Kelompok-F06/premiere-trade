@@ -6,60 +6,102 @@
 
 {% block extra_head %}
     <style>
+        .player-subtitle {
+            text-align: center;
+            color: gray;
+            margin-bottom: 25px;
+        }
         .player-table-container {
-            max-width: 1200px;
-            margin: 30px auto;
+            margin: 50px auto;           /* Changed from 30px */
             padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
+            width: 90%;                  /* Added width constraint */
+            max-width: 1200px;
+            background-color: #fdfdfd;   /* Changed from #fff */
+            border-radius: 10px;         /* Changed from 8px */
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .player-table-container h1 {
-            color: #142850;
             text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
+            margin-bottom: 5px;          /* Reduced spacing */
+            font-size: 28px;             /* Added font size */
+            color: #333;                 /* Changed from #142850 */
+            font-weight: 600;            /* Add if needed */
         }
         .player-table {
-            border-collapse: collapse;
             width: 100%;
+            border-collapse: collapse;
+            background-color: white;     /* Explicitly set white */
+            border-radius: 8px;
+            overflow: hidden;            /* Added for rounded corners */
             font-size: 0.9rem;
         }
-        .player-table th, .player-table td {
-            border: 1px solid #ddd;
-            padding: 10px 12px;
-            text-align: left;
-            vertical-align: middle;
-        }
         .player-table th {
-            background-color: #142850; /* Warna biru header */
+            background-color: #1c2a4a;   /* Changed from #142850 */
             color: white;
+            padding: 12px;               /* Consistent padding */
             font-weight: 600;
+            border: none;                /* Remove border */
+            text-align: center;          /* Added center alignment */
         }
-        .player-table tbody tr:nth-child(even) {
-            background-color: #f9f9f9; /* Warna zebra */
+
+        .player-table td {
+            text-align: center;          /* Changed from left to center */
+            padding: 10px;               /* Reduced from 10px 12px */
+            border: none;                /* Remove side borders */
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
         }
         .player-table tbody tr:hover {
-            background-color: #f1f1f1; /* Highlight pas hover */
+            background-color: #f4f8ff; /* Highlight pas hover */
         }
         .player-table img {
-            max-height: 40px;
-            max-width: 40px;
+            width: 50px;                 /* Changed from max-width */
+            height: auto;
+            border-radius: 8px;          /* Changed from 4px */
+            max-height: none;            /* Remove max-height */
             vertical-align: middle;
-            border-radius: 4px; /* Sedikit rounded */
         }
         .no-players-msg {
             text-align: center;
             padding: 20px;
             color: #777;
         }
+        .club-header-vertical {
+            text-align: center;
+            margin-bottom: 5px;  /* Kurangin dari 10px jadi 5px */
+        }
+
+        .club-logo {
+            margin-top: 10px;
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 5px;  /* Kurangin dari 10px jadi 5px */
+        }
+
+        .club-header-vertical h1 {
+            margin: 0;
+            margin-bottom: -10px;  /* Tambahkan ini buat jarak ke subtitle */
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
     </style>
 {% endblock %}
 
 {% block content %}
+
 <div class="player-table-container">
+    <div class="club-header-vertical">
+        {% if club.logo_url %}
+            <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="club-logo">
+        {% else %}
+            <img src="{% static 'images/placeholder-logo.png' %}" alt="{{ club.name }} Logo" class="club-logo">
+        {% endif %}
+        <h1>{{ club.name }}</h1>
+    </div>
     <h1>Daftar Pemain - {{ club.name }}</h1>
+        <p class="player-subtitle">Daftar lengkap pemain dari {{ club.name }}</p>
 
     <table class="player-table">
         <thead>
@@ -88,7 +130,7 @@
                 <td>{{ player.nama_pemain }}</td>
                 <td>{{ player.position }}</td>
                 <td>{{ player.umur }}</td>
-                <td>€{{ player.market_value|floatformat:0|intcomma }}</td>
+                <td>Rp{{ player.market_value|floatformat:0|intcomma }}</td>
                 <td>{{ player.negara }}</td>
                 <td>{{ player.jumlah_goal }}</td>
                 <td>{{ player.jumlah_asis }}</td>

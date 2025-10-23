@@ -9,11 +9,14 @@
     <div class="nav-menu">
         <a href="{% url 'main:homepage' %}">Home</a>
         <a href="{% url 'community:community_home' %}">Community</a>
-        
+
         <a href="#">Best XI</a>
-        <a href="#">My Club</a>
+        {% if user.is_club_admin %}
+            <a href="#">My Club</a>
+        {% endif %}
         <a href="#">Rumor</a>
-        <a href="#">Transfer</a>
+        <a href="#">Transfer</a> 
+        
 
         {% if user.is_club_admin %}
             <a href="#">Inbox</a>
