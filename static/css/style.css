@@ -46,10 +46,21 @@ a:hover {
     transition: all 0.2s ease; white-space: nowrap;
 }
 .nav-menu a:hover { background-color: #f0f0f0; }
-.auth-links { display: flex; align-items: center; gap: 15px; }
-.auth-links a {
-    text-decoration: none; padding: 8px 12px; border-radius: 4px;
-    font-weight: 500; transition: all 0.2s ease; white-space: nowrap;
+
+.auth-links {
+    display: flex;
+    align-items: center; /* Vertikal tengah */
+    gap: 15px; /* Jarak antar item */
+}
+.auth-links a { /* Style dasar link di kanan */
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    display: inline-flex; /* Biar align-items jalan */
+    align-items: center;
 }
 .auth-links .login { background-color: #007bff; color: white; }
 .auth-links .register { background-color: #28a745; color: white; }
@@ -57,8 +68,26 @@ a:hover {
 .auth-links .login:hover { background-color: #0069d9; }
 .auth-links .register:hover { background-color: #218838; }
 .auth-links .logout:hover { background-color: #c82333; }
-.auth-links .user-info { color: #1c2a4a; }
+.auth-links .user-info { color: #1c2a4a; font-weight: 500; } /* Tebelin dikit username */
 .auth-links .user-info strong { color: #142850; }
+
+/* == STYLE BARU BUAT ICON INBOX == */
+.auth-links .inbox-icon {
+    font-size: 1.4rem; /* Ukuran emoji/icon */
+    color: #1c2a4a; /* Warna icon */
+    padding: 0 5px; /* Hapus padding vertikal, kasih padding horizontal dikit */
+    text-decoration: none;
+    background-color: transparent !important; /* Hapus background tombol */
+    border: none;
+    line-height: 1; /* Biar sejajar */
+    transition: transform 0.2s ease;
+}
+.auth-links .inbox-icon:hover {
+    transform: scale(1.1); /* Efek zoom dikit pas hover */
+    background-color: transparent !important; /* Pastikan background tetap transparan */
+    text-decoration: none;
+}
+/* =============================== */
 
 
 /* 3. HERO SECTION BARU (DENGAN GAMBAR BACKGROUND) */
@@ -94,48 +123,18 @@ a:hover {
     margin-bottom: 2.5rem; overflow: hidden;
 }
 .team-header {
-    display: flex;
-    align-items: center; /* Vertikal tengah */
-    justify-content: space-between; /* Kiri nempel kiri, Kanan nempel kanan */
-    gap: 15px;
-    padding: 1.5rem;
-    border-bottom: 1px solid #e0e6ed;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 15px; padding: 1.5rem; border-bottom: 1px solid #e0e6ed;
 }
-
-/* == STYLE BARU UNTUK BUNGKUS LOGO & NAMA == */
-.team-info {
-    display: flex;
-    align-items: center; /* Logo dan nama tim sejajar */
-    gap: 15px; /* Jarak antara logo dan nama tim */
-}
-/* ======================================= */
-
+.team-info { display: flex; align-items: center; gap: 15px; }
 .team-header img { height: 40px; width: 40px; }
-.team-header h3 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #142850;
-}
-
-/* == STYLE UNTUK TOMBOL "SEE ALL" DI HEADER KANAN == */
+.team-header h3 { margin: 0; font-size: 1.5rem; color: #142850; }
 .see-all-btn {
-    background-color: #007bff;
-    color: white;
-    padding: 8px 15px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background-color 0.2s ease;
+    background-color: #007bff; color: white; padding: 8px 15px;
+    border-radius: 6px; font-size: 0.9rem; font-weight: 500;
+    text-decoration: none; white-space: nowrap; transition: background-color 0.2s ease;
 }
-.see-all-btn:hover {
-    background-color: #0069d9;
-    color: white;
-    text-decoration: none;
-}
-/* ======================================= */
-
+.see-all-btn:hover { background-color: #0069d9; color: white; text-decoration: none; }
 .player-grid {
     display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem; padding: 1.5rem;
@@ -176,4 +175,5 @@ a:hover {
 @media (max-width: 768px) {
     .footer-content { flex-direction: column; gap: 20px; }
     .footer-right { text-align: center; }
-}   
+}
+

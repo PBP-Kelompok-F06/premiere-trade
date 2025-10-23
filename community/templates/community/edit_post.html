@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Forum Post - {{ post.title }}{% endblock %}
+
+{% block extra_head %}
+    <!-- Ini WAJIB ada buat narik style form -->
+    <link rel="stylesheet" href="{% static 'community/css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="forum-container" style="max-width: 700px;">
+    <h1>Edit Forum Post</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <label for="id_title">Judul:</label>
+        <input type="text" id="id_title" name="title" value="{{ post.title }}" required>
+
+        <label for="id_description">Deskripsi:</label>
+        <textarea id="id_description" name="description" required>{{ post.description }}</textarea>
+
+        <label for="id_image_url">URL Gambar (opsional):</label>
+        <input type="text" id="id_image_url" name="image_url" value="{{ post.image_url|default_if_none:'' }}" placeholder="Tempel URL gambar di sini">
+
+        <div class="form-actions">
+            <button type="submit" class="save-btn">Simpan Perubahan</button>
+            <a href="{% url 'community:community_home' %}" class="cancel-btn">Batal</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
