@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create New Transfer Rumor{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+  <h2 class="fw-bold mb-4">Create New Rumor</h2>
+
+  <form method="POST">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        <ul>
+          {% for field, errors in form.errors.items %}
+            <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="mb-3">
+      <label for="{{ form.club_asal.id_for_label }}" class="form-label">Current Club</label>
+      {{ form.club_asal }}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.club_tujuan.id_for_label }}" class="form-label">Designated Club</label>
+      {{ form.club_tujuan }}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.pemain.id_for_label }}" class="form-label">Player</label>
+      {{ form.pemain }}
+    </div>
+
+    <div class="mb-3">
+      <label for="{{ form.content.id_for_label }}" class="form-label">Rumor Details</label>
+      {{ form.content }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Send</button>
+  </form>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const clubSelect = document.getElementById("id_club_asal");
+    const playerSelect = document.getElementById("id_pemain");
+
+    clubSelect.addEventListener("change", function() {
+        const clubId = this.value;
+        const url = "{% url 'rumors:get_players_by_club' %}?club_id=" + clubId;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                playerSelect.innerHTML = ""; // kosongkan dulu
+                data.forEach(player => {
+                    const option = document.createElement("option");
+                    option.value = player.id;
+                    option.textContent = player.nama_pemain;
+                    playerSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error("Error fetching players:", error));
+    });
+});
+</script>
+
+{% endblock %}

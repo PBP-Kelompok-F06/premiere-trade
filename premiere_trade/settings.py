@@ -35,7 +35,7 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id",
+    "adryan-muhammad-premieretrade.pbp.cs.ui.ac.id",
 ]
 
 
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "community",
     "accounts",
     'player_transaction',
+    "rumors",
 ]   
 
 MIDDLEWARE = [

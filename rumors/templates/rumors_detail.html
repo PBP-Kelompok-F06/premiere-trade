@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Detail Rumor{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow-sm p-4">
+    <div class="d-flex align-items-center mb-3">
+      {% if rumor.pemain.thumbnail %}
+        <img src="{{ rumor.pemain.thumbnail }}" 
+             alt="{{ rumor.pemain.nama_pemain }}" 
+             class="rounded me-3" 
+             style="width: 100px; height: 100px; object-fit: cover;">
+      {% endif %}
+      <div>
+        <h3 class="mb-0">{{ rumor.title }}</h3>
+        <small class="text-muted">
+          Created by {{ rumor.author.username }} • {{ rumor.created_at|date:"j F Y H:i" }}
+        </small>
+      </div>
+    </div>
+
+    <hr>
+
+    <p><strong>Player:</strong> {{ rumor.pemain.nama_pemain }}</p>
+    <p><strong>Current Club:</strong> {{ rumor.club_asal.name }}</p>
+    <p><strong>Designated Club:</strong> {{ rumor.club_tujuan.name }}</p>
+
+    <hr>
+    {% if rumor.content %}
+      <p>{{ rumor.content }}</p>
+    {% else %}
+      <p><em>No added details</em></p>
+    {% endif %}
+
+    <hr>
+
+    <p><strong>Views:</strong> {{ rumor.rumors_views }}</p>
+
+    {% if rumor.is_verified %}
+      <span class="badge bg-success">Confirmed</span>
+    {% else %}
+      <span class="badge bg-warning text-dark">Pending</span> 
+    {% endif %}
+
+    <div class="mt-3">
+      {% if request.user == rumor.author %}
+        <a href="{% url 'rumors:edit_rumors' rumor.id %}" class="btn btn-primary">Edit</a>
+        <a href="{% url 'rumors:delete_rumors' rumor.id %}" class="btn btn-danger">Delete</a>
+      {% endif %}
+
+      {% if request.user.is_authenticated and not rumor.is_verified %}
+        {% if request.user.is_club_admin and request.user.profile.managed_club == rumor.club_tujuan %}
+            <a href="{% url 'rumors:verify_rumor' rumor.id %}" class="btn btn-success">
+                Verify Rumor
+            </a>
+        {% endif %}
+    {% endif %}
+
+
+      <a href="{% url 'rumors:show_rumors_main' %}" class="btn btn-secondary">Back</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

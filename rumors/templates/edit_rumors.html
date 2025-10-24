@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Edit Rumor{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Edit Rumor</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <div class="mb-3">{{ form.club_asal.label_tag }} {{ form.club_asal }}</div>
+    <div class="mb-3">{{ form.club_tujuan.label_tag }} {{ form.club_tujuan }}</div>
+    <div class="mb-3">{{ form.pemain.label_tag }} {{ form.pemain }}</div>
+    <div class="mb-3">{{ form.content.label_tag }} {{ form.content }}</div>
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'rumors:show_rumors_detail' rumor.id %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const clubSelect = document.querySelector('#id_club_asal');
+  const pemainSelect = document.querySelector('#id_pemain');
+  clubSelect.addEventListener('change', function() {
+    const clubId = this.value;
+    if (!clubId) return;
+    fetch(`/rumors/get-players/?club_id=${clubId}`)
+      .then(res => res.json())
+      .then(data => {
+        pemainSelect.innerHTML = '';
+        data.forEach(p => {
+          const option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = p.nama_pemain;
+          pemainSelect.appendChild(option);
+        });
+      });
+  });
+});
+</script>
+{% endblock %}
