@@ -25,7 +25,8 @@
 
     <div class="forum-list">
         {% for post in posts %}
-        <div class="forum-card" id="post-card-{{ post.id }}"> {% if post.image_url %}
+        <div class="forum-card" id="post-card-{{ post.id }}"> 
+            {% if post.image_url %}
                 <img src="{{ post.image_url }}" alt="{{ post.title }}" id="post-image-{{ post.id }}">
             {% endif %}
 
@@ -35,7 +36,7 @@
                 <small>Dibuat oleh {{ post.author }} • {{ post.created_at|date:"d M Y, H:i" }}</small>
 
                 <div class="post-actions">
-                    <button class="reply-btn" data-target-form="reply-form-{{ post.id }}">
+                    <button class="reply-btn" data-target-form="reply-form-post-{{ post.id }}">
                         💬 Reply ({{ post.replies.count }})
                     </button>
 
@@ -65,8 +66,7 @@
                     </form>
                 </div>
 
-
-                <div class="reply-form-container hidden" id="reply-form-{{ post.id }}">
+                <div class="reply-form-container hidden" id="reply-form-post-{{ post.id }}">
                     <form action="{% url 'community:add_reply' post.id %}" method="POST" class="reply-form">
                         {% csrf_token %}
                         <textarea name="content" placeholder="Tulis balasanmu..." rows="3" required></textarea>
@@ -74,14 +74,11 @@
                     </form>
                 </div>
 
-                <div class="replies-list">
-                    {% for reply in post.replies.all %}
-                        <div class="reply-card">
-                            <strong>{{ reply.author.username }}</strong>
-                            <p>{{ reply.content }}</p>
-                        </div>
+                <div class="replies-list" id="replies-for-post-{{ post.id }}">
+                    {% for reply in post.top_level_replies %}
+                        {% include "community/_reply.html" with reply=reply %}
                     {% empty %}
-                        <small class="no-replies">Belum ada balasan.</small>
+                        <small class="no-replies" id="no-reply-msg-{{ post.id }}">Belum ada balasan.</small>
                     {% endfor %}
                 </div>
             </div>
@@ -94,8 +91,8 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Ambil CSRF Token dari form utama
     const csrfToken = document.querySelector('#forumForm [name=csrfmiddlewaretoken]').value;
+    const forumList = document.querySelector('.forum-list');
 
     // Toggle form "Tambah Forum"
     const btn = document.getElementById("toggleBtn");
@@ -104,97 +101,168 @@ document.addEventListener("DOMContentLoaded", function() {
         btn.addEventListener("click", () => { form.classList.toggle("hidden"); });
     }
 
-    // Toggle form "Reply"
-    const allReplyButtons = document.querySelectorAll(".reply-btn");
-    allReplyButtons.forEach(button => {
-        button.addEventListener("click", () => {
-            const formId = button.getAttribute("data-target-form");
+    // Toggle form "Reply" dan "Edit" menggunakan event delegation
+    forumList.addEventListener("click", function(event) {
+        // 1. Handle tombol "Reply"
+        if (event.target.classList.contains("reply-btn")) {
+            const formId = event.target.dataset.targetForm;
             const replyForm = document.getElementById(formId);
             if (replyForm) { replyForm.classList.toggle("hidden"); }
-        });
-    });
+        }
 
-    // --- SCRIPT AJAX BARU UNTUK EDIT ---
-
-    // 1. Toggle form "Edit"
-    document.querySelectorAll(".edit-btn-ajax").forEach(button => {
-        button.addEventListener("click", () => {
-            const formId = button.dataset.targetForm;
+        // 2. Handle tombol "Edit"
+        if (event.target.classList.contains("edit-btn-ajax")) {
+            const formId = event.target.dataset.targetForm;
             const editForm = document.getElementById(formId);
             if (editForm) { editForm.classList.toggle("hidden"); }
-        });
-    });
+        }
 
-    // 2. Toggle Batal Edit
-    document.querySelectorAll(".cancel-edit-btn").forEach(button => {
-        button.addEventListener("click", () => {
-            const formId = button.dataset.targetForm;
+        // 3. Handle tombol "Batal Edit"
+        if (event.target.classList.contains("cancel-edit-btn")) {
+            const formId = event.target.dataset.targetForm;
             const editForm = document.getElementById(formId);
             if (editForm) { editForm.classList.add("hidden"); }
-        });
+        }
     });
 
-    // 3. Handle Submit Form Edit (AJAX)
-    document.querySelectorAll(".edit-form").forEach(editForm => {
-        editForm.addEventListener("submit", function(event) {
-            event.preventDefault(); // Stop form submit biasa
+    // Handle Submit Form Edit (AJAX)
+    forumList.addEventListener("submit", function(event) {
+        if (event.target.classList.contains("edit-form")) {
+            event.preventDefault(); 
 
-            const postId = this.dataset.postId;
+            const postId = event.target.dataset.postId;
             const editUrl = document.querySelector(`.edit-btn-ajax[data-target-form="edit-form-${postId}"]`).dataset.editUrl;
             
-            // Ambil data dari form
             const formData = {
-                title: this.querySelector('[name="title"]').value,
-                description: this.querySelector('[name="description"]').value,
-                image_url: this.querySelector('[name="image_url"]').value
+                title: event.target.querySelector('[name="title"]').value,
+                description: event.target.querySelector('[name="description"]').value,
+                image_url: event.target.querySelector('[name="image_url"]').value
             };
 
             fetch(editUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken
-                },
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
                 body: JSON.stringify(formData)
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update tampilan di halaman (DOM)
                     document.getElementById(`post-title-${postId}`).textContent = data.post.title;
                     document.getElementById(`post-desc-${postId}`).textContent = data.post.description;
-                    
-                    // Update gambar (jika ada)
                     const imgElement = document.getElementById(`post-image-${postId}`);
                     if (data.post.image_url) {
                         if (imgElement) {
                             imgElement.src = data.post.image_url;
                         } else {
-                            // Jika sebelumnya tidak ada gambar, tambahkan element img
                             const card = document.getElementById(`post-card-${postId}`);
                             const newImg = document.createElement('img');
                             newImg.id = `post-image-${postId}`;
                             newImg.src = data.post.image_url;
                             newImg.alt = data.post.title;
-                            card.prepend(newImg); // Tambah di awal card
+                            card.prepend(newImg);
                         }
                     } else if (imgElement) {
-                        // Jika gambar dihapus
                         imgElement.remove();
                     }
-
-                    // Sembunyikan form edit
-                    this.parentElement.classList.add("hidden");
+                    event.target.parentElement.classList.add("hidden");
                 } else {
                     alert("Gagal update: " + data.message);
                 }
             })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("Terjadi kesalahan. Coba lagi.");
-            });
-        });
+            .catch(error => { console.error("Error:", error); alert("Terjadi kesalahan."); });
+        }
+
+        // ✅ HANDLE SUBMIT REPLY FORM (AJAX) - SUPPORT NESTED
+        if (event.target.classList.contains("reply-form")) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                headers: { "X-CSRFToken": csrfToken },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Buat HTML untuk reply baru
+                    const newReplyHTML = createReplyHTML(data.reply);
+                    
+                    // Tentukan di mana reply baru akan diletakkan
+                    let targetList;
+                    if (data.reply.parent_id) {
+                        // ✅ Ini adalah nested reply
+                        const parentCard = document.getElementById(`reply-${data.reply.parent_id}`);
+                        targetList = parentCard.querySelector('.nested-replies');
+                    } else {
+                        // ✅ Ini adalah top-level reply
+                        targetList = document.getElementById(`replies-for-post-${data.reply.post_id}`);
+                        // Hapus pesan "Belum ada balasan" jika ada
+                        const noReplyMsg = document.getElementById(`no-reply-msg-${data.reply.post_id}`);
+                        if(noReplyMsg) { noReplyMsg.remove(); }
+                    }
+                    
+                    // Tambahkan HTML ke DOM
+                    targetList.insertAdjacentHTML('beforeend', newReplyHTML);
+                    
+                    // Kosongkan dan sembunyikan form
+                    form.querySelector('textarea').value = '';
+                    form.parentElement.classList.add('hidden');
+
+                    // ==== ⬇️ TAMBAHKAN 4 BARIS INI ⬇️ ====
+                    const postId = data.reply.post_id;
+                    const mainReplyButton = document.querySelector(`.reply-btn[data-target-form="reply-form-post-${postId}"]`);
+                    const match = mainReplyButton.textContent.match(/\((\d+)\)/);
+                    mainReplyButton.textContent = `💬 Reply (${match ? parseInt(match[1]) + 1 : 1})`;
+                    // ==== ⬆️ PERBAIKAN SELESAI ⬆️ ====
+                } else {
+                    alert("Gagal membalas: " + data.message);
+                }
+            })
+            .catch(error => { console.error("Error:", error); alert("Terjadi kesalahan."); });
+        }
     });
+
+    // ✅ FUNGSI UNTUK MEMBUAT HTML REPLY CARD BARU (Support Nested)
+    function createReplyHTML(reply) {
+        return `
+        <div class="reply-card" id="reply-${reply.id}">
+            <div class="reply-header">
+                <strong>${reply.author_username}</strong>
+                <small>• ${reply.created_at}</small>
+            </div>
+            <p class="reply-content">${escapeHtml(reply.content)}</p>
+            <div class="post-actions">
+                <button class="reply-btn" data-target-form="reply-form-${reply.id}">
+                    💬 Balas
+                </button>
+            </div>
+            <div class="reply-form-container nested-form hidden" id="reply-form-${reply.id}">
+                <form action="${reply.new_reply_url}" method="POST" class="reply-form">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <textarea name="content" placeholder="Balas ${reply.author_username}..." rows="2" required></textarea>
+                    <button type="submit">Kirim Balasan</button>
+                </form>
+            </div>
+            <div class="nested-replies"></div>
+        </div>
+        `;
+    }
+
+    // ✅ Helper function untuk escape HTML (keamanan)
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
 });
 </script>
 {% endblock %}

@@ -2,7 +2,6 @@
 
 from django.db import migrations
 
-
 CLUBS_DATA = [
     {
         "name": "Chelsea",
@@ -33,6 +32,19 @@ def create_clubs_and_admins(apps, schema_editor):
     CustomUser = apps.get_model("accounts", "CustomUser")
     Profile = apps.get_model("accounts", "Profile")
 
+    club_obj, created = Club.objects.get_or_create(
+        name="Admin",
+        defaults={"country": "-", "logo_url": "-"},
+    )
+    admin_user = CustomUser.objects.create_user(
+        username="admin",
+        password="adminpassword123",
+        is_club_admin=True,
+        is_fan=True,
+    )
+    Profile.objects.create(user=admin_user, managed_club=club_obj)
+    print(f"--> Berhasil membuat SuperUser 'admin'.\n")
+
     for data in CLUBS_DATA:
         club_obj, created = Club.objects.get_or_create(
             name=data["name"],
@@ -57,11 +69,19 @@ def create_clubs_and_admins(apps, schema_editor):
             print(f"--> Admin '{username}' sudah ada.\n")
 
 
-# --- FUNGSI BARU UNTUK PROSES MUNDUR (UNDO) ---
 def delete_clubs_and_admins(apps, schema_editor):
     """Fungsi untuk MUNDUR: Menghapus klub dan admin yang dibuat."""
     Club = apps.get_model("main", "Club")
     CustomUser = apps.get_model("accounts", "CustomUser")
+
+    # Hapus user admin
+    username = f"{"admin".lower().replace(' ', '')}_admin"
+    CustomUser.objects.filter(username=username).delete()
+    print(f"--> Admin '{username}' dihapus.")
+
+    # Hapus klub
+    Club.objects.filter(name="Admin").delete()
+    print(f"-> Klub '{data['name']}' dihapus.\n")
 
     for data in CLUBS_DATA:
         # Hapus user admin

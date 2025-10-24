@@ -3,7 +3,6 @@
     
     <div class="logo">
         <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
-        Premiere Trade
     </div>
     
     <div class="nav-menu">
@@ -25,9 +24,9 @@
 
     <div class="auth-links">
         {% if user.is_authenticated %}
-            <span class="user-info">
-                <strong>{{ user.username }}</strong>
-            </span>
+            <a class="bg-gray-200 hover:bg-gray-700 hover:text-white py-2 px-4 border hover:border-transparent rounded" href="{% url 'accounts:edit_profile' %}">
+                {{ user.username }}
+            </a>
             <a href="{% url 'accounts:logout_user' %}" class="logout">Logout</a>
         {% else %}
             <a href="{% url 'accounts:login_page' %}" class="login">Login</a>

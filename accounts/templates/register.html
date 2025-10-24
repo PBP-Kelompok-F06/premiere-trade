@@ -82,7 +82,7 @@
 
             <button
               type="submit"
-              class="w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="w-full justify-center rounded-md border border-transparent bg-purple-700 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               Create Account
             </button>
@@ -94,7 +94,7 @@
             Already have an account?
             <a
               href="{% url 'accounts:login_page' %}"
-              class="font-medium text-blue-600 hover:text-blue-500"
+              class="font-medium text-purple-600 hover:text-purple-500"
             >
               Login
             </a>
@@ -144,7 +144,7 @@
               "X-CSRFToken": csrftoken,
             },
             body: JSON.stringify({
-              username: username, // key 'username' dipertahankan untuk backend
+              username: username, 
               password: password,
               password2: password2,
             }),
@@ -160,7 +160,7 @@
             registerMessage.className = `${baseMessageClasses} bg-green-100 text-green-800`;
             setTimeout(() => {
               window.location.href = "{% url 'main:homepage' %}";
-            }, 1500);
+            }, 500);
           } else {
             registerMessage.className = `${baseMessageClasses} bg-red-100 text-red-800`;
           }

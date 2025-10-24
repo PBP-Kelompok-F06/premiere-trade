@@ -69,22 +69,24 @@
         .club-header-vertical {
             text-align: center;
             margin-bottom: 5px;  /* Kurangin dari 10px jadi 5px */
+        }   
+        .club-header-vertical h1 {
+            text-align: center; /* TAMBAHKAN INI */
+            margin: 0;
+            margin-bottom: -10px;
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
         }
-
         .club-logo {
+            display: block;           /* TAMBAHKAN INI */
+            margin-left: auto;        /* TAMBAHKAN INI */
+            margin-right: auto;       /* TAMBAHKAN INI */
             margin-top: 10px;
             width: 80px;
             height: 80px;
             object-fit: contain;
-            margin-bottom: 5px;  /* Kurangin dari 10px jadi 5px */
-        }
-
-        .club-header-vertical h1 {
-            margin: 0;
-            margin-bottom: -10px;  /* Tambahkan ini buat jarak ke subtitle */
-            font-size: 28px;
-            color: #333;
-            font-weight: 600;
+            margin-bottom: 5px;
         }
     </style>
 {% endblock %}
