@@ -4,12 +4,9 @@
 {% block title %}Club Saya - Premiere Trade{% endblock %}
 
 {% block content %}
-<a href="{% url 'main:homepage' %}">
-<div class="tombol-back">&lt; Back to homepage</div>
-</a>
 
 <div class = "club-saya-container">
-
+    <h1>My Club</h1>
     {%if user.profile.managed_club.name == "Manchester City"%}
         <div class = "club-saya-header-city">
             <img class="logo-club" src="https://tmssl.akamaized.net//images/wappen/head/9265.png?lm=1467356331" alt="">
@@ -63,7 +60,11 @@
                     <td>{{ player.jumlah_asis }}</td>
                     <td>{{ player.jumlah_goal }}</td>
                     <td>Rp{{ player.market_value|floatformat:0 }}</td>
-                    <td><button class="sell-button">Jual</button></td>
+                    <td> {% if player.sedang_dijual %}
+                            <button class="sell-button" disabled style="opacity:0.6;">Sedang Dijual</button>
+                        {% else %}
+                            <button class="sell-button">Jual</button>
+                        {% endif %}</td>
                 </tr>
                 {% empty %}
                 <tr>
@@ -115,12 +116,6 @@
 </div>
 
 <style>
-    .tombol-back{
-        margin-top: 20px;
-        margin-left: 80px;
-        color: gray;
-        cursor: pointer;
-    }
 
     a:hover{
         text-decoration: none;
@@ -218,6 +213,13 @@
     .sell-button:hover{
         background-color: #ff3838;
         color: white;
+    }
+
+    .sell-button[disabled] {
+    background-color: #ddd;
+    color: #777;
+    border-color: #ccc;
+    cursor: not-allowed;
     }
 
 

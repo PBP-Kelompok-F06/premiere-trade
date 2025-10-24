@@ -86,6 +86,8 @@ def beli_pemain_ajax(request, player_id):
     player.sedang_dijual = False
     player.save()
 
+    Negotiation.objects.filter(player=player, status='pending').update(status='cancelled')
+
     return JsonResponse({
         'success': True,
         'message': f"{player.nama_pemain} berhasil dibeli oleh {pembeli_club.name}!"
@@ -156,8 +158,20 @@ def respond_negotiation(request, nego_id, action):
 
     if action == 'accept':
         nego.status = 'accepted'
+        nego.save()
+
+        player = nego.player
+        player.current_club = nego.from_club  # 🔥 Pemain berpindah ke klub pembeli
+        player.sedang_dijual = False
+        player.save()
+
+        # ✅ Batalkan semua negosiasi lain pada pemain ini
+        Negotiation.objects.filter(player=player).exclude(id=nego.id).update(status='cancelled')
+
     elif action == 'reject':
         nego.status = 'rejected'
+        nego.save()
+        message = f"Tawaran dari {nego.from_club.name} ditolak."
     else:
         return JsonResponse({'success': False, 'message': 'Aksi tidak valid.'})
 
@@ -190,18 +204,18 @@ def respond_negotiation(request, nego_id, action):
 
 
 def show_xml(request):
-     pemain_list = Pemain.objects.all()
+     pemain_list = Player.objects.all()
      xml_data = serializers.serialize("xml", pemain_list)
      return HttpResponse(xml_data, content_type="application/xml")
 
 def show_json(request):
-    pemain_list = Pemain.objects.select_related('user').all()
+    pemain_list = Player.objects.select_related('current_club').all()
     
     data = [
         {
             'id': str(pemain.id),
             'nama_pemain': pemain.nama_pemain,
-            'club': pemain.club,
+            'club': pemain.current_club.name,
             'umur': pemain.umur,
             'market_value': pemain.market_value,
             'negara': pemain.negara,
@@ -209,29 +223,28 @@ def show_json(request):
             'jumlah_asis': pemain.jumlah_asis,
             'jumlah_match': pemain.jumlah_match,
             'sedang_dijual': pemain.sedang_dijual,
-            'user_id': pemain.user.id if pemain.user else None,
         }
         for pemain in pemain_list
     ]
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False, json_dumps_params={'indent': 2})
 
 
 def show_xml_by_id(request, product_id):
    try:
-       product_item = Pemain.objects.filter(pk=product_id)
+       product_item = Player.objects.filter(pk=product_id)
        xml_data = serializers.serialize("xml", product_item)
        return HttpResponse(xml_data, content_type="application/xml")
-   except Pemain.DoesNotExist:
+   except Player.DoesNotExist:
        return HttpResponse(status=404)
 
 def show_json_by_id(request, product_id):
     try:
-        pemain = Pemain.objects.select_related('user').get(pk=product_id)
+        pemain = Player.objects.select_related('current_club').get(pk=product_id)
         data = {
             'id': str(pemain.id),
             'nama_pemain': pemain.nama_pemain,
-            'club': pemain.club,
+            'club': pemain.current_club.name,
             'umur': pemain.umur,
             'market_value': pemain.market_value,
             'negara': pemain.negara,
@@ -239,8 +252,7 @@ def show_json_by_id(request, product_id):
             'jumlah_asis': pemain.jumlah_asis,
             'jumlah_match': pemain.jumlah_match,
             'sedang_dijual': pemain.sedang_dijual,
-            'user_username': pemain.user.username if pemain.user else 'Anonymous'
         }
         return JsonResponse(data)
-    except Pemain.DoesNotExist:
+    except Player.DoesNotExist:
         return JsonResponse({'detail': 'Not found'}, status=404)

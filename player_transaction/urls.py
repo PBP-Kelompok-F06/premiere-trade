@@ -15,4 +15,11 @@ urlpatterns = [
     path('inbox/', views.negotiation_inbox, name='negotiation_inbox'),
     path('send-negotiation/<uuid:player_id>/', views.send_negotiation, name='send_negotiation'),
     path('negotiation/<int:nego_id>/<str:action>/', views.respond_negotiation, name='respond_negotiation'),
+
+
+
+    path('show_xml/', views.show_xml, name='show_xml'),
+    path('show_json/', views.show_json, name='show_json'),
+    path('show_xml_by_id/<uuid:player_id>/', views.show_xml_by_id, name='show_xml_by_id'),
+    path('show_json_by_id/<uuid:player_id>/', views.show_json_by_id, name='show_json_by_id'),
 ]

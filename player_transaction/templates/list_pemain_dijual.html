@@ -22,7 +22,9 @@
         <th>Goal</th>
         <th>Asis</th>
         <th>Market Value</th>
-        <th>Aksi</th>
+        {% if not user.is_fan %}
+        <th>Aksi</th>  {# Hanya muncul untuk club admin #}
+        {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -40,24 +42,64 @@
 
         <td>Rp{{ player.market_value|floatformat:0 }}</td>
 
+        {% if not user.is_fan %}
         <td class="aksi-cell">
             <div class="meatball-menu">
-            <button class="menu-trigger">⋮</button>
-            <div class="menu-dropdown">
-                {% if player.current_club == user.profile.managed_club %}
-                <button class="menu-item cancel-sale" data-id="{{ player.id }}">Batal Jual</button>
-                {% else %}
-                <button class="menu-item buy-player" data-id="{{ player.id }}">Beli</button>
-                <button class="menu-item nego-player" data-id="{{ player.id }}">Negosiasi</button>
-                {% endif %}
-            </div>
+                <button class="menu-trigger">⋮</button>
+                <div class="menu-dropdown">
+                    {% if player.current_club == user.profile.managed_club %}
+                    <button class="menu-item cancel-sale" data-id="{{ player.id }}">Batal Jual</button>
+                    {% else %}
+                    <button class="menu-item buy-player" data-id="{{ player.id }}">Beli</button>
+                    <button class="menu-item nego-player" data-id="{{ player.id }}">Negosiasi</button>
+                    {% endif %}
+                </div>
             </div>
         </td>
+        {% endif %}
+
         </tr>
         {% endfor %}
     </tbody>
     </table>
 </div>
+
+<!-- 🔹 Reuse modal milikmu -->
+<div id="sellModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+
+    <div class="modal-body">
+      <div class="modal-image-container">
+        <img id="modal-thumbnail" class="modal-img" src="" alt="Player photo">
+        <img id="modal-logo" src="{% static 'images/logo.png' %}" alt="Logo">
+      </div>
+      <div class="modal-info">
+        <h2 id="modal-nama"></h2>
+        <p><b>Posisi:</b> <span id="modal-posisi"></span></p>
+        <p><b>Umur:</b> <span id="modal-umur"></span></p>
+        <p><b>Negara:</b> <span id="modal-negara"></span></p>
+        <p><b>Total Match:</b> <span id="modal-match"></span></p>
+        <p><b>Total Goal:</b> <span id="modal-goal"></span></p>
+        <p><b>Total Assist:</b> <span id="modal-assist"></span></p>
+        <p><b>Market Value:</b> Rp<span id="modal-value"></span></p>
+
+        <div id="nego-input-container" style="display:none; margin-top:10px;">
+        <label for="nego-input" style="font-weight:bold;">Masukkan Harga Penawaran (Rp):</label>
+        <input id="nego-input" type="number" min="1" class="form-control"
+                style="width: 100%; padding: 6px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px;">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button id="cancelButton" class="cancel-btn">Cancel</button>
+      <button id="confirmSellButton" class="confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+
 
 <style>
 .transfer-container {
@@ -162,7 +204,6 @@
   border-radius: 10px;
 }
 
-
 .menu-trigger {
   background: none;
   border: none;
@@ -196,127 +237,328 @@
 .menu-item:hover {
   background-color: #f1f1f1;
 }
+
+.menu-dropdown-floating {
+  border-radius: 6px;
+  min-width: 130px;
+  max-width: 130px;
+  font-size: 13px;
+}
+
+.menu-item {
+  padding: 8px 10px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  margin-top: 100px;
+  padding: 20px;
+  padding-top: 5px;
+  width: 600px;
+  height: 450px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { 
+    from {opacity: 0; transform: scale(0.95);} to {opacity: 1; transform: scale(1);} 
+}
+
+.close { 
+    color: #aaa; 
+    float: right; 
+    font-size: 28px; 
+    cursor: pointer; 
+}
+
+.close:hover {
+     color: black; }
+
+.modal-body {
+    display: flex;
+    align-items: center; 
+    gap: 20px; 
+    margin-top: 30px; }
+
+.modal-image-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.modal-img { 
+    width: 200px;
+    border-radius: 8px; 
+}
+
+.modal-logo { 
+    width: 40px; 
+}
+
+.modal-info { 
+    margin-left: 10px; 
+    margin-right: 10px; 
+}
+
+.modal-footer { 
+    display: flex; 
+    justify-content: flex-end; 
+    margin-top: 20px; 
+}
+
+
+.modal-content.expand {
+  height: 520px; /* 🟢 versi lebih tinggi saat negosiasi */
+}
+
+.cancel-btn, .confirm-btn {
+  border: none; 
+  padding: 8px 14px; 
+  border-radius: 6px;
+  cursor: pointer; 
+  transition: 0.3s;
+}
+
+.cancel-btn { 
+    background-color: #ccc; 
+    margin-right: 10px; 
+}
+
+.cancel-btn:hover { 
+    background-color: #999; 
+}
+
+.confirm-btn { 
+    background-color: #ff3838; 
+    color: white; 
+}
+
+.confirm-btn:hover { 
+    background-color: #e02828; 
+}
+
+/* Warna khusus per aksi */
+.confirm-btn.buy { 
+    background-color: #2ecc71; 
+}
+
+.confirm-btn.nego { 
+    background-color: #f1c40f; 
+}
+
+.confirm-btn.cancel { 
+    background-color: #ff3838; 
+}
+
+#nego-input-container label {
+  font-size: 14px;
+  color: #333;
+}
+
+#nego-input {
+  font-size: 14px;
+  padding: 6px 10px;
+}
+
 </style>
 
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const csrfToken = "{{ csrf_token }}";
-
-    document.querySelectorAll(".buy-button").forEach(button => {
-        button.addEventListener("click", function() {
-            const playerId = this.dataset.playerId;
-            const row = this.closest("tr");
-            const nama = row.children[1].innerText;
-
-            if (confirm(`Beli pemain ${nama}?`)) {
-                fetch(`/player_transaction/beli/${playerId}/`, {
-                    method: "POST",
-                    headers: {
-                        "X-CSRFToken": csrfToken,
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(`✅ ${data.message}`);
-                        row.remove(); // hapus pemain dari tabel
-                    } else {
-                        alert("❌ Gagal membeli pemain.");
-                    }
-                })
-                .catch(() => alert("Terjadi kesalahan pada server."));
-            }
-        });
-    });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
+<script defer>
+document.addEventListener("DOMContentLoaded", () => {
   const csrfToken = "{{ csrf_token }}";
+  const modal = document.getElementById("sellModal");
+  console.log("🔎 modal ditemukan?", modal);
+  const closeBtn = modal.querySelector(".close");
+  const cancelBtn = modal.querySelector("#cancelButton");
+  const confirmBtn = modal.querySelector("#confirmSellButton");
 
-  // Toggle dropdown
+  const nama = document.getElementById("modal-nama");
+  const posisi = document.getElementById("modal-posisi");
+  const umur = document.getElementById("modal-umur");
+  const negara = document.getElementById("modal-negara");
+  const match = document.getElementById("modal-match");
+  const goal = document.getElementById("modal-goal");
+  const assist = document.getElementById("modal-assist");
+  const value = document.getElementById("modal-value");
+  const thumbnail = document.getElementById("modal-thumbnail");
+
+  let currentAction = null;
+  let currentPlayerId = null;
+
+  // Fungsi buka modal
+  const openModal = () => {
+    modal.style.display = "flex"; // pakai flex sesuai CSS-mu
+    document.body.style.overflow = "hidden"; // cegah scroll
+  };
+
+  // Fungsi tutup modal
+  const closeModal = () => {
+    modal.style.display = "none";
+    document.body.style.overflow = "auto";
+  };
+
+  closeBtn.addEventListener("click", closeModal);
+  cancelBtn.addEventListener("click", closeModal);
+  window.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  // Fungsi buka dropdown (⋮)
   document.querySelectorAll(".menu-trigger").forEach((btn) => {
-    btn.addEventListener("click", function (e) {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const dropdown = this.nextElementSibling;
-      document.querySelectorAll(".menu-dropdown").forEach((m) => {
-        if (m !== dropdown) m.style.display = "none";
-      });
-      dropdown.style.display =
-        dropdown.style.display === "block" ? "none" : "block";
-    });
-  });
 
-  // Tutup menu kalau klik di luar
-  window.addEventListener("click", () =>
-    document
-      .querySelectorAll(".menu-dropdown")
-      .forEach((m) => (m.style.display = "none"))
-  );
+      // Hapus dropdown lain
+      document.querySelectorAll(".menu-dropdown-floating").forEach((d) => d.remove());
 
-  // --------------- FUNGSI: BATAL JUAL ---------------
-  document.querySelectorAll(".cancel-sale").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const playerId = this.dataset.id;
-      if (!confirm("Yakin ingin membatalkan penjualan pemain ini?")) return;
+      const dropdownTemplate = btn.nextElementSibling.cloneNode(true);
+      dropdownTemplate.classList.add("menu-dropdown-floating");
+      dropdownTemplate.style.display = "block";
+      dropdownTemplate.style.position = "absolute";
 
-      fetch(`/player_transaction/batal-jual/${playerId}/`, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          alert(data.message);
-          location.reload();
+      const rect = btn.getBoundingClientRect();
+      dropdownTemplate.style.top = rect.bottom + window.scrollY + "px";
+      dropdownTemplate.style.left = rect.right + window.scrollX - 150 + "px";
+      document.body.appendChild(dropdownTemplate);
+
+      document.addEventListener("click", () => dropdownTemplate.remove(), { once: true });
+
+      // Aksi di dalam dropdown
+        dropdownTemplate.querySelectorAll(".menu-item").forEach((menuItem) => {
+        menuItem.addEventListener("click", () => {
+            dropdownTemplate.remove();
+
+            const playerId = menuItem.dataset.id;
+            const row = document.querySelector(`tr[data-player-id="${playerId}"]`);
+            if (!row) {
+            console.error("❌ Tidak bisa menemukan baris pemain untuk ID:", playerId);
+            return;
+            }
+
+            const action = menuItem.classList.contains("buy-player")
+            ? "buy"
+            : menuItem.classList.contains("nego-player")
+            ? "nego"
+            : "cancel";
+
+            currentAction = action;
+            currentPlayerId = playerId;
+
+            // isi modal dengan data pemain dari baris tabel asli
+            nama.textContent = row.querySelector("td:nth-child(2)").textContent;
+            posisi.textContent = row.querySelector("td:nth-child(4)").textContent;
+            umur.textContent = row.querySelector("td:nth-child(5)").textContent;
+            negara.textContent = row.querySelector("td:nth-child(6)").textContent;
+            match.textContent = row.querySelector("td:nth-child(7)").textContent;
+            goal.textContent = row.querySelector("td:nth-child(8)").textContent;
+            assist.textContent = row.querySelector("td:nth-child(9)").textContent;
+            value.textContent = row.querySelector("td:nth-child(10)").textContent.replace("Rp", "");
+            thumbnail.src = row.querySelector("img").src;
+
+            // ubah tombol konfirmasi sesuai aksi
+            confirmBtn.classList.remove("buy", "nego", "cancel");
+            const negoInputContainer = document.getElementById("nego-input-container");
+            if (action === "buy") {
+            confirmBtn.textContent = "Confirm Purchase";
+            confirmBtn.classList.add("buy");
+            negoInputContainer.style.display = "none"; // sembunyikan input
+            modal.querySelector(".modal-content").classList.remove("expand");
+            } 
+            else if (action === "nego") {
+            confirmBtn.textContent = "Negosiasi";
+            confirmBtn.classList.add("nego");
+            negoInputContainer.style.display = "block"; // tampilkan input
+            modal.querySelector(".modal-content").classList.add("expand");
+            } 
+            else {
+            confirmBtn.textContent = "Batalkan Penjualan";
+            confirmBtn.classList.add("Batal");
+            negoInputContainer.style.display = "none"; // sembunyikan input
+            modal.querySelector(".modal-content").classList.remove("expand");
+            }
+
+            console.log("openModal dipanggil untuk aksi:", action);
+            openModal(); // 🎯 SEKARANG TERPANGGIL DENGAN BENAR
+        });
         });
     });
   });
 
-  // --------------- FUNGSI: BELI PEMAIN ---------------
-  document.querySelectorAll(".buy-player").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const playerId = this.dataset.id;
-      if (!confirm("Beli pemain ini dengan harga yang ditentukan?")) return;
+  // Aksi konfirmasi
+  confirmBtn.addEventListener("click", async () => {
+    if (!currentAction || !currentPlayerId) return;
 
-      fetch(`/player_transaction/beli/${playerId}/`, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          alert(data.message);
-          location.reload();
+    try {
+      let res, data;
+
+      if (currentAction === "buy") {
+        res = await fetch(`/player_transaction/beli/${currentPlayerId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
         });
-    });
-  });
+        data = await res.json();
+        alert(data.message);
+        location.reload();
 
-  // --------------- FUNGSI: NEGOSIASI ---------------
-  document.querySelectorAll(".nego-player").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const playerId = this.dataset.id;
-      const harga = prompt("Masukkan harga penawaran (Rp):");
-      if (!harga) return;
+      } else if (currentAction === "nego") {
+            const hargaInput = document.getElementById("nego-input");
+            const harga = hargaInput.value.trim();
+            if (!harga || isNaN(harga) || parseInt(harga) <= 0) {
+                alert("Masukkan harga penawaran yang valid!");
+                return;
+            }
 
-      fetch(`/player_transaction/send-negotiation/${playerId}/`, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        body: JSON.stringify({ offered_price: harga }),
-      })
-        .then((res) => res.json())
-        .then((data) => alert(data.message));
-    });
+            res = await fetch(`/player_transaction/send-negotiation/${currentPlayerId}/`, {
+                method: "POST",
+                headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest",
+                },
+                body: JSON.stringify({ offered_price: harga }),
+            });
+
+            data = await res.json();
+            alert(data.message);
+            hargaInput.value = ""; // reset setelah kirim
+
+      } else if (currentAction === "cancel") {
+        res = await fetch(`/player_transaction/batalkan-jual/${currentPlayerId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        });
+        data = await res.json();
+        alert(data.message);
+        location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan: " + err.message);
+    }
+
+    closeModal();
   });
 });
-
 </script>
 
 {% endblock %}
