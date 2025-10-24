@@ -66,7 +66,6 @@
                     </form>
                 </div>
 
-
                 <div class="reply-form-container hidden" id="reply-form-post-{{ post.id }}">
                     <form action="{% url 'community:add_reply' post.id %}" method="POST" class="reply-form">
                         {% csrf_token %}
@@ -76,15 +75,11 @@
                 </div>
 
                 <div class="replies-list" id="replies-for-post-{{ post.id }}">
-                    
                     {% for reply in post.top_level_replies %}
-                        
                         {% include "community/_reply.html" with reply=reply %}
-
                     {% empty %}
                         <small class="no-replies" id="no-reply-msg-{{ post.id }}">Belum ada balasan.</small>
                     {% endfor %}
-
                 </div>
             </div>
         </div>
@@ -96,9 +91,8 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Ambil CSRF Token dari form utama
     const csrfToken = document.querySelector('#forumForm [name=csrfmiddlewaretoken]').value;
-    const forumList = document.querySelector('.forum-list'); // Parent untuk event delegation
+    const forumList = document.querySelector('.forum-list');
 
     // Toggle form "Tambah Forum"
     const btn = document.getElementById("toggleBtn");
@@ -131,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Handle Submit Form Edit (AJAX) - Tetap sama
+    // Handle Submit Form Edit (AJAX)
     forumList.addEventListener("submit", function(event) {
         if (event.target.classList.contains("edit-form")) {
             event.preventDefault(); 
@@ -178,9 +172,9 @@ document.addEventListener("DOMContentLoaded", function() {
             .catch(error => { console.error("Error:", error); alert("Terjadi kesalahan."); });
         }
 
-        // --- SCRIPT AJAX BARU UNTUK REPLY ---
+        // ✅ HANDLE SUBMIT REPLY FORM (AJAX) - SUPPORT NESTED
         if (event.target.classList.contains("reply-form")) {
-            event.preventDefault(); // Stop form submit biasa
+            event.preventDefault();
             
             const form = event.target;
             const url = form.action;
@@ -188,10 +182,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             fetch(url, {
                 method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken
-                    // 'Content-Type' jangan di-set, biarkan browser
-                },
+                headers: { "X-CSRFToken": csrfToken },
                 body: formData
             })
             .then(response => response.json())
@@ -203,11 +194,11 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Tentukan di mana reply baru akan diletakkan
                     let targetList;
                     if (data.reply.parent_id) {
-                        // Ini adalah nested reply
+                        // ✅ Ini adalah nested reply
                         const parentCard = document.getElementById(`reply-${data.reply.parent_id}`);
                         targetList = parentCard.querySelector('.nested-replies');
                     } else {
-                        // Ini adalah top-level reply
+                        // ✅ Ini adalah top-level reply
                         targetList = document.getElementById(`replies-for-post-${data.reply.post_id}`);
                         // Hapus pesan "Belum ada balasan" jika ada
                         const noReplyMsg = document.getElementById(`no-reply-msg-${data.reply.post_id}`);
@@ -220,6 +211,13 @@ document.addEventListener("DOMContentLoaded", function() {
                     // Kosongkan dan sembunyikan form
                     form.querySelector('textarea').value = '';
                     form.parentElement.classList.add('hidden');
+
+                    // ==== ⬇️ TAMBAHKAN 4 BARIS INI ⬇️ ====
+                    const postId = data.reply.post_id;
+                    const mainReplyButton = document.querySelector(`.reply-btn[data-target-form="reply-form-post-${postId}"]`);
+                    const match = mainReplyButton.textContent.match(/\((\d+)\)/);
+                    mainReplyButton.textContent = `💬 Reply (${match ? parseInt(match[1]) + 1 : 1})`;
+                    // ==== ⬆️ PERBAIKAN SELESAI ⬆️ ====
                 } else {
                     alert("Gagal membalas: " + data.message);
                 }
@@ -228,13 +226,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Fungsi untuk membuat HTML reply card baru
+    // ✅ FUNGSI UNTUK MEMBUAT HTML REPLY CARD BARU (Support Nested)
     function createReplyHTML(reply) {
         return `
         <div class="reply-card" id="reply-${reply.id}">
-            <strong>${reply.author_username}</strong>
-            <p>${reply.content}</p>
-            <small>${reply.created_at}</small>
+            <div class="reply-header">
+                <strong>${reply.author_username}</strong>
+                <small>• ${reply.created_at}</small>
+            </div>
+            <p class="reply-content">${escapeHtml(reply.content)}</p>
             <div class="post-actions">
                 <button class="reply-btn" data-target-form="reply-form-${reply.id}">
                     💬 Balas
@@ -242,14 +242,26 @@ document.addEventListener("DOMContentLoaded", function() {
             </div>
             <div class="reply-form-container nested-form hidden" id="reply-form-${reply.id}">
                 <form action="${reply.new_reply_url}" method="POST" class="reply-form">
-                    {% csrf_token %} <textarea name="content" placeholder="Balas ${reply.author_username}..." rows="2" required></textarea>
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                    <textarea name="content" placeholder="Balas ${reply.author_username}..." rows="2" required></textarea>
                     <button type="submit">Kirim Balasan</button>
                 </form>
             </div>
-            <div class="nested-replies">
-                </div>
+            <div class="nested-replies"></div>
         </div>
         `;
+    }
+
+    // ✅ Helper function untuk escape HTML (keamanan)
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
     }
 });
 </script>
