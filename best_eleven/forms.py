@@ -1,4 +1,3 @@
-# best_eleven/forms.py
 from django import forms
 from django.core.exceptions import ValidationError
 from .models import BestEleven, Player
@@ -13,8 +12,7 @@ class TailwindCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
 
 class PlayerChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, obj):
-        value_display = f"({obj.market_value})" if obj.market_value else "(N/A)"
-        return f"{obj.name} {value_display}"
+        return obj.nama_pemain 
 
 class BestElevenForm(forms.ModelForm):
 

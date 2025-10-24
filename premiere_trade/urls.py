@@ -9,6 +9,6 @@ urlpatterns = [
     path('', include('main.urls')), 
     path('community/', include('community.urls')), 
     path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('best-eleven/', include('best_eleven.urls')),
-    path('accounts/', include('django.contrib.auth.urls')),
+    path('player_transaction/', include('player_transaction.urls')),        
+    path('best_eleven/', include('best_eleven.urls')),        
 ]

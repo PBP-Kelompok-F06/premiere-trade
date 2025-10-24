@@ -3,13 +3,14 @@
 {% block content %}
 <div class="max-w-2xl mx-auto bg-white/70 backdrop-blur-sm p-8 rounded-xl shadow-xl border border-white/50">
 
-  <h2 class="text-3xl font-extrabold text-indigo-800 mb-6">
+  <h2 class="text-3xl font-extrabold text-purple mb-6">
     {% if object %}
       Edit Formasi
     {% else %}
       Buat Formasi Best 11 Baru
     {% endif %}
   </h2>
+
 
   <form method="POST">
     {% csrf_token %}

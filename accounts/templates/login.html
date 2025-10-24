@@ -34,14 +34,14 @@
             {% csrf_token %}
             <div>
               <label
-                for="login_email"
+                for="login_username"
                 class="block text-sm font-medium text-gray-700"
               >
-                Email
+                Username
               </label>
               <input
                 type="text"
-                id="login_email"
+                id="login_username"
                 name="username"
                 placeholder="Enter your username here"
                 required
@@ -68,7 +68,7 @@
 
             <button
               type="submit"
-              class="w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="w-full justify-center rounded-md border border-transparent bg-purple-700 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               Login
             </button>
@@ -80,7 +80,7 @@
             Don't have an account?
             <a
               href="{% url 'accounts:register_page' %}"
-              class="font-medium text-blue-600 hover:text-blue-500"
+              class="font-medium text-purple-600 hover:text-purple-500"
             >
               Sign up
             </a>
@@ -115,8 +115,7 @@
 
       loginForm.addEventListener("submit", async function (e) {
         e.preventDefault();
-        // **PENTING**: Mengambil value dari ID input yang sudah diubah
-        const username = document.getElementById("login_email").value;
+        const username = document.getElementById("login_username").value;
         const password = document.getElementById("login_password").value;
 
         try {
@@ -140,9 +139,19 @@
 
           if (response.ok && data.status === "success") {
             loginMessage.className = `${baseMessageClasses} bg-green-100 text-green-800`;
+
+            // --- BAGIAN BARU ---
+            // Cek flag 'is_superuser' dari response
             setTimeout(() => {
-              window.location.href = "{% url 'main:homepage' %}";
-            }, 1500);
+              if (data.is_superuser) {
+                // Jika superuser, redirect ke dashboard
+                window.location.href =
+                  "{% url 'accounts:superuser_dashboard' %}";
+              } else {
+                // Jika bukan, redirect ke homepage
+                window.location.href = "{% url 'main:homepage' %}";
+              }
+            }, 1500); // Tunggu 1.5 detik agar pesan sukses terbaca
           } else {
             loginMessage.className = `${baseMessageClasses} bg-red-100 text-red-800`;
           }

@@ -54,7 +54,7 @@ a:hover {
 }
 .auth-links a { /* Style dasar link di kanan */
     text-decoration: none;
-    padding: 8px 12px;
+    padding: 3px 9px;
     border-radius: 4px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -62,11 +62,10 @@ a:hover {
     display: inline-flex; /* Biar align-items jalan */
     align-items: center;
 }
-.auth-links .login { background-color: #007bff; color: white; }
-.auth-links .register { background-color: #28a745; color: white; }
+.auth-links .login { color: #142850; }
+.auth-links .register { background-color: purple; color: white; }
 .auth-links .logout { background-color: #dc3545; color: white; }
-.auth-links .login:hover { background-color: #0069d9; }
-.auth-links .register:hover { background-color: #218838; }
+.auth-links .register:hover { background-color: mediumorchid; }
 .auth-links .logout:hover { background-color: #c82333; }
 .auth-links .user-info { color: #1c2a4a; font-weight: 500; } /* Tebelin dikit username */
 .auth-links .user-info strong { color: #142850; }
@@ -130,11 +129,11 @@ a:hover {
 .team-header img { height: 40px; width: 40px; }
 .team-header h3 { margin: 0; font-size: 1.5rem; color: #142850; }
 .see-all-btn {
-    background-color: #007bff; color: white; padding: 8px 15px;
+    background-color: purple; color: white; padding: 8px 15px;
     border-radius: 6px; font-size: 0.9rem; font-weight: 500;
     text-decoration: none; white-space: nowrap; transition: background-color 0.2s ease;
 }
-.see-all-btn:hover { background-color: #0069d9; color: white; text-decoration: none; }
+.see-all-btn:hover { background-color: mediumorchid; color: white; text-decoration: none; }
 .player-grid {
     display: grid; grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem; padding: 1.5rem;

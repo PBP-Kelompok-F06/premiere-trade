@@ -1,0 +1,31 @@
+{% load static %}
+<aside class="w-64 bg-white text-gray-800 min-h-screen p-4 shadow-lg">
+  <a
+    href="{% url 'accounts:superuser_dashboard' %}"
+    class="flex items-center space-x-2 mb-10"
+  >
+    <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-12" />
+  </a>
+  <nav>
+    <a
+      href="{% url 'accounts:superuser_dashboard' %}"
+      class="block py-2.5 px-4 rounded transition duration-200 {% if active_nav == 'dashboard' %} bg-blue-100 text-blue-700 font-semibold {% else %} hover:bg-gray-100 {% endif %}"
+    >
+      Dashboard
+    </a>
+
+    <a
+      href="{% url 'accounts:add_user' %}"
+      class="block py-2.5 px-4 rounded transition duration-200 {% if active_nav == 'add_user' %} bg-blue-100 text-blue-700 font-semibold {% else %} hover:bg-gray-100 {% endif %}"
+    >
+      Tambah Pengguna
+    </a>
+
+    <a
+      href="{% url 'accounts:logout_user' %}"
+      class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-100 text-red-500"
+    >
+      Logout
+    </a>
+  </nav>
+</aside>
