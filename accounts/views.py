@@ -3,10 +3,17 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from .forms import UserUpdateForm, ProfileUpdateForm, SuperUserEditForm, SuperUserCreateForm
+from django.core.exceptions import PermissionDenied
+from django.contrib import messages
+from main.models import Club
+from django.shortcuts import get_object_or_404
+from main.models import Club
+from django.core.exceptions import PermissionDenied
 import json
 
 # Create your views here.
-from .models import CustomUser, Profile # DIUBAH: Tambahkan Profile untuk auto-create
+from .models import CustomUser, Profile  # DIUBAH: Tambahkan Profile untuk auto-create
 
 
 def login_page(request):
@@ -44,7 +51,7 @@ def register_ajax(request):
 
         user = CustomUser.objects.create_user(username=username, password=password)
         # Otomatis buat profile saat user register
-        Profile.objects.create(user=user) # BARU: Agar tes Profile .exists() lolos
+        Profile.objects.create(user=user)  # BARU: Agar tes Profile .exists() lolos
 
         login(request, user)
 
@@ -79,16 +86,20 @@ def login_ajax(request):
 
         if user is not None:
             login(request, user)
-            return JsonResponse(
-                {
-                    "status": "success",
-                    "message": "Login berhasil! Anda akan dialihkan...",
-                }
-            )
+            # Cek apakah user adalah superuser
+            is_superuser = _is_superuser_check(user)
+
+            # Siapkan data JSON untuk dikirim kembali
+            response_data = {
+                "status": "success",
+                "message": "Login berhasil! Anda akan dialihkan...",
+                "is_superuser": is_superuser,  # Kirim status superuser
+            }
+            return JsonResponse(response_data)
         else:
             return JsonResponse(
                 {"status": "error", "message": "Username atau password salah."},
-                status=401, # DIUBAH: Sesuai ekspektasi tes (401 Unauthorized)
+                status=401,
             )
 
     except Exception as e:
@@ -100,3 +111,136 @@ def login_ajax(request):
 def logout_user(request):
     logout(request)
     return redirect("main:homepage")
+
+
+@login_required
+def edit_profile(request):
+    if request.method == "POST":
+        # Inisialisasi form dengan data POST dan data user yang ada
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, "Profil Anda berhasil diperbarui!")
+            return redirect("accounts:edit_profile")  # Redirect ke halaman yang sama
+        else:
+            messages.error(request, "Terjadi kesalahan saat memperbarui profil.")
+
+    else:
+        # Tampilkan form dengan data user yang ada saat ini
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {"user_form": user_form, "profile_form": profile_form}
+    return render(request, "edit_profile.html", context)
+
+
+def _is_superuser_check(user):
+    """Fungsi helper untuk memeriksa hak akses superuser."""
+    return (
+        user.is_authenticated
+        and user.is_fan
+        and user.is_club_admin
+        and hasattr(user, "profile")
+        and user.profile.managed_club is not None
+        and user.profile.managed_club.name.lower() == "admin"
+    )
+
+
+@login_required
+def superuser_dashboard(request):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+    # --- Pengecekan Hak Akses ---
+    # Dapatkan user yang sedang login
+    user = request.user
+
+    # Cek apakah user memenuhi semua kriteria "superuser"
+    is_superuser = (
+        user.is_fan
+        and user.is_club_admin
+        and user.profile.managed_club is not None
+        and user.profile.managed_club.name.lower() == "admin"
+    )
+
+    if not is_superuser:
+        # Jika tidak memenuhi syarat, lempar error 403 Forbidden
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    # --- Pengambilan Data untuk Dashboard ---
+    all_users = CustomUser.objects.all().order_by("username")
+    all_clubs = Club.objects.all().order_by("name")
+
+    context = {
+        "all_users": all_users,
+        "all_clubs": all_clubs,
+        "user_count": all_users.count()-1,
+        "club_count": all_clubs.count()-1,
+    }
+
+    return render(request, "dashboard.html", context)
+
+
+@login_required
+def edit_user(request, pk):
+    # Pastikan hanya superuser yang bisa mengakses halaman ini
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied(
+            "Anda tidak memiliki akses untuk melakukan tindakan ini."
+        )
+
+    # Dapatkan user yang akan diedit, atau 404 jika tidak ada
+    user_to_edit = get_object_or_404(CustomUser, pk=pk)
+
+    if request.method == "POST":
+        form = SuperUserEditForm(request.POST, instance=user_to_edit)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, f"Profil '{user_to_edit.username}' berhasil diperbarui."
+            )
+            return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        # Tampilkan form dengan data user yang ada
+        form = SuperUserEditForm(instance=user_to_edit)
+
+    context = {"form": form, "user_to_edit": user_to_edit}
+    return render(request, "edit_user.html", context)
+
+
+@login_required
+def add_user(request):
+    # Pastikan hanya superuser yang bisa mengakses
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    if request.method == "POST":
+        form = SuperUserCreateForm(request.POST)
+        if form.is_valid():
+            # Cek duplikasi username secara manual karena create_user bisa error
+            if CustomUser.objects.filter(
+                username=form.cleaned_data["username"]
+            ).exists():
+                messages.error(request, "Username sudah digunakan.")
+            else:
+                form.save()
+                messages.success(
+                    request,
+                    f"Pengguna '{form.cleaned_data['username']}' berhasil dibuat.",
+                )
+                return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        form = SuperUserCreateForm()
+
+    context = {"form": form}
+    return render(request, "add_user.html", context)

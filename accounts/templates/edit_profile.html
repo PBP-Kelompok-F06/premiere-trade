@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Profile - Premiere Trade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    {% load static %}
+
+    <nav class="bg-white shadow-md">
+      <div
+        class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center"
+      >
+        <a href="/" class="flex items-center space-x-2">
+          <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8" />
+          <span class="text-xl font-bold text-gray-800">Premiere Trade</span>
+        </a>
+        <div>
+          <span class="text-gray-700 mr-4">Hello, {{ user.username }}!</span>
+          <a
+            href="{% url 'accounts:logout_user' %}"
+            class="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600"
+            >Logout</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <div class="flex items-center justify-center min-h-screen -mt-16">
+      <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Edit Profile</h1>
+
+        {% if messages %} {% for message in messages %}
+        <div
+          class="p-3 mb-4 rounded-md text-sm {% if message.tags == 'success' %} bg-green-100 text-green-800 {% else %} bg-red-100 text-red-800 {% endif %}"
+        >
+          {{ message }}
+        </div>
+        {% endfor %} {% endif %}
+
+        <form method="POST">
+          {% csrf_token %}
+          <div class="space-y-5">
+            <div>
+              <label
+                for="{{ user_form.username.id_for_label }}"
+                class="block text-sm font-medium text-gray-700"
+                >Username</label
+              >
+              {{ user_form.username }}
+            </div>
+
+            {% if user.is_club_admin %}
+            <div class="border-t pt-4">
+              <h2 class="text-lg font-semibold text-gray-800">Admin Area</h2>
+              <p class="text-sm text-gray-500 mb-2">
+                Kelola klub yang Anda pimpin.
+              </p>
+              <label
+                for="{{ profile_form.managed_club.id_for_label }}"
+                class="block text-sm font-medium text-gray-700"
+                >Managed Club</label
+              >
+              {{ profile_form.managed_club }}
+            </div>
+            {% endif %}
+
+            <button
+              type="submit"
+              class="w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+            >
+              Simpan Perubahan
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll("input, select").forEach(function (el) {
+        el.classList.add(
+          "mt-1",
+          "block",
+          "w-full",
+          "rounded-md",
+          "border-gray-300",
+          "border-2",
+          "shadow-sm",
+          "focus:border-indigo-500",
+          "focus:ring-indigo-500",
+          "sm:text-sm",
+          "p-3"
+        );
+      });
+    </script>
+  </body>
+</html>

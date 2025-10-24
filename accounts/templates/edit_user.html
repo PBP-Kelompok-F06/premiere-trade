@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit User - {{ user_to_edit.username }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    {% load static %}
+    <div class="flex">
+      <aside class="w-64 bg-gray-800 text-white min-h-screen p-4">
+        <a
+          href="{% url 'accounts:superuser_dashboard' %}"
+          class="flex items-center space-x-2 mb-10"
+        >
+          <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8" />
+          <span class="text-xl font-bold">Premiere Trade</span>
+        </a>
+        <nav>
+          <a
+            href="{% url 'accounts:superuser_dashboard' %}"
+            class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+            >Dashboard</a
+          >
+          <a
+            href="{% url 'accounts:logout_user' %}"
+            class="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700"
+            >Logout</a
+          >
+        </nav>
+      </aside>
+
+      <main class="flex-1 p-10">
+        <h1 class="text-3xl font-bold text-gray-800">
+          Edit User:
+          <span class="text-blue-600">{{ user_to_edit.username }}</span>
+        </h1>
+        <p class="text-gray-600 mb-8">
+          Ubah detail dan hak akses untuk pengguna ini.
+        </p>
+
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+          <form method="POST">
+            {% csrf_token %}
+            <div class="space-y-6">
+              <div>
+                <label
+                  for="{{ form.username.id_for_label }}"
+                  class="block text-sm font-medium text-gray-700"
+                  >Username</label
+                >
+                {{ form.username }}
+              </div>
+
+              <div>
+                <label
+                  for="{{ form.managed_club.id_for_label }}"
+                  class="block text-sm font-medium text-gray-700"
+                  >Managed Club</label
+                >
+                <p class="text-xs text-gray-500 mb-1">
+                  Pilih klub yang dikelola jika user ini adalah Admin Klub.
+                  Kosongkan jika hanya Fan.
+                </p>
+                {{ form.managed_club }}
+              </div>
+
+              <div class="flex items-start space-x-10 border-t pt-4">
+                <div class="flex items-center h-5">
+                  {{ form.is_fan }}
+                  <div class="ml-3 text-sm">
+                    <label
+                      for="{{ form.is_fan.id_for_label }}"
+                      class="font-medium text-gray-700"
+                      >Is Fan</label
+                    >
+                    <p class="text-xs text-gray-500">
+                      Aktifkan jika pengguna ini adalah seorang fan.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center h-5">
+                  {{ form.is_club_admin }}
+                  <div class="ml-3 text-sm">
+                    <label
+                      for="{{ form.is_club_admin.id_for_label }}"
+                      class="font-medium text-gray-700"
+                      >Is Club Admin</label
+                    >
+                    <p class="text-xs text-gray-500">
+                      Aktifkan untuk memberikan hak akses admin klub.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex space-x-4">
+                <button
+                  type="submit"
+                  class="w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+                >
+                  Simpan Perubahan
+                </button>
+                <a
+                  href="{% url 'accounts:superuser_dashboard' %}"
+                  class="w-full text-center justify-center rounded-md border border-gray-300 bg-white py-3 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+                >
+                  Batal
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document
+        .querySelectorAll('input[type="text"], select')
+        .forEach(function (el) {
+          el.classList.add(
+            "mt-1",
+            "block",
+            "w-full",
+            "rounded-md",
+            "border-gray-300",
+            "border-2",
+            "shadow-sm",
+            "focus:border-indigo-500",
+            "focus:ring-indigo-500",
+            "sm:text-sm",
+            "p-3"
+          );
+        });
+      document
+        .querySelectorAll('input[type="checkbox"]')
+        .forEach(function (el) {
+          el.classList.add(
+            "h-4",
+            "w-4",
+            "rounded",
+            "border-gray-300",
+            "text-indigo-600",
+            "focus:ring-indigo-500"
+          );
+        });
+    </script>
+  </body>
+</html>
