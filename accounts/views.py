@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -14,12 +14,10 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from main.models import Club
 from django.shortcuts import get_object_or_404
-from main.models import Club
-from django.core.exceptions import PermissionDenied
+from .models import CustomUser, Profile
 import json
 
 # Create your views here.
-from .models import CustomUser, Profile  # DIUBAH: Tambahkan Profile untuk auto-create
 
 
 def login_page(request):
@@ -117,30 +115,6 @@ def login_ajax(request):
 def logout_user(request):
     logout(request)
     return redirect("main:homepage")
-
-
-@login_required
-def edit_profile(request):
-    if request.method == "POST":
-        # Inisialisasi form dengan data POST dan data user yang ada
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileUpdateForm(request.POST, instance=request.user.profile)
-
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, "Profil Anda berhasil diperbarui!")
-            return redirect("accounts:edit_profile")  # Redirect ke halaman yang sama
-        else:
-            messages.error(request, "Terjadi kesalahan saat memperbarui profil.")
-
-    else:
-        # Tampilkan form dengan data user yang ada saat ini
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileUpdateForm(instance=request.user.profile)
-
-    context = {"user_form": user_form, "profile_form": profile_form}
-    return render(request, "edit_profile.html", context)
 
 
 def _is_superuser_check(user):
@@ -306,3 +280,24 @@ def delete_account(request):
     messages.success(request, "Akun Anda telah berhasil dihapus secara permanen.")
     # Redirect ke halaman utama atau halaman login
     return redirect("main:homepage")
+
+
+@login_required
+@require_POST
+def delete_user(request, pk):
+    # Pastikan hanya superuser yang bisa mengakses
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses untuk melakukan tindakan ini.")
+
+    # Ambil user yang akan dihapus
+    user_to_delete = get_object_or_404(CustomUser, pk=pk)
+
+    # Pastikan superuser tidak bisa menghapus akunnya sendiri dari sini
+    if user_to_delete == request.user:
+        messages.error(request, "Anda tidak dapat menghapus akun Anda sendiri dari dashboard.")
+        return redirect('accounts:superuser_dashboard')
+
+    username = user_to_delete.username
+    user_to_delete.delete()
+    messages.success(request, f"Pengguna '{username}' telah berhasil dihapus.")
+    return redirect('accounts:superuser_dashboard')

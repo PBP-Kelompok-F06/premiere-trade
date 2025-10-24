@@ -61,12 +61,22 @@
                       >
                       {% endif %}
                     </td>
-                    <td class="px-6 py-4">
+                    <td class="px-6 py-4 flex space-x-4">
                       <a
                         href="{% url 'accounts:edit_user' u.pk %}"
                         class="font-medium text-blue-600 hover:underline"
                         >Edit</a
                       >
+
+                      <button
+                        type="button"
+                        class="font-medium text-red-600 hover:underline"
+                        data-url="{% url 'accounts:delete_user' u.pk %}"
+                        data-username="{{ u.username }}"
+                        onclick="openDeleteModal(this)"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                   {% endif %}{% empty %}
@@ -115,5 +125,77 @@
         </div>
       </main>
     </div>
+    <div
+      id="delete-modal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden"
+    >
+      <div
+        class="relative mx-auto p-8 border w-full max-w-md shadow-lg rounded-md bg-white"
+      >
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900">
+            Konfirmasi Penghapusan
+          </h3>
+          <div class="mt-4 px-7 py-3">
+            <p class="text-md text-gray-600">
+              Apakah Anda yakin ingin menghapus pengguna
+              <strong id="delete-username" class="text-red-600"></strong> secara
+              permanen?
+            </p>
+          </div>
+          <form id="delete-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="flex justify-center items-center space-x-4 mt-6">
+              <button
+                id="cancel-btn"
+                type="button"
+                class="w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="w-full justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700"
+              >
+                Ya, Hapus Pengguna
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ▼▼▼ SCRIPT BARU UNTUK MODAL ▼▼▼
+      const modal = document.getElementById("delete-modal");
+      const deleteForm = document.getElementById("delete-form");
+      const deleteUsernameSpan = document.getElementById("delete-username");
+      const cancelBtn = document.getElementById("cancel-btn");
+
+      // Fungsi untuk membuka modal
+      function openDeleteModal(button) {
+        const actionUrl = button.getAttribute('data-url');
+        const username = button.getAttribute('data-username');
+        // Set action form dan nama user di modal
+        deleteForm.action = actionUrl;
+        deleteUsernameSpan.textContent = username;
+        // Tampilkan modal
+        modal.classList.remove("hidden");
+      }
+
+      // Fungsi untuk menutup modal
+      function closeDeleteModal() {
+        modal.classList.add("hidden");
+      }
+
+      // Event listener untuk tombol batal
+      cancelBtn.addEventListener("click", closeDeleteModal);
+
+      // Event listener untuk menutup modal jika klik di luar area modal
+      window.addEventListener("click", function (event) {
+        if (event.target == modal) {
+          closeDeleteModal();
+        }
+      });
+    </script>
   </body>
 </html>
