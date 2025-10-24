@@ -75,11 +75,7 @@ ROOT_URLCONF = "premiere_trade.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-<<<<<<< HEAD
-        "DIRS": [BASE_DIR / "templates"],
-=======
         "DIRS": [BASE_DIR / 'templates'],
->>>>>>> df67dcb (progress best eleven)
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
