@@ -20,13 +20,14 @@ import json
 
 # Create your views here.
 
-
+@ensure_csrf_cookie
 def login_page(request):
     if request.user.is_authenticated:
         return redirect("main:homepage")
     return render(request, "login.html")
 
 
+@ensure_csrf_cookie
 def register_page(request):
     if request.user.is_authenticated:
         return redirect("main:homepage")
