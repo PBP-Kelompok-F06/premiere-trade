@@ -2,7 +2,7 @@
 
 import django.db.models.deletion
 from django.db import migrations, models
-
+import uuid  # <-- TAMBAHKAN IMPORT INI
 
 class Migration(migrations.Migration):
 
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Player',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=100)),
                 ('position', models.CharField(max_length=50)),
                 ('market_value', models.DecimalField(decimal_places=2, default=0.0, max_digits=10)),
