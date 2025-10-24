@@ -13,26 +13,36 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+
 class Reply(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='replies')
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # --- PERUBAHAN UTAMA DI SINI ---
-    # Menambahkan 'parent' yang menunjuk ke Reply lain.
-    # 'null=True' berarti ini adalah balasan level atas (top-level).
+    
+    # 🆕 FITUR BARU: Reply bisa punya parent (reply ke reply)
     parent = models.ForeignKey(
-        'self', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
-        related_name='child_replies'
+        'self',  # Self-referencing: Reply bisa nge-reply Reply lain
+        on_delete=models.CASCADE,
+        null=True,  # Null = ini reply langsung ke Post
+        blank=True,
+        related_name='child_replies'  # Untuk akses balasan dari balasan
     )
-    # --------------------------------
+
+    class Meta:
+        ordering = ['created_at']  # Urutkan berdasarkan waktu
+        verbose_name_plural = 'Replies'
 
     def __str__(self):
-        # Memperbarui __str__ agar lebih deskriptif
         if self.parent:
-            return f'Reply by {self.author} to {self.parent.author} on {self.post.title}'
+            return f'Reply by {self.author} on {self.parent.author}\'s comment'
         return f'Reply by {self.author} on {self.post.title}'
+    
+    # 🆕 Helper method: Cek apakah ini top-level reply (langsung ke post)
+    def is_top_level(self):
+        return self.parent is None
+    
+    # 🆕 Helper method: Ambil semua nested replies
+    def get_nested_replies(self):
+        """Rekursif ambil semua child replies"""
+        return self.child_replies.all()
