@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .forms import (
@@ -287,17 +288,28 @@ def delete_account(request):
 def delete_user(request, pk):
     # Pastikan hanya superuser yang bisa mengakses
     if not _is_superuser_check(request.user):
-        raise PermissionDenied("Anda tidak memiliki akses untuk melakukan tindakan ini.")
+        raise PermissionDenied(
+            "Anda tidak memiliki akses untuk melakukan tindakan ini."
+        )
 
     # Ambil user yang akan dihapus
     user_to_delete = get_object_or_404(CustomUser, pk=pk)
 
     # Pastikan superuser tidak bisa menghapus akunnya sendiri dari sini
     if user_to_delete == request.user:
-        messages.error(request, "Anda tidak dapat menghapus akun Anda sendiri dari dashboard.")
-        return redirect('accounts:superuser_dashboard')
+        messages.error(
+            request, "Anda tidak dapat menghapus akun Anda sendiri dari dashboard."
+        )
+        return redirect("accounts:superuser_dashboard")
 
     username = user_to_delete.username
     user_to_delete.delete()
     messages.success(request, f"Pengguna '{username}' telah berhasil dihapus.")
-    return redirect('accounts:superuser_dashboard')
+    return redirect("accounts:superuser_dashboard")
+
+
+@ensure_csrf_cookie
+def register_page(request):
+    if request.user.is_authenticated:
+        return redirect("main:homepage")
+    return render(request, "register.html")
