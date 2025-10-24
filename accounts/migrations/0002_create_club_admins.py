@@ -77,9 +77,9 @@ def delete_clubs_and_admins(apps, schema_editor):
     CustomUser = apps.get_model("accounts", "CustomUser")
 
     # Hapus user admin
-    username = f"{"admin".lower().replace(' ', '')}_admin"
-    CustomUser.objects.filter(username=username).delete()
-    print(f"--> Admin '{username}' dihapus.")
+    username_admin = 'admin'
+    CustomUser.objects.filter(username=username_admin).delete()
+    print(f"--> Admin '{username_admin}' dihapus.")
 
     # Hapus klub
     Club.objects.filter(name="Admin").delete()
