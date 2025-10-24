@@ -3,7 +3,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .forms import UserUpdateForm, ProfileUpdateForm, SuperUserEditForm, SuperUserCreateForm
+from .forms import (
+    UserUpdateForm,
+    ProfileUpdateForm,
+    SuperUserEditForm,
+    SuperUserCreateForm,
+    PasswordChangeCustomForm,
+)
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from main.models import Club
@@ -176,8 +182,8 @@ def superuser_dashboard(request):
     context = {
         "all_users": all_users,
         "all_clubs": all_clubs,
-        "user_count": all_users.count()-1,
-        "club_count": all_clubs.count()-1,
+        "user_count": all_users.count() - 1,
+        "club_count": all_clubs.count() - 1,
     }
 
     return render(request, "dashboard.html", context)
@@ -244,3 +250,59 @@ def add_user(request):
 
     context = {"form": form}
     return render(request, "add_user.html", context)
+
+
+@login_required
+def edit_profile(request):
+    # Logika untuk form ganti password
+    if "change_password" in request.POST:
+        password_form = PasswordChangeCustomForm(user=request.user, data=request.POST)
+        if password_form.is_valid():
+            user = password_form.save()
+            # Penting! Jaga agar user tidak logout setelah ganti password
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password Anda berhasil diubah.")
+            return redirect("accounts:edit_profile")
+        else:
+            messages.error(
+                request, "Gagal mengubah password. Silakan periksa error di bawah."
+            )
+            # Siapkan form username agar tidak kosong saat halaman dirender ulang
+            user_form = UserUpdateForm(instance=request.user)
+
+    # Logika untuk form update username
+    elif "update_username" in request.POST:
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        if user_form.is_valid():
+            user_form.save()
+            messages.success(request, "Username Anda berhasil diperbarui.")
+            return redirect("accounts:edit_profile")
+        else:
+            messages.error(request, "Gagal memperbarui username.")
+            # Siapkan form password agar tidak kosong
+            password_form = PasswordChangeCustomForm(user=request.user)
+
+    # Jika method GET (pertama kali buka halaman)
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = PasswordChangeCustomForm(user=request.user)
+
+    context = {
+        "user_form": user_form,
+        "password_form": password_form,
+    }
+    return render(request, "edit_profile.html", context)
+
+
+@login_required
+@require_POST  # Pastikan view ini hanya bisa diakses via POST
+def delete_account(request):
+    user = request.user
+    # Lakukan logout sebelum menghapus untuk membersihkan session
+    logout(request)
+    # Hapus user dari database
+    user.delete()
+    # Beri pesan (meskipun user sudah logout, ini berguna jika ada redirect ke halaman publik)
+    messages.success(request, "Akun Anda telah berhasil dihapus secara permanen.")
+    # Redirect ke halaman utama atau halaman login
+    return redirect("main:homepage")

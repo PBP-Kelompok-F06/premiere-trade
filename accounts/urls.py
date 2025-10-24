@@ -18,4 +18,5 @@ urlpatterns = [
     path('dashboard/', views.superuser_dashboard, name='superuser_dashboard'),
     path('user/<int:pk>/edit/', views.edit_user, name='edit_user'),
     path('user/add/', views.add_user, name='add_user'),
+    path('profile/delete/', views.delete_account, name='delete_account'),
 ]

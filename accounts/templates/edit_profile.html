@@ -1,99 +1,133 @@
-<!DOCTYPE html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Profile - Premiere Trade</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 font-sans">
-    {% load static %}
+{% extends "base.html" %} {% load static %} {% block title %}Edit Profile -
+Premiere Trade{% endblock %} {% block content %}
+<main class="w-full max-w-2xl mx-auto m-8">
 
-    <nav class="bg-white shadow-md">
-      <div
-        class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center"
-      >
-        <a href="/" class="flex items-center space-x-2">
-          <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-8" />
-          <span class="text-xl font-bold text-gray-800">Premiere Trade</span>
-        </a>
-        <div>
-          <span class="text-gray-700 mr-4">Hello, {{ user.username }}!</span>
-          <a
-            href="{% url 'accounts:logout_user' %}"
-            class="bg-red-500 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-red-600"
-            >Logout</a
-          >
-        </div>
-      </div>
-    </nav>
+  {% if messages %} {% for message in messages %}
+  <div
+    class="p-4 mb-4 rounded-md text-sm {% if message.tags == 'success' %} bg-green-100 text-green-800 {% elif message.tags == 'error' %} bg-red-100 text-red-800 {% else %} bg-blue-100 text-blue-800 {% endif %}"
+    role="alert"
+  >
+    {{ message }}
+  </div>
+  {% endfor %} {% endif %}
 
-    <div class="flex items-center justify-center min-h-screen -mt-16">
-      <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
-        <h1 class="text-3xl font-bold text-gray-900 mb-6">Edit Profile</h1>
-
-        {% if messages %} {% for message in messages %}
-        <div
-          class="p-3 mb-4 rounded-md text-sm {% if message.tags == 'success' %} bg-green-100 text-green-800 {% else %} bg-red-100 text-red-800 {% endif %}"
-        >
-          {{ message }}
-        </div>
-        {% endfor %} {% endif %}
-
-        <form method="POST">
-          {% csrf_token %}
-          <div class="space-y-5">
-            <div>
-              <label
-                for="{{ user_form.username.id_for_label }}"
-                class="block text-sm font-medium text-gray-700"
-                >Username</label
-              >
-              {{ user_form.username }}
-            </div>
-
-            {% if user.is_club_admin %}
-            <div class="border-t pt-4">
-              <h2 class="text-lg font-semibold text-gray-800">Admin Area</h2>
-              <p class="text-sm text-gray-500 mb-2">
-                Kelola klub yang Anda pimpin.
-              </p>
-              <label
-                for="{{ profile_form.managed_club.id_for_label }}"
-                class="block text-sm font-medium text-gray-700"
-                >Managed Club</label
-              >
-              {{ profile_form.managed_club }}
-            </div>
-            {% endif %}
-
+  <div class="space-y-8">
+    <div class="bg-white p-8 rounded-lg shadow-md">
+      <h2 class="text-xl font-bold text-gray-900 mb-1">Profil Pengguna</h2>
+      <p class="text-sm text-gray-500 mb-6">
+        Perbarui informasi username Anda.
+      </p>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label
+              for="{{ user_form.username.id_for_label }}"
+              class="block text-sm font-medium text-gray-700"
+              >Username</label
+            >
+            {{ user_form.username }}
+          </div>
+          <div class="text-right">
             <button
               type="submit"
-              class="w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+              name="update_username"
+              class="justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
             >
-              Simpan Perubahan
+              Simpan Username
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
 
-    <script>
-      document.querySelectorAll("input, select").forEach(function (el) {
-        el.classList.add(
-          "mt-1",
-          "block",
-          "w-full",
-          "rounded-md",
-          "border-gray-300",
-          "border-2",
-          "shadow-sm",
-          "focus:border-indigo-500",
-          "focus:ring-indigo-500",
-          "sm:text-sm",
-          "p-3"
-        );
-      });
-    </script>
-  </body>
-</html>
+    <div class="bg-white p-8 rounded-lg shadow-md">
+      <h2 class="text-xl font-bold text-gray-900 mb-1">Ubah Password</h2>
+      <p class="text-sm text-gray-500 mb-6">
+        Masukkan password lama Anda untuk mengatur password baru.
+      </p>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="space-y-4">
+          <div>
+            <label
+              for="{{ password_form.old_password.id_for_label }}"
+              class="block text-sm font-medium text-gray-700"
+              >Password Lama</label
+            >
+            {{ password_form.old_password }}
+          </div>
+          <div>
+            <label
+              for="{{ password_form.new_password1.id_for_label }}"
+              class="block text-sm font-medium text-gray-700"
+              >Password Baru</label
+            >
+            {{ password_form.new_password1 }}
+          </div>
+          <div>
+            <label
+              for="{{ password_form.new_password2.id_for_label }}"
+              class="block text-sm font-medium text-gray-700"
+              >Konfirmasi Password Baru</label
+            >
+            {{ password_form.new_password2 }}
+          </div>
+          <div class="text-right">
+            <button
+              type="submit"
+              name="change_password"
+              class="justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+            >
+              Ubah Password
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="bg-white border-2 border-red-500 p-8 rounded-lg shadow-md">
+      <h2 class="text-xl font-bold text-red-600 mb-1">Zona Berbahaya</h2>
+      <p class="text-sm text-gray-500 mb-6">
+        Tindakan ini tidak dapat diurungkan. Ini akan menghapus akun Anda secara
+        permanen.
+      </p>
+      <form
+        action="{% url 'accounts:delete_account' %}"
+        method="POST"
+        onsubmit="return confirm('Apakah Anda benar-benar yakin ingin menghapus akun Anda secara permanen?');"
+      >
+        {% csrf_token %}
+        <div class="text-right">
+          <button
+            type="submit"
+            class="justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700"
+          >
+            Hapus Akun Saya
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script>
+  document
+    .querySelectorAll('input[type="text"], input[type="password"]')
+    .forEach(function (el) {
+      el.classList.add(
+        "mt-1",
+        "block",
+        "w-full",
+        "rounded-md",
+        "border-gray-300",
+        "border-2",
+        "shadow-sm",
+        "focus:border-indigo-500",
+        "focus:ring-indigo-500",
+        "sm:text-sm",
+        "p-3"
+      );
+    });
+</script>
+{% endblock %}
