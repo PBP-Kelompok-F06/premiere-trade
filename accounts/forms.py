@@ -26,7 +26,6 @@ ROLE_CHOICES = (
 
 
 class SuperUserEditForm(forms.ModelForm):
-    # Ganti checkbox dengan satu field 'role'
     role = forms.ChoiceField(
         choices=ROLE_CHOICES, widget=forms.RadioSelect, label="Peran Pengguna"
     )
@@ -40,7 +39,7 @@ class SuperUserEditForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["username"]  # Hapus is_fan dan is_club_admin dari sini
+        fields = ["username"]  
 
     def __init__(self, *args, **kwargs):
         user_instance = kwargs.get("instance")
