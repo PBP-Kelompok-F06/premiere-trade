@@ -14,7 +14,7 @@
         {% if user.is_club_admin %}
             <a href="#">My Club</a>
         {% endif %}
-        <a href="#">Rumor</a>
+        <a href="{% url 'rumors:show_rumors_main' %}">Rumor</a>
         <a href="#">Transfer</a> 
         
 

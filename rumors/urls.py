@@ -11,6 +11,6 @@ urlpatterns = [
     path('<uuid:id>/delete/', views.delete_rumors, name='delete_rumors'),  # /rumors/<uuid>/delete/
     path('<uuid:id>/verify/', views.verify_rumor, name='verify_rumor'),  # /rumors/<uuid>/verify/
     path('get-players/', views.get_players_by_club, name='get_players_by_club'),  # /rumors/get-players/
-    
-
+    path('<uuid:id>/deny/', views.deny_rumor, name='deny_rumor'),
+    path('<uuid:id>/revert/', views.revert_rumor, name='revert_rumor'),
 ]

@@ -4,68 +4,128 @@
 {% block title %}Create New Transfer Rumor{% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-  <h2 class="fw-bold mb-4">Create New Rumor</h2>
+<div class="flex justify-center items-center py-12 px-4">
+  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
+    <h2 class="text-2xl font-bold text-center text-[#142850] mb-6">Create New Rumor</h2>
 
-  <form method="POST">
-    {% csrf_token %}
-    {% if form.errors %}
-      <div class="alert alert-danger">
-        <ul>
-          {% for field, errors in form.errors.items %}
-            <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
-          {% endfor %}
-        </ul>
+    <form method="POST" id="rumor-form" class="space-y-5">
+      {% csrf_token %}
+      {% if form.errors %}
+        <div class="bg-red-100 text-red-700 p-3 rounded-md mb-4 text-sm">
+          <ul class="list-disc pl-5">
+            {% for field, errors in form.errors.items %}
+              <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <!-- Current Club -->
+      <div>
+        <label for="{{ form.club_asal.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
+          Current Club
+        </label>
+        {{ form.club_asal }}
       </div>
-    {% endif %}
 
-    <div class="mb-3">
-      <label for="{{ form.club_asal.id_for_label }}" class="form-label">Current Club</label>
-      {{ form.club_asal }}
-    </div>
+      <!-- Designated Club -->
+      <div>
+        <label for="{{ form.club_tujuan.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
+          Designated Club
+        </label>
+        {{ form.club_tujuan }}
+      </div>
 
-    <div class="mb-3">
-      <label for="{{ form.club_tujuan.id_for_label }}" class="form-label">Designated Club</label>
-      {{ form.club_tujuan }}
-    </div>
+      <!-- Player -->
+      <div>
+        <label for="{{ form.pemain.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
+          Player
+        </label>
+        {{ form.pemain }}
+      </div>
 
-    <div class="mb-3">
-      <label for="{{ form.pemain.id_for_label }}" class="form-label">Player</label>
-      {{ form.pemain }}
-    </div>
+      <!-- Rumor Details -->
+      <div>
+        <label for="{{ form.content.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
+          Rumor Details
+        </label>
+        {{ form.content }}
+      </div>
 
-    <div class="mb-3">
-      <label for="{{ form.content.id_for_label }}" class="form-label">Rumor Details</label>
-      {{ form.content }}
-    </div>
+      <!-- Submit Button -->
+      <div class="pt-4">
+        <button 
+        type="submit"
+        class="w-full bg-[rgb(128,0,128)] hover:bg-[rgb(100,0,100)] text-white font-semibold py-2.5 rounded-lg shadow-md transition-all">
+        Send Rumor
+        </button>
 
-    <button type="submit" class="btn btn-primary">Send</button>
-  </form>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const clubSelect = document.getElementById("id_club_asal");
-    const playerSelect = document.getElementById("id_pemain");
+document.addEventListener('DOMContentLoaded', function() {
+    const currentClubSelect = document.getElementById('id_club_asal');
+    const designatedClubSelect = document.getElementById('id_club_tujuan');
+    const playerSelect = document.getElementById('id_pemain');
 
-    clubSelect.addEventListener("change", function() {
-        const clubId = this.value;
-        const url = "{% url 'rumors:get_players_by_club' %}?club_id=" + clubId;
+    // Hilangkan "---------" default
+    if (currentClubSelect.options[0]?.text === '---------') currentClubSelect.remove(0);
+    if (designatedClubSelect.options[0]?.text === '---------') designatedClubSelect.remove(0);
+    if (playerSelect.options[0]?.text === '---------') playerSelect.remove(0);
 
-        fetch(url)
+    // Simpan semua opsi club tujuan (buat nanti direbuild)
+    const allClubs = Array.from(designatedClubSelect.options).map(opt => ({
+        value: opt.value,
+        text: opt.text
+    }));
+
+    function refreshDesignatedClubs(excludeValue) {
+        designatedClubSelect.innerHTML = ''; // hapus semua dulu
+        allClubs.forEach(club => {
+            if (club.value !== excludeValue) {
+                const option = document.createElement('option');
+                option.value = club.value;
+                option.textContent = club.text;
+                designatedClubSelect.appendChild(option);
+            }
+        });
+    }
+
+    function updatePlayers(clubId) {
+        playerSelect.innerHTML = '';
+        if (!clubId) return;
+        fetch(`/rumors/get-players/?club_id=${clubId}`)
             .then(response => response.json())
             .then(data => {
-                playerSelect.innerHTML = ""; // kosongkan dulu
                 data.forEach(player => {
-                    const option = document.createElement("option");
+                    const option = document.createElement('option');
                     option.value = player.id;
                     option.textContent = player.nama_pemain;
                     playerSelect.appendChild(option);
                 });
-            })
-            .catch(error => console.error("Error fetching players:", error));
+            });
+    }
+
+    // Default: pilih club pertama dan isi dropdown tujuan tanpa club itu
+    if (currentClubSelect.options.length > 0) {
+        currentClubSelect.selectedIndex = 0;
+        refreshDesignatedClubs(currentClubSelect.value);
+        designatedClubSelect.selectedIndex = 0;
+        updatePlayers(currentClubSelect.value);
+    }
+
+    // Saat current club berubah
+    currentClubSelect.addEventListener('change', function() {
+        const selectedClubId = this.value;
+        refreshDesignatedClubs(selectedClubId);
+        designatedClubSelect.selectedIndex = 0;
+        updatePlayers(selectedClubId);
     });
 });
 </script>
+
 
 {% endblock %}

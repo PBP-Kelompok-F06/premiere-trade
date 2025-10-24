@@ -1,46 +1,106 @@
 {% extends 'base.html' %}
-{% block title %}Transfer Rumors{% endblock %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Transfer Rumors</h2>
-    {% if user.is_authenticated and not user.is_club_admin %}
-        <a href="{% url 'rumors:create_rumors' %}" class="btn btn-primary">Create New Rumor</a>
-    {% endif %}
 
-  </div>
+<div class="min-h-screen bg-gray-100 py-8 px-4 relative">
+  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Latest Transfer Rumors</h1>
 
-  {% if user.is_club_admin %}
-  <div class="alert alert-info mt-3">
-    You are logged in as a <strong>club admin</strong>. You can verify rumors but not create them.
-  </div>
-{% endif %}
+  <!-- Container grid dua kolom -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
 
-  {% if rumors_list %}
-    <div class="row">
-      {% for rumor in rumors_list %}
-      <div class="col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-          {% if rumor.pemain.thumbnail %}
-            <img src="{{ rumor.pemain.thumbnail }}" class="card-img-top" alt="{{ rumor.pemain.nama_pemain }}" style="height: 220px; object-fit: cover;">
-          {% endif %}
-          <div class="card-body">
-            <h5 class="card-title">{{ rumor.title }}</h5>
-            <p class="card-text">{{ rumor.content|truncatechars:120 }}</p>
-            <p class="text-muted mb-1">
-              <strong>{{ rumor.pemain.nama_pemain }}</strong> – {{ rumor.pemain.current_club.name }}
-            </p>
-            <small class="text-secondary">Views: {{ rumor.rumors_views }}</small>
+    {% for rumor in rumors_list %}
+    <a href="{% url 'rumors:show_rumors_detail' rumor.id %}"
+       class="no-underline hover:no-underline relative flex items-center bg-white rounded-2xl shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition duration-200 cursor-pointer">
+
+      <!-- Status icon -->
+      <div class="absolute -left-3 top-1/2 transform -translate-y-1/2">
+        {% if rumor.status == "verified" %}
+          <div class="bg-green-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
+            ✓
           </div>
-          <div class="card-footer bg-transparent border-top-0">
-            <a href="{% url 'rumors:show_rumors_detail' rumor.id %}" class="btn btn-sm btn-outline-primary">View Detail</a>
+        {% elif rumor.status == "pending" %}
+          <div class="bg-yellow-400 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
+            ⏱
           </div>
-        </div>
+        {% elif rumor.status == "denied" %}
+          <div class="bg-red-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
+            ✕
+          </div>
+        {% endif %}
       </div>
-      {% endfor %}
+
+      <!-- Isi utama kartu -->
+      <div class="flex items-center w-full gap-4">
+
+    <!-- Foto pemain -->
+    <div class="flex-shrink-0">
+    {% if rumor.pemain.thumbnail %}
+        <div class="w-20 h-20 rounded-full overflow-hidden shadow-md">
+        <img src="{{ rumor.pemain.thumbnail }}" alt="{{ rumor.pemain.nama_pemain }}"
+            class="w-full h-full object-cover object-center">
+        </div>
+    {% else %}
+        <div class="w-20 h-20 rounded-full overflow-hidden shadow-md">
+        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="default avatar"
+            class="w-full h-full object-cover object-center">
+        </div>
+    {% endif %}
     </div>
-  {% else %}
-    <p>Nothing to see here 👀</p>
+
+
+
+        <!-- Nama pemain dan waktu -->
+        <div class="flex flex-col">
+          <span class="font-semibold text-lg text-gray-800">{{ rumor.pemain.nama_pemain }}</span>
+          <span class="inline-flex items-center gap-1 bg-red-100 text-red-600 text-[0.75rem] font-medium px-2.5 py-1 rounded-full mt-1 shadow-sm">
+            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+            {{ rumor.created_at|timesince }} ago
+            </span>
+        </div>
+
+        <!-- Spacer -->
+        <div class="flex-1"></div>
+
+<!-- Transfer logo -->
+<div class="flex items-center gap-4">
+  {% if rumor.club_asal.logo_url %}
+    <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
+      <img src="{{ rumor.club_asal.logo_url }}" alt="{{ rumor.club_asal.name }}"
+           class="w-10 h-10 object-contain">
+    </div>
+  {% endif %}
+
+  <span class="text-3xl font-light text-gray-600">→</span>
+
+  {% if rumor.club_tujuan.logo_url %}
+    <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
+      <img src="{{ rumor.club_tujuan.logo_url }}" alt="{{ rumor.club_tujuan.name }}"
+           class="w-10 h-10 object-contain">
+    </div>
   {% endif %}
 </div>
+
+
+
+      </div>
+    </a>
+    {% empty %}
+      <p class="text-center text-gray-500 col-span-2">No Rumors available.</p>
+    {% endfor %}
+
+  </div>
+
+  <!-- Floating Create Button -->
+  {% if not request.user.is_club_admin %}
+  <a href="{% url 'rumors:create_rumors' %}"
+  class="fixed bottom-8 right-8 bg-white rounded-full shadow-lg p-4 text-purple-600 hover:scale-110 hover:shadow-xl transition">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke-width="2.5" stroke="currentColor" class="w-8 h-8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+    </a>
+    {% endif %}
+
+
 {% endblock %}

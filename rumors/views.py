@@ -35,9 +35,8 @@ def show_rumors_detail(request, id):
 # ========== Membuat rumor ==========
 @login_required(login_url='accounts:login_page')
 def create_rumors(request):
-    # 🔒 Cegah admin club bikin rumor
+    #  Cegah admin club bikin rumor
     if request.user.is_club_admin:
-        messages.error(request, "Club admins are not allowed to create rumors.")
         return redirect('rumors:show_rumors_main')
 
     if request.method == "POST":
@@ -46,7 +45,6 @@ def create_rumors(request):
             rumor = form.save(commit=False)
             rumor.author = request.user
             rumor.save()
-            messages.success(request, "Rumor successfully created!")
             return redirect('rumors:show_rumors_main')
         else:
             print("DEBUG FORM ERRORS:", form.errors)
@@ -60,15 +58,49 @@ def create_rumors(request):
 @login_required(login_url='accounts:login_page')
 def edit_rumors(request, id):
     rumor = get_object_or_404(Rumors, pk=id)
+
     if rumor.author != request.user:
-        return HttpResponse("Kamu tidak punya izin mengedit rumor ini.", status=403)
+        return HttpResponse("You are not authorized to edit this rumor.", status=403)
+
+    original_data = {
+        "club_asal": rumor.club_asal,
+        "club_tujuan": rumor.club_tujuan,
+        "pemain": rumor.pemain,
+        "content": rumor.content,
+    }
 
     form = RumorsForm(request.POST or None, instance=rumor)
-    if form.is_valid():
-        form.save()
-        messages.success(request, "Rumor berhasil diupdate!")
-        return redirect('rumors:show_rumors_detail', id=id)
-    return render(request, "edit_rumors.html", {'form': form, 'rumor': rumor})
+
+    if request.method == "POST":
+        if form.is_valid():
+            updated_rumor = form.save(commit=False)
+
+            # Cek apakah ada perubahan pada data utama
+            data_changed = (
+                updated_rumor.club_asal != original_data["club_asal"] or
+                updated_rumor.club_tujuan != original_data["club_tujuan"] or
+                updated_rumor.pemain != original_data["pemain"] or
+                updated_rumor.content != original_data["content"]
+            )
+
+            #  Reset status hanya jika ada perubahan dan status lama bukan pending
+            if data_changed and rumor.status in ["verified", "denied"]:
+                updated_rumor.status = "pending"
+                messages.warning(
+                    request,
+                    "Editing this rumor has reset its verification status back to Pending for re-verification."
+                )
+            elif not data_changed:
+                messages.info(request, "No changes detected. Status remains unchanged.")
+
+            updated_rumor.save()
+            return redirect('rumors:show_rumors_detail', id=id)
+        else:
+            messages.error(request, "Please fix the errors in the form before submitting.")
+
+    context = {'form': form, 'rumor': rumor}
+    return render(request, "edit_rumors.html", context)
+
 
 # ========== Menghapus rumor ==========
 @login_required(login_url='accounts:login_page')
@@ -77,7 +109,7 @@ def delete_rumors(request, id):
     if rumor.author != request.user:
         return HttpResponse("Kamu tidak punya izin menghapus rumor ini.", status=403)
     rumor.delete()
-    messages.success(request, "Rumor berhasil dihapus.")
+    
     return redirect('rumors:show_rumors_main')
 
 # ========== Verifikasi oleh admin ==========
@@ -85,27 +117,24 @@ def delete_rumors(request, id):
 def verify_rumor(request, id):
     rumor = get_object_or_404(Rumors, pk=id)
 
-    # Cek kalau user bukan admin club
+    # Hanya admin klub tujuan atau asal yang bisa verifikasi
     if not request.user.is_club_admin:
-        return HttpResponseForbidden("You are not authorized to verify rumors.")
-
-
-    # Ambil profile user
-    try:
-        profile = request.user.profile
-    except Profile.DoesNotExist:
-        messages.error(request, "You don't have a club assigned to your profile.")
+        
         return redirect('rumors:show_rumors_detail', id=id)
 
-    # Cek apakah rumor ini menuju club yang dikelola oleh admin tersebut
-    if profile.managed_club != rumor.club_tujuan:
-        messages.error(request, "You can only verify rumors directed to your managed club.")
+    profile = getattr(request.user, "profile", None)
+    if not profile or not profile.managed_club:
+        
         return redirect('rumors:show_rumors_detail', id=id)
 
-    # Jika lolos semua, verifikasi rumor
-    rumor.is_verified = True
+    if profile.managed_club not in [rumor.club_tujuan, rumor.club_asal]:
+        
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    # Update status ke verified
+    rumor.status = "verified"
     rumor.save()
-    messages.success(request, f"Rumor '{rumor.title}' has been verified successfully!")
+    
     return redirect('rumors:show_rumors_detail', id=id)
 
 # ========== AJAX: get pemain berdasarkan club_asal ==========
@@ -113,3 +142,51 @@ def get_players_by_club(request):
     club_id = request.GET.get('club_id')
     players = Player.objects.filter(current_club_id=club_id).values('id', 'nama_pemain')
     return JsonResponse(list(players), safe=False)
+
+@login_required(login_url='accounts:login_page')
+def deny_rumor(request, id):
+    rumor = get_object_or_404(Rumors, pk=id)
+
+    if not request.user.is_club_admin:
+        
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    profile = getattr(request.user, "profile", None)
+    if not profile or not profile.managed_club:
+
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    if profile.managed_club not in [rumor.club_tujuan, rumor.club_asal]:
+        
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    # Update status ke denied
+    rumor.status = "denied"
+    rumor.save()
+    
+    return redirect('rumors:show_rumors_detail', id=id)
+
+@login_required(login_url='accounts:login_page')
+def revert_rumor(request, id):
+    rumor = get_object_or_404(Rumors, pk=id)
+
+    # Hanya admin klub yang bisa revert
+    if not request.user.is_club_admin:
+
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    profile = getattr(request.user, "profile", None)
+    if not profile or not profile.managed_club:
+        
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    # Hanya admin klub tujuan atau asal yang bisa revert
+    if profile.managed_club not in [rumor.club_tujuan, rumor.club_asal]:
+        
+        return redirect('rumors:show_rumors_detail', id=id)
+
+    #  Set status jadi pending lagi
+    rumor.status = "pending"
+    rumor.save()
+    
+    return redirect('rumors:show_rumors_detail', id=id)

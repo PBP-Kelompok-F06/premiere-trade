@@ -1,38 +1,64 @@
 {% extends 'base.html' %}
-{% block title %}Edit Rumor{% endblock %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-4">
-  <h2>Edit Rumor</h2>
-  <form method="POST">
-    {% csrf_token %}
-    <div class="mb-3">{{ form.club_asal.label_tag }} {{ form.club_asal }}</div>
-    <div class="mb-3">{{ form.club_tujuan.label_tag }} {{ form.club_tujuan }}</div>
-    <div class="mb-3">{{ form.pemain.label_tag }} {{ form.pemain }}</div>
-    <div class="mb-3">{{ form.content.label_tag }} {{ form.content }}</div>
-    <button type="submit" class="btn btn-success">Save</button>
-    <a href="{% url 'rumors:show_rumors_detail' rumor.id %}" class="btn btn-secondary">Cancel</a>
-  </form>
+<div class="min-h-screen bg-gray-100 py-12 flex items-center justify-center px-4">
+
+  <!-- Card container -->
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10">
+
+    <!-- Header -->
+    <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">
+      ✏️ Edit Transfer Rumor
+    </h1>
+
+    {% if rumor.status == "verified" or rumor.status == "denied" %}
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 text-sm p-4 rounded-lg mb-6">
+    ⚠️ This rumor is currently <strong>{{ rumor.status }}</strong>.
+    Editing it will reset the status to <strong>Pending</strong>.
+    </div>
+    {% endif %}
+
+
+
+    <!-- Form -->
+    <form method="POST" class="space-y-5">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <!-- Loop fields -->
+      {% for field in form %}
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          {% if field.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ field.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <!-- Buttons -->
+      <div class="flex justify-between items-center pt-6">
+        <a href="{% url 'rumors:show_rumors_main' %}"
+           class="text-gray-600 hover:text-gray-800 transition text-sm font-medium">
+          ← Cancel
+        </a>
+        <button type="submit"
+                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2.5 rounded-full shadow-md transition">
+          💾 Update Rumor
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const clubSelect = document.querySelector('#id_club_asal');
-  const pemainSelect = document.querySelector('#id_pemain');
-  clubSelect.addEventListener('change', function() {
-    const clubId = this.value;
-    if (!clubId) return;
-    fetch(`/rumors/get-players/?club_id=${clubId}`)
-      .then(res => res.json())
-      .then(data => {
-        pemainSelect.innerHTML = '';
-        data.forEach(p => {
-          const option = document.createElement('option');
-          option.value = p.id;
-          option.textContent = p.nama_pemain;
-          pemainSelect.appendChild(option);
-        });
-      });
-  });
-});
-</script>
+<!-- Tailwind form styling -->
+<style>
+  input, select, textarea {
+    @apply w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition;
+  }
+</style>
+
 {% endblock %}
