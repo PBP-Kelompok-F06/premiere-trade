@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Forum Diskusi - Premiere Trade{% endblock %}
+{% block title %}Community - Premiere Trade{% endblock %}
 
 {% block extra_head %}
     <link rel="stylesheet" href="{% static 'community/css/style.css' %}">
@@ -9,39 +9,65 @@
 
 {% block content %}
 <div class="forum-container">
-    <h1>Forum Diskusi Premiere Trade</h1>
+    <h1>Community Premiere Trade</h1>
 
     <button class="add-forum-btn" id="toggleBtn">+ Tambah Forum</button>
 
     <div id="addForumForm" class="hidden">
-        <form id="forumForm" method="POST"> 
+        <form id="forumForm" method="POST">
             {% csrf_token %}
             <input type="text" name="title" placeholder="Judul forum..." required>
             <textarea name="description" placeholder="Tulis deskripsi atau pandanganmu..." required></textarea>
-            
             <input type="text" name="image_url" placeholder="Tempel URL gambar di sini (opsional)">
-            
             <button type="submit">Kirim</button>
         </form>
     </div>
 
     <div class="forum-list">
         {% for post in posts %}
-        <div class="forum-card">
-            
+        <div class="forum-card" id="post-card-{{ post.id }}"> 
             {% if post.image_url %}
-                <img src="{{ post.image_url }}" alt="{{ post.title }}">
+                <img src="{{ post.image_url }}" alt="{{ post.title }}" id="post-image-{{ post.id }}">
             {% endif %}
-            
-            <div class="forum-content">
-                <h2>{{ post.title }}</h2>
-                <p>{{ post.description }}</p>
-                <small>Dibuat oleh {{ post.author }} • {{ post.created_at|date:"d M Y, H:i" }}</small>
-                
-                <button class="reply-btn" data-target-form="reply-form-{{ post.id }}">
-                    💬 Reply ({{ post.replies.count }}) </button>
 
-                <div class="reply-form-container hidden" id="reply-form-{{ post.id }}">
+            <div class="forum-content">
+                <h2 id="post-title-{{ post.id }}">{{ post.title }}</h2>
+                <p id="post-desc-{{ post.id }}">{{ post.description }}</p>
+                <small>Dibuat oleh {{ post.author }} • {{ post.created_at|date:"d M Y, H:i" }}</small>
+
+                <div class="post-actions">
+                    <button class="reply-btn" data-target-form="reply-form-post-{{ post.id }}">
+                        💬 Reply ({{ post.replies.count }})
+                    </button>
+
+                    <div class="author-actions">
+                        {% if post.author == user %}
+                            <button class="edit-btn edit-btn-ajax" 
+                                    data-target-form="edit-form-{{ post.id }}"
+                                    data-edit-url="{% url 'community:edit_post' post.id %}">
+                                ✏️ Edit
+                            </button>
+                          
+                            <form action="{% url 'community:delete_post' post.id %}" method="POST" class="delete-form" onsubmit="return confirm('Yakin mau hapus post ini?');">
+                                {% csrf_token %}
+                                <button type="submit" class="delete-btn">🗑️ Delete</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="edit-form-container hidden" id="edit-form-{{ post.id }}">
+                    <form class="edit-form" data-post-id="{{ post.id }}">
+                        <input type="text" name="title" value="{{ post.title }}" required>
+                        <textarea name="description" rows="4" required>{{ post.description }}</textarea>
+                        <input type="text" name="image_url" value="{{ post.image_url|default_if_none:'' }}" placeholder="URL Gambar (opsional)">
+                        <button type="submit">Simpan</button>
+                        <button type="button" class="cancel-edit-btn" data-target-form="edit-form-{{ post.id }}">Batal</button>
+                    </form>
+                </div>
+
+
+                <div class="reply-form-container hidden" id="reply-form-post-{{ post.id }}">
                     <form action="{% url 'community:add_reply' post.id %}" method="POST" class="reply-form">
                         {% csrf_token %}
                         <textarea name="content" placeholder="Tulis balasanmu..." rows="3" required></textarea>
@@ -49,15 +75,16 @@
                     </form>
                 </div>
 
-                <div class="replies-list">
-                    {% for reply in post.replies.all %}
-                        <div class="reply-card">
-                            <strong>{{ reply.author.username }}</strong>
-                            <p>{{ reply.content }}</p>
-                        </div>
+                <div class="replies-list" id="replies-for-post-{{ post.id }}">
+                    
+                    {% for reply in post.top_level_replies %}
+                        
+                        {% include "community/_reply.html" with reply=reply %}
+
                     {% empty %}
-                        <small class="no-replies">Belum ada balasan.</small>
+                        <small class="no-replies" id="no-reply-msg-{{ post.id }}">Belum ada balasan.</small>
                     {% endfor %}
+
                 </div>
             </div>
         </div>
@@ -69,30 +96,161 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    
-    // Script 1: Toggle Form "Tambah Forum"
+    // Ambil CSRF Token dari form utama
+    const csrfToken = document.querySelector('#forumForm [name=csrfmiddlewaretoken]').value;
+    const forumList = document.querySelector('.forum-list'); // Parent untuk event delegation
+
+    // Toggle form "Tambah Forum"
     const btn = document.getElementById("toggleBtn");
     const form = document.getElementById("addForumForm");
-    
-    if (btn && form) { 
-        btn.addEventListener("click", () => {
-            form.classList.toggle("hidden");
-        });
+    if (btn && form) {
+        btn.addEventListener("click", () => { form.classList.toggle("hidden"); });
     }
 
-    // Script 2: Toggle Form "Reply"
-    const allReplyButtons = document.querySelectorAll(".reply-btn");
-    
-    allReplyButtons.forEach(button => {
-        button.addEventListener("click", () => {
-            const formId = button.getAttribute("data-target-form");
+    // Toggle form "Reply" dan "Edit" menggunakan event delegation
+    forumList.addEventListener("click", function(event) {
+        // 1. Handle tombol "Reply"
+        if (event.target.classList.contains("reply-btn")) {
+            const formId = event.target.dataset.targetForm;
             const replyForm = document.getElementById(formId);
-            
-            if (replyForm) {
-                replyForm.classList.toggle("hidden");
-            }
-        });
+            if (replyForm) { replyForm.classList.toggle("hidden"); }
+        }
+
+        // 2. Handle tombol "Edit"
+        if (event.target.classList.contains("edit-btn-ajax")) {
+            const formId = event.target.dataset.targetForm;
+            const editForm = document.getElementById(formId);
+            if (editForm) { editForm.classList.toggle("hidden"); }
+        }
+
+        // 3. Handle tombol "Batal Edit"
+        if (event.target.classList.contains("cancel-edit-btn")) {
+            const formId = event.target.dataset.targetForm;
+            const editForm = document.getElementById(formId);
+            if (editForm) { editForm.classList.add("hidden"); }
+        }
     });
+
+    // Handle Submit Form Edit (AJAX) - Tetap sama
+    forumList.addEventListener("submit", function(event) {
+        if (event.target.classList.contains("edit-form")) {
+            event.preventDefault(); 
+
+            const postId = event.target.dataset.postId;
+            const editUrl = document.querySelector(`.edit-btn-ajax[data-target-form="edit-form-${postId}"]`).dataset.editUrl;
+            
+            const formData = {
+                title: event.target.querySelector('[name="title"]').value,
+                description: event.target.querySelector('[name="description"]').value,
+                image_url: event.target.querySelector('[name="image_url"]').value
+            };
+
+            fetch(editUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(`post-title-${postId}`).textContent = data.post.title;
+                    document.getElementById(`post-desc-${postId}`).textContent = data.post.description;
+                    const imgElement = document.getElementById(`post-image-${postId}`);
+                    if (data.post.image_url) {
+                        if (imgElement) {
+                            imgElement.src = data.post.image_url;
+                        } else {
+                            const card = document.getElementById(`post-card-${postId}`);
+                            const newImg = document.createElement('img');
+                            newImg.id = `post-image-${postId}`;
+                            newImg.src = data.post.image_url;
+                            newImg.alt = data.post.title;
+                            card.prepend(newImg);
+                        }
+                    } else if (imgElement) {
+                        imgElement.remove();
+                    }
+                    event.target.parentElement.classList.add("hidden");
+                } else {
+                    alert("Gagal update: " + data.message);
+                }
+            })
+            .catch(error => { console.error("Error:", error); alert("Terjadi kesalahan."); });
+        }
+
+        // --- SCRIPT AJAX BARU UNTUK REPLY ---
+        if (event.target.classList.contains("reply-form")) {
+            event.preventDefault(); // Stop form submit biasa
+            
+            const form = event.target;
+            const url = form.action;
+            const formData = new FormData(form);
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                    // 'Content-Type' jangan di-set, biarkan browser
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Buat HTML untuk reply baru
+                    const newReplyHTML = createReplyHTML(data.reply);
+                    
+                    // Tentukan di mana reply baru akan diletakkan
+                    let targetList;
+                    if (data.reply.parent_id) {
+                        // Ini adalah nested reply
+                        const parentCard = document.getElementById(`reply-${data.reply.parent_id}`);
+                        targetList = parentCard.querySelector('.nested-replies');
+                    } else {
+                        // Ini adalah top-level reply
+                        targetList = document.getElementById(`replies-for-post-${data.reply.post_id}`);
+                        // Hapus pesan "Belum ada balasan" jika ada
+                        const noReplyMsg = document.getElementById(`no-reply-msg-${data.reply.post_id}`);
+                        if(noReplyMsg) { noReplyMsg.remove(); }
+                    }
+                    
+                    // Tambahkan HTML ke DOM
+                    targetList.insertAdjacentHTML('beforeend', newReplyHTML);
+                    
+                    // Kosongkan dan sembunyikan form
+                    form.querySelector('textarea').value = '';
+                    form.parentElement.classList.add('hidden');
+                } else {
+                    alert("Gagal membalas: " + data.message);
+                }
+            })
+            .catch(error => { console.error("Error:", error); alert("Terjadi kesalahan."); });
+        }
+    });
+
+    // Fungsi untuk membuat HTML reply card baru
+    function createReplyHTML(reply) {
+        return `
+        <div class="reply-card" id="reply-${reply.id}">
+            <strong>${reply.author_username}</strong>
+            <p>${reply.content}</p>
+            <small>${reply.created_at}</small>
+            <div class="post-actions">
+                <button class="reply-btn" data-target-form="reply-form-${reply.id}">
+                    💬 Balas
+                </button>
+            </div>
+            <div class="reply-form-container nested-form hidden" id="reply-form-${reply.id}">
+                <form action="${reply.new_reply_url}" method="POST" class="reply-form">
+                    {% csrf_token %} <textarea name="content" placeholder="Balas ${reply.author_username}..." rows="2" required></textarea>
+                    <button type="submit">Kirim Balasan</button>
+                </form>
+            </div>
+            <div class="nested-replies">
+                </div>
+        </div>
+        `;
+    }
 });
 </script>
 {% endblock %}

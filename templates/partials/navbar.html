@@ -3,22 +3,28 @@
     
     <div class="logo">
         <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
-        Premiere Trade
     </div>
     
     <div class="nav-menu">
         <a href="{% url 'main:homepage' %}">Home</a>
         <a href="{% url 'community:community_home' %}">Community</a>
-        
+
+        <a href="#">Best XI</a>
+        {% if user.is_club_admin %}
+            <a href="{% url 'player_transaction:club_saya' %}">My Club</a>
+        {% endif %}
         <a href="#">Rumor</a>
-        <a href="{% url 'player_transaction:pemain_dijual' %}">Transfer</a>
+        <a href="{% url 'player_transaction:list_pemain_dijual' %}">Transfer</a>
+        {% if user.is_club_admin %}
+            <a href="{% url 'player_transaction:negotiation_inbox' %}">Inbox</a>
+        {% endif %}
     </div>
 
     <div class="auth-links">
         {% if user.is_authenticated %}
-            <span class="user-info">
-                Halo, <strong>{{ user.username }}</strong>
-            </span>
+            <a class="bg-gray-200 hover:bg-gray-700 hover:text-white py-2 px-4 border hover:border-transparent rounded" href="{% url 'accounts:edit_profile' %}">
+                {{ user.username }}
+            </a>
             <a href="{% url 'accounts:logout_user' %}" class="logout">Logout</a>
         {% else %}
             <a href="{% url 'accounts:login_page' %}" class="login">Login</a>

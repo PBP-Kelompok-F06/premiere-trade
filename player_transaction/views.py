@@ -18,25 +18,70 @@ from player_transaction.models import Negotiation
 def club_admin_required(user):
     return user.is_authenticated and user.is_club_admin
 
-@login_required(login_url='/login')
-def menampilkan_list_pemain_yang_sedang_dijual(request):
-    pemain_list = Player.objects.filter(sedang_dijual = True)
+@login_required(login_url='/accounts/login/')
+def list_pemain_dijual_view(request):
+    """Menampilkan halaman list pemain yang sedang dijual (HTML)"""
+    return render(request, "list_pemain_dijual.html")
 
-    context = {
-        'pemain_list': pemain_list,
-    }
+@login_required(login_url='/accounts/login/')
+def list_pemain_dijual_json(request):
+    """Endpoint AJAX: Mengembalikan daftar pemain yang sedang dijual (JSON)"""
+    pemain_list = Player.objects.filter(sedang_dijual=True).select_related('current_club')
 
-    return render(request, "list_pemain_dijual.html", context)
+    data = [
+        {
+            "id": p.id,
+            "nama_pemain": p.nama_pemain,
+            "posisi": p.position,
+            "umur": p.umur,
+            "negara": p.negara,
+            "match": p.jumlah_match,
+            "goal": p.jumlah_goal,
+            "assist": p.jumlah_asis,
+            "market_value": p.market_value,
+            "thumbnail": p.thumbnail,
+            "nama_klub": p.current_club.name if p.current_club else "-",
+        }
+        for p in pemain_list
+    ]
 
-@login_required(login_url='/login')
+    return JsonResponse(data, safe=False)
+
+@login_required(login_url='/accounts/login/')
 def list_pemain_saya(request):
-    """Tampilkan pemain milik klub admin yang sedang login"""
+    """Endpoint AJAX: mengembalikan daftar pemain milik klub user login (format JSON)."""
     profile = get_object_or_404(Profile, user=request.user)
-    pemain_list = Player.objects.filter(current_club=profile.managed_club)
-    return render(request, "club_saya.html", {"pemain_list": pemain_list})
+    klub = profile.managed_club
+
+    # Ambil semua pemain klub yang dikelola user login
+    pemain_list = Player.objects.filter(current_club=klub).select_related('current_club')
+
+    data = [
+        {
+            "id": p.id,
+            "nama_pemain": p.nama_pemain,
+            "posisi": p.position,
+            "umur": p.umur,
+            "negara": p.negara,
+            "match": p.jumlah_match,
+            "goal": p.jumlah_goal,
+            "assist": p.jumlah_asis,
+            "market_value": p.market_value,
+            "sedang_dijual": p.sedang_dijual,
+            "thumbnail": p.thumbnail,
+        }
+        for p in pemain_list
+    ]
+
+    return JsonResponse(data, safe=False)
+
+@login_required(login_url='/accounts/login/')
+def club_saya_view(request):
+    """Menampilkan halaman My Club (HTML)"""
+    return render(request, "club_saya.html")
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def jual_pemain_ajax(request, player_id):
     """Ubah status pemain jadi sedang dijual (AJAX)"""
@@ -53,7 +98,7 @@ def jual_pemain_ajax(request, player_id):
         'nama': player.nama_pemain,
     })
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def batalkan_jual_pemain_ajax(request, player_id):
     """Batalkan penjualan pemain milik klub sendiri"""
@@ -71,7 +116,7 @@ def batalkan_jual_pemain_ajax(request, player_id):
         'message': f"Penjualan {player.nama_pemain} telah dibatalkan."
     })
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def beli_pemain_ajax(request, player_id):
     """Admin club membeli pemain dari transfer market"""
@@ -94,7 +139,7 @@ def beli_pemain_ajax(request, player_id):
     })
 
 # --- Inbox (hanya untuk admin club) ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 def negotiation_inbox(request):
     profile = get_object_or_404(Profile, user=request.user)
@@ -114,7 +159,7 @@ def negotiation_inbox(request):
 
 
 # --- Kirim tawaran (dari halaman pemain dijual) ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
 def send_negotiation(request, player_id):
@@ -144,7 +189,7 @@ def send_negotiation(request, player_id):
 
 
 # --- Aksi accept/reject ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
 def respond_negotiation(request, nego_id, action):

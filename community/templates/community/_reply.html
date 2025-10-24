@@ -1,0 +1,25 @@
+<div class="reply-card" id="reply-{{ reply.id }}">
+    <strong>{{ reply.author.username }}</strong>
+    <p>{{ reply.content }}</p>
+    <small>{{ reply.created_at|date:"d M Y, H:i" }}</small>
+
+    <div class="post-actions">
+        <button class="reply-btn" data-target-form="reply-form-{{ reply.id }}">
+            💬 Balas
+        </button>
+    </div>
+
+    <div class="reply-form-container nested-form hidden" id="reply-form-{{ reply.id }}">
+        <form action="{% url 'community:add_nested_reply' reply.id %}" method="POST" class="reply-form">
+            {% csrf_token %}
+            <textarea name="content" placeholder="Balas {{ reply.author.username }}..." rows="2" required></textarea>
+            <button type="submit">Kirim Balasan</button>
+        </form>
+    </div>
+
+    <div class="nested-replies">
+        {% for child_reply in reply.child_replies.all %}
+            {% include "community/_reply.html" with reply=child_reply %}
+        {% endfor %}
+    </div>
+</div>

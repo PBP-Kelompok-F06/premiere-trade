@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Superuser Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    {% load static %}
+    <div class="flex">
+      {% include '_sidebar.html' with active_nav='dashboard' %}
+
+      <main class="flex-1 p-10">
+        <h1 class="text-3xl font-bold text-gray-800">Superuser Dashboard</h1>
+        <p class="text-gray-600 mb-8">Selamat datang, {{ user.username }}.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Total Users</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ user_count }}</p>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Total Clubs</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ club_count }}</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">
+              Daftar Pengguna
+            </h2>
+            <div class="overflow-y-auto h-96">
+              <table class="w-full text-sm text-left text-gray-500">
+                <thead
+                  class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"
+                >
+                  <tr>
+                    <th scope="col" class="px-6 py-3">Username</th>
+                    <th scope="col" class="px-6 py-3">Role</th>
+                    <th scope="col" class="px-6 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for u in all_users %} {% if u.username != "admin"%}
+                  <tr class="bg-white border-b hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">
+                      {{ u.username }}
+                    </td>
+                    <td class="px-6 py-4">
+                      {% if u.is_club_admin %}
+                      <span
+                        class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full"
+                        >Admin Club</span
+                      >
+                      {% else %}
+                      <span
+                        class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full"
+                        >Fan</span
+                      >
+                      {% endif %}
+                    </td>
+                    <td class="px-6 py-4 flex space-x-4">
+                      <a
+                        href="{% url 'accounts:edit_user' u.pk %}"
+                        class="font-medium text-blue-600 hover:underline"
+                        >Edit</a
+                      >
+
+                      <button
+                        type="button"
+                        class="font-medium text-red-600 hover:underline"
+                        data-url="{% url 'accounts:delete_user' u.pk %}"
+                        data-username="{{ u.username }}"
+                        onclick="openDeleteModal(this)"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                  {% endif %}{% empty %}
+                  <tr>
+                    <td colspan="3" class="px-6 py-4 text-center">
+                      Tidak ada data pengguna.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Klub</h2>
+            <div class="overflow-y-auto h-96">
+              <table class="w-full text-sm text-left text-gray-500">
+                <thead
+                  class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"
+                >
+                  <tr>
+                    <th scope="col" class="px-6 py-3">Nama Klub</th>
+                    <th scope="col" class="px-6 py-3">Negara</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for club in all_clubs %} {% if club.name != "Admin"%}
+                  <tr class="bg-white border-b hover:bg-gray-50">
+                    <td class="px-6 py-4 font-medium text-gray-900">
+                      {{ club.name }}
+                    </td>
+                    <td class="px-6 py-4">{{ club.country }}</td>
+                  </tr>
+                  {% endif %} {% empty %}
+                  <tr>
+                    <td colspan="2" class="px-6 py-4 text-center">
+                      Tidak ada data klub.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <div
+      id="delete-modal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden"
+    >
+      <div
+        class="relative mx-auto p-8 border w-full max-w-md shadow-lg rounded-md bg-white"
+      >
+        <div class="text-center">
+          <h3 class="text-2xl font-bold text-gray-900">
+            Konfirmasi Penghapusan
+          </h3>
+          <div class="mt-4 px-7 py-3">
+            <p class="text-md text-gray-600">
+              Apakah Anda yakin ingin menghapus pengguna
+              <strong id="delete-username" class="text-red-600"></strong> secara
+              permanen?
+            </p>
+          </div>
+          <form id="delete-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="flex justify-center items-center space-x-4 mt-6">
+              <button
+                id="cancel-btn"
+                type="button"
+                class="w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                class="w-full justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700"
+              >
+                Ya, Hapus Pengguna
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ▼▼▼ SCRIPT BARU UNTUK MODAL ▼▼▼
+      const modal = document.getElementById("delete-modal");
+      const deleteForm = document.getElementById("delete-form");
+      const deleteUsernameSpan = document.getElementById("delete-username");
+      const cancelBtn = document.getElementById("cancel-btn");
+
+      // Fungsi untuk membuka modal
+      function openDeleteModal(button) {
+        const actionUrl = button.getAttribute('data-url');
+        const username = button.getAttribute('data-username');
+        // Set action form dan nama user di modal
+        deleteForm.action = actionUrl;
+        deleteUsernameSpan.textContent = username;
+        // Tampilkan modal
+        modal.classList.remove("hidden");
+      }
+
+      // Fungsi untuk menutup modal
+      function closeDeleteModal() {
+        modal.classList.add("hidden");
+      }
+
+      // Event listener untuk tombol batal
+      cancelBtn.addEventListener("click", closeDeleteModal);
+
+      // Event listener untuk menutup modal jika klik di luar area modal
+      window.addEventListener("click", function (event) {
+        if (event.target == modal) {
+          closeDeleteModal();
+        }
+      });
+    </script>
+  </body>
+</html>
