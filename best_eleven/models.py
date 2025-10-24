@@ -2,12 +2,6 @@ from django.db import models
 from django.conf import settings
 from main.models import Club, Player
 
-
-
-def __str__(self):
-    return f"{self.nama_pemain} ({self.current_club.name if self.current_club else 'N/A'})"
-    
-
 class BestEleven(models.Model):
     FORMATION_CHOICES = [
         ('4-4-2', '4-4-2'),
@@ -22,6 +16,11 @@ class BestEleven(models.Model):
     players = models.ManyToManyField(Player)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    player_slot_data = models.JSONField(default=list, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} - by {self.fan_account.username}"
+        username = getattr(self.fan_account, self.fan_account.USERNAME_FIELD, str(self.fan_account.pk))
+        return f"{self.name} - by {username}"
+
+    class Meta:
+         ordering = ['-updated_at']

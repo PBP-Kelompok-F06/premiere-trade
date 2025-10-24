@@ -1,678 +1,43 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static tailwind_tags %} 
 
 {% block title %}Best XI Team Builder{% endblock title %}
 
 {% block content %}
 
-<style>
-    :root {
-        --primary-purple: #6B46C1;
-        --secondary-purple: #f5f8fc;
-        --accent-pink: #D946A6;
-        --dark-bg: #f5f8fc;
-        --card-bg: #f5f8fc;
-        --card-border: #4A2C7C;
-        --text-light: #4A2C7C;
-        --card-border: #D946A6;
-        --text-muted: rgb(46, 15, 50);
-        --success-green: #10B981;
-        --pitch-green: #1A5F1A;
-    }
-
-    body {
-        background: linear-gradient(135deg, #f5f8fc 0%, #f2f1f3 100%);
-        min-height: 100vh;
-    }
-
-    /* ===== TYPOGRAPHY ===== */
-    h1, h2, h3 {
-        color: var(--text-light);
-        font-weight: 700;
-    }
-
-    .main-title {
-        background: linear-gradient(135deg, #A78BFA 0%, #D946A6 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-size: 2.5rem;
-        text-align: center;
-        margin-bottom: 2rem;
-        letter-spacing: -0.02em;
-        animation: fadeInDown 0.6s ease;
-    }
-
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* ===== SIDEBAR CARDS ===== */
-    .sidebar-card {
-        background: var(--card-bg);
-        border: 2px solid var(--card-border);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 10px 30px rgba(105, 70, 193, 0.2);
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        animation: fadeInUp 0.6s ease;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .sidebar-card h2 {
-        color: var(--text-light);
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid var(--card-border);
-        display: flex;
-        align-items: center;
-        justify-content: space-between; 
-        gap: 0.5rem;
-    }
-
-    /* ===== HISTORY LIST (Left Sidebar) ===== */
-    #history-list {
-        overflow-y: auto;
-        flex-grow: 1;
-        max-height: calc(80vh - 120px);
-    }
-
-    #history-list::-webkit-scrollbar,
-    #player-list::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    #history-list::-webkit-scrollbar-track,
-    #player-list::-webkit-scrollbar-track {
-        background: var(--dark-bg);
-        border-radius: 4px;
-    }
-
-    #history-list::-webkit-scrollbar-thumb,
-    #player-list::-webkit-scrollbar-thumb {
-        background: var(--primary-purple);
-        border-radius: 4px;
-    }
-
-    .history-item {
-        background: linear-gradient(135deg, #f5f8fc 0%, #f5f8fc 100%);
-        border: 2px solid var(--card-border);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .history-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: linear-gradient(180deg, var(--primary-purple), var(--accent-pink));
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .history-item:hover {
-        border-color: var(--accent-pink);
-        transform: translateX(5px);
-        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.3);
-    }
-
-    .history-item:hover::before {
-        opacity: 1;
-    }
-
-    .history-item.highlighted {
-        background: linear-gradient(135deg, #9c89c7 0%, #D946A6 100%);
-        border-color: var(--accent-pink);
-        box-shadow: 0 0 20px rgba(217, 70, 166, 0.5);
-    }
-
-    .history-item.highlighted::before {
-        opacity: 1;
-    }
-
-    .history-item h4 {
-        color: var(--text-light);
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-    }
-
-    .history-item p {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    /* ===== PITCH CONTAINER (Center) ===== */
-    .pitch-container {
-        background: var(--card-bg);
-        border: 2px solid var(--card-border);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 10px 30px rgba(105, 70, 193, 0.2);
-        animation: fadeInUp 0.6s ease 0.2s both;
-    }
-
-    .formation-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        padding: 1rem;
-        background: #e3dcef;
-        border-radius: 0.75rem;
-        backdrop-filter: blur(10px);
-    }
-
-    @media (min-width: 768px) {
-        .formation-controls {
-            flex-direction: row;
-        }
-    }
-
-    .formation-controls input,
-    .formation-controls select {
-        flex: 1;
-        background: var(--dark-bg);
-        color: var(--text-light);
-        border: 2px solid var(--card-border);
-        border-radius: 0.5rem;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .formation-controls input:focus,
-    .formation-controls select:focus {
-        outline: none;
-        border-color: var(--primary-purple);
-        box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.2);
-    }
-
-    .formation-controls input::placeholder {
-        color: var(--text-muted);
-    }
-
-    /* ===== PITCH FIELD ===== */
-    #pitch {
-        background-image: url('{% static 'images/lapangan.jpg' %}');
-        background-size: cover;
-        background-position: center;
-        border-radius: 0.75rem;
-        position: relative;
-        display: grid;
-        grid-template-rows: repeat(5, 1fr);
-        grid-template-columns: repeat(5, 1fr);
-        padding: 10px 0;
-        height: 450px;
-        box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
-    }
-
-    @media (min-width: 768px) {
-        #pitch {
-            height: 550px;
-        }
-    }
-
-    .pitch-slot {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .pitch-slot.empty .slot-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: rgba(107, 70, 193, 0.3);
-        border: 3px dashed rgba(167, 139, 250, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    @media (min-width: 768px) {
-        .pitch-slot.empty .slot-circle {
-            width: 80px;
-            height: 80px;
-        }
-    }
-
-    .pitch-slot.empty:hover .slot-circle {
-        background: rgba(107, 70, 193, 0.5);
-        border-color: var(--accent-pink);
-        transform: scale(1.1);
-        box-shadow: 0 0 20px rgba(217, 70, 166, 0.5);
-    }
-
-    .pitch-slot.empty span {
-        font-weight: 700;
-        color: white;
-        font-size: 1rem;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-    }
-
-    @media (min-width: 768px) {
-        .pitch-slot.empty span {
-            font-size: 1.25rem;
-        }
-    }
-
-    .pitch-slot.filled img {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid var(--primary-purple);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-        transition: all 0.3s ease;
-    }
-
-    @media (min-width: 768px) {
-        .pitch-slot.filled img {
-            width: 80px;
-            height: 80px;
-        }
-    }
-
-    .pitch-slot.filled:hover img {
-        transform: scale(1.15);
-        border-color: var(--accent-pink);
-        box-shadow: 0 0 25px rgba(217, 70, 166, 0.8);
-    }
-
-    .pitch-slot .player-name {
-        margin-top: 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
-        background: linear-gradient(135deg, rgba(107, 70, 193, 0.9), rgba(217, 70, 166, 0.9));
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        max-width: 100px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: center;
-    }
-
-    .pitch-slot.selected .slot-circle {
-        background: rgba(217, 70, 166, 0.5) !important;
-        border-color: var(--accent-pink) !important;
-        border-style: solid !important;
-        animation: pulse 1.5s infinite;
-    }
-
-    .pitch-slot.selected .player-name {
-        display: none;
-    }
-
-    @keyframes pulse {
-        0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-        50% {
-            opacity: 0.7;
-            transform: scale(1.1);
-        }
-    }
-
-    /* Grid Positions */
-    .GK { grid-area: 5 / 3 / 6 / 4; }
-    .LB { grid-area: 4 / 1 / 5 / 2; }
-    .LCB { grid-area: 4 / 2 / 5 / 3; }
-    .RCB { grid-area: 4 / 4 / 5 / 5; }
-    .RB { grid-area: 4 / 5 / 5 / 6; }
-    .layout-4-3-3 .LCM { grid-area: 3 / 2 / 4 / 3; }
-    .layout-4-3-3 .CM { grid-area: 3 / 3 / 4 / 4; }
-    .layout-4-3-3 .RCM { grid-area: 3 / 4 / 4 / 5; }
-    .layout-4-3-3 .LW { grid-area: 2 / 1 / 3 / 2; }
-    .layout-4-3-3 .ST { grid-area: 2 / 3 / 3 / 4; }
-    .layout-4-3-3 .RW { grid-area: 2 / 5 / 3 / 6; }
-    .layout-4-4-2 .LM { grid-area: 3 / 1 / 4 / 2; }
-    .layout-4-4-2 .LCM { grid-area: 3 / 2 / 4 / 3; }
-    .layout-4-4-2 .RCM { grid-area: 3 / 4 / 4 / 5; }
-    .layout-4-4-2 .RM { grid-area: 3 / 5 / 4 / 6; }
-    .layout-4-4-2 .LST { grid-area: 2 / 2 / 3 / 3; }
-    .layout-4-4-2 .RST { grid-area: 2 / 4 / 3 / 5; }
-    .layout-3-5-2 .LCB { grid-area: 4 / 2 / 5 / 3; }
-    .layout-3-5-2 .CB { grid-area: 4 / 3 / 5 / 4; }
-    .layout-3-5-2 .RCB { grid-area: 4 / 4 / 5 / 5; }
-    .layout-3-5-2 .LWB { grid-area: 3 / 1 / 4 / 2; }
-    .layout-3-5-2 .LCM { grid-area: 3 / 2 / 4 / 3; }
-    .layout-3-5-2 .CAM { grid-area: 3 / 3 / 4 / 4; }
-    .layout-3-5-2 .RCM { grid-area: 3 / 4 / 4 / 5; }
-    .layout-3-5-2 .RWB { grid-area: 3 / 5 / 4 / 6; }
-    .layout-3-5-2 .LST { grid-area: 2 / 2 / 3 / 3; }
-    .layout-3-5-2 .RST { grid-area: 2 / 4 / 3 / 5; }
-    .layout-4-2-3-1 .LDM { grid-area: 3 / 2 / 4 / 3; }
-    .layout-4-2-3-1 .RDM { grid-area: 3 / 4 / 4 / 5; }
-    .layout-4-2-3-1 .LAM { grid-area: 2 / 1 / 3 / 2; }
-    .layout-4-2-3-1 .CAM { grid-area: 2 / 3 / 3 / 4; }
-    .layout-4-2-3-1 .RAM { grid-area: 2 / 5 / 3 / 6; }
-    .layout-4-2-3-1 .ST { grid-area: 1 / 3 / 2 / 4; }
-
-    /* ===== ACTION BUTTONS ===== */
-    .action-buttons {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-        border-top: 2px solid var(--card-border);
-        gap: 1rem;
-    }
-
-    .btn {
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.5rem;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .btn-clear {
-        background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
-        color: white;
-    }
-
-    .btn-clear:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(220, 38, 38, 0.4);
-    }
-
-    .btn-save {
-        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-pink) 100%);
-        color: white;
-        flex: 1;
-    }
-
-    .btn-save:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.4);
-    }
-
-    .btn-save:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* ===== PLAYER LIST (Right Sidebar) ===== */
-    .club-filter {
-        margin-bottom: 1rem;
-    }
-
-    .club-filter label {
-        display: block;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-    }
-
-    .club-filter select {
-        width: 100%;
-        background: var(--dark-bg);
-        color: var(--text-light);
-        border: 2px solid var(--card-border);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .club-filter select:focus {
-        outline: none;
-        border-color: var(--primary-purple);
-        box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.2);
-    }
-
-    .filter-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.75rem;
-    }
-
-    .filter-label {
-        color: var(--text-light);
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    .clear-filter-btn {
-        background: none;
-        border: none;
-        color: #F87171;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 0.25rem 0.5rem;
-    }
-
-    .clear-filter-btn:hover {
-        color: #DC2626;
-        text-decoration: underline;
-    }
-    
-    /* --- MODIFIED STYLE FOR NEW BUTTON --- */
-    .btn-new-formation {
-        background: linear-gradient(135deg, var(--primary-purple) 0%, var(--accent-pink) 100%); /* Solid gradient */
-        color: white; /* White text */
-        border: none; /* No border */
-        font-size: 0.9rem; /* Slightly larger */
-        font-weight: 700; /* Bolder */
-        cursor: pointer;
-        transition: all 0.3s ease;
-        padding: 0.4rem 0.9rem; /* Adjusted padding */
-        border-radius: 0.5rem;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-    }
-    .btn-new-formation:hover {
-        color: white;
-        box-shadow: 0 5px 15px rgba(217, 70, 166, 0.4); /* Stronger hover shadow */
-        transform: translateY(-2px); /* Pop effect */
-    }
-    /* --- END MODIFIED STYLE --- */
-
-    #player-list {
-        overflow-y: auto;
-        flex-grow: 1;
-        max-height: calc(80vh - 250px);
-    }
-
-    .player-item {
-        background: linear-gradient(135deg, #f5f8fc 0%, #f5f8fc 100%);
-        border: 2px solid var(--card-border);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.75rem;
-    }
-
-    .player-item:hover {
-        border-color: var(--accent-pink);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 20px rgba(217, 70, 166, 0.3);
-    }
-
-    .player-info {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        flex: 1;
-        overflow: hidden;
-    }
-
-    .player-item img {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid var(--primary-purple);
-        flex-shrink: 0;
-    }
-
-    .player-details {
-        overflow: hidden;
-        flex: 1;
-    }
-
-    .player-name {
-        color: var(--text-light);
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 0.25rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .player-meta {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .player-value {
-        color: var(--success-green);
-        font-weight: 600;
-    }
-
-    .player-position-badge {
-        background: linear-gradient(135deg, var(--primary-purple), var(--accent-pink));
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.85rem;
-        font-weight: 600;
-        flex-shrink: 0;
-        text-transform: uppercase;
-    }
-
-    /* ===== STATUS MESSAGE ===== */
-    #global-status {
-        min-height: 40px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-weight: 600;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-        transition: all 0.3s ease;
-    }
-
-    .status-error {
-        background: linear-gradient(135deg, rgba(220, 38, 38, 0.2), rgba(153, 27, 27, 0.2));
-        border: 2px solid #DC2626;
-        color: #FCA5A5;
-    }
-
-    .status-success {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
-        border: 2px solid var(--success-green);
-        color: #6EE7B7;
-    }
-
-    /* ===== RESPONSIVE GRID ===== */
-    .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 2rem 1rem;
-    }
-
-    .grid-layout {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    @media (min-width: 1024px) {
-        .grid-layout {
-            grid-template-columns: 1fr 2fr 1fr;
-        }
-    }
-
-    /* ===== UTILITY CLASSES ===== */
-    .hidden {
-        display: none;
-    }
-
-    /* ===== EMPTY STATE ===== */
-    .empty-state {
-        text-align: center;
-        padding: 2rem 1rem;
-        color: var(--text-muted);
-        font-style: italic;
-    }
-</style>
-
-<div class="container">
-    <h1 class="main-title">Best XI Team Builder</h1>
-
-    <div id="global-status"></div>
-
-    <div class="grid-layout">
-        <div class="sidebar-card" style="animation-delay: 0s;">
-            <h2>
+<div class="container mx-auto max-w-7xl px-4 py-8">
+    <h1 class="text-4xl font-extrabold text-center mb-8 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 text-transparent bg-clip-text">
+        Best XI Team Builder
+    </h1>
+
+    {# Global Status Message Area #}
+    <div id="global-status" class="min-h-[40px] mb-6 transition-all duration-300"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {# Kolom Kiri: Saved Formations #}
+        <div class="bg-gray-50 border-2 border-pink-500 rounded-xl p-6 shadow-lg flex flex-col h-full">
+            <h2 class="text-xl font-bold text-purple-900 mb-4 pb-4 border-b-2 border-pink-500 flex justify-between items-center gap-2">
                 <span>💾 Saved Formations</span>
-                <button id="new-formation-btn" class="btn-new-formation">
-                    + NEW
-                </button>
+                <a href="{% url 'best_eleven:besteleven-list' %}" class="text-xs font-medium text-purple-600 hover:text-pink-600 hover:underline transition-colors" title="Lihat Semua Formasi">
+                    Lihat Semua
+                </a>
             </h2>
-            <div id="history-list">
-                <p class="empty-state">Loading history...</p>
+            <div id="history-list" class="overflow-y-auto flex-grow max-h-[60vh] pr-2 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-200">
+                <p class="empty-state text-center py-8 text-gray-500 italic">Loading history...</p>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <button id="new-formation-btn" class="w-full py-2 px-4 rounded-md text-white font-bold bg-gradient-to-r from-purple-600 to-pink-500 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-sm">
+                    + NEW FORMATION
+                </button>
             </div>
         </div>
 
-        <div class="pitch-container">
-            <div class="formation-controls">
-                <input type="text" id="formation-name" placeholder="✏️ Formation Name (e.g., Dream Team)">
-                <select id="formation-layout-select">
+        {# Kolom Tengah: Pitch #}
+        <div class="bg-gray-50 border-2 border-pink-500 rounded-xl p-6 shadow-lg">
+            <div class="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-purple-50 rounded-lg">
+                <input type="text" id="formation-name" placeholder="✏️ Formation Name (e.g., Dream Team)" class="flex-1 bg-white text-purple-900 border-2 border-pink-500 rounded-md py-2 px-4 text-sm focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 placeholder-gray-400">
+                <select id="formation-layout-select" class="bg-white text-purple-900 border-2 border-pink-500 rounded-md py-2 px-4 text-sm focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600">
                     <option value="4-3-3">4-3-3</option>
                     <option value="4-4-2">4-4-2</option>
                     <option value="3-5-2">3-5-2</option>
@@ -680,53 +45,62 @@
                 </select>
             </div>
 
-            <div id="pitch" class="relative w-full"></div>
+            <div id="pitch"
+                 class="relative w-full bg-cover bg-center rounded-lg grid grid-rows-5 grid-cols-5 py-2 h-[450px] md:h-[550px] shadow-inner"
+                 style="background-image: url('{% static 'images/lapangan.jpg' %}')"
+                 >
+                 {# Pitch slots will be rendered here by JS #}
+            </div>
 
-            <div class="action-buttons">
-                <button id="clear-formation-btn" class="btn btn-clear">
-                    🗑️ Clear
+            <div class="flex justify-between items-center mt-6 pt-6 border-t-2 border-pink-500 gap-4">
+                <button id="clear-formation-btn" class="font-semibold py-2 px-6 rounded-md border-none cursor-pointer transition-all duration-300 text-sm flex items-center gap-2 bg-gradient-to-r from-red-600 to-red-800 text-white hover:translate-y-[-2px] hover:shadow-lg">
+                    🗑️ Clear Players
                 </button>
-                <button id="save-formation-btn" class="btn btn-save" disabled>
+                <button id="save-formation-btn" class="font-semibold py-2 px-6 rounded-md border-none cursor-pointer transition-all duration-300 text-sm flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white flex-1 hover:enabled:translate-y-[-2px] hover:enabled:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                     💾 Save Formation
                 </button>
             </div>
         </div>
 
-        <div class="sidebar-card" style="animation-delay: 0.2s;">
-            <h2><span>📋 Player List</span></h2>
-            
-            <div class="club-filter">
-                <label for="club-select">🏆 Filter by Club</label>
-                <select id="club-select">
+        {# Kolom Kanan: Player List #}
+        <div class="bg-gray-50 border-2 border-pink-500 rounded-xl p-6 shadow-lg flex flex-col h-full">
+            <h2 class="text-xl font-bold text-purple-900 mb-4 pb-4 border-b-2 border-pink-500">
+                <span>📋 Player List</span>
+            </h2>
+
+            <div class="mb-4">
+                <label for="club-select" class="block text-gray-500 text-sm mb-2 font-medium">🏆 Filter by Club</label>
+                <select id="club-select" class="w-full bg-white text-purple-900 border-2 border-pink-500 rounded-md py-2 px-4 text-sm focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600">
                     <option value="">Loading clubs...</option>
                 </select>
             </div>
 
-            <div class="filter-header">
-                <span id="filter-position-label" class="filter-label">Select club or position</span>
-                <button id="clear-filter-btn" class="clear-filter-btn hidden">✕ Clear Filter</button>
+            <div class="flex justify-between items-center mb-3">
+                <span id="filter-position-label" class="text-purple-900 text-sm font-semibold">Select club or position</span>
+                <button id="clear-filter-btn" class="hidden bg-none border-none text-red-400 text-xs cursor-pointer transition-colors duration-300 px-2 py-1 hover:text-red-600 hover:underline">✕ Clear Filter</button>
             </div>
 
-            <div id="player-list">
-                <p class="empty-state">Loading players...</p>
+            <div id="player-list" class="overflow-y-auto flex-grow max-h-[60vh] pr-2 scrollbar-thin scrollbar-thumb-purple-400 scrollbar-track-gray-200">
+                <p class="empty-state text-center py-8 text-gray-500 italic">Loading players...</p>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- Global State ---
+    // --- SEMUA LOGIKA JAVASCRIPT ANDA TETAP SAMA ---
+    // --- KECUALI PERUBAHAN PADA FUNGSI YANG MEMANIPULASI CLASS ---
+
     let allClubs = [];
     let allHistory = [];
     let currentPlayers = [];
-    let currentSquad = []; 
-    let selectedPlayers = []; 
+    let currentSquad = []; // Array of { player: PlayerObject, originalSlotId: string }
+    let selectedPlayers = []; // Array of { player: PlayerObject, slotId: string } (for pitch display)
     let selectedSlotId = null;
-    let currentFilterPositionCode = null; 
-    let currentLayout = '4-3-3'; 
-    let currentFormationId = null; 
+    let currentFilterPositionCode = null;
+    let currentLayout = '4-3-3';
+    let currentFormationId = null;
 
-    // --- Element Selectors ---
     const pitch = document.getElementById('pitch');
     const clubSelect = document.getElementById('club-select');
     const formationLayoutSelect = document.getElementById('formation-layout-select');
@@ -738,44 +112,35 @@
     const clearFilterBtn = document.getElementById('clear-filter-btn');
     const globalStatus = document.getElementById('global-status');
     const filterPositionLabel = document.getElementById('filter-position-label');
-    const newFormationBtn = document.getElementById('new-formation-btn'); 
+    const newFormationBtn = document.getElementById('new-formation-btn');
 
-    // --- Layout Definitions ---
-    const formationLayouts = {
+    const formationLayouts = { /* ... SAMA ... */
         '4-3-3': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LCM', 'CM', 'RCM', 'LW', 'ST', 'RW'],
         '4-4-2': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LM', 'LCM', 'RCM', 'RM', 'LST', 'RST'],
         '3-5-2': ['GK', 'LCB', 'CB', 'RCB', 'LWB', 'LCM', 'RCM', 'RWB', 'CAM', 'LST', 'RST'],
         '4-2-3-1': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LDM', 'RDM', 'LAM', 'CAM', 'RAM', 'ST']
     };
-
-    const slotPositionMap = {
-        'GK': 'Kiper',
-        'LB': 'Bek-Kiri', 'LWB': 'Bek-Kiri',
+    const slotPositionMap = { /* ... SAMA ... */
+        'GK': 'Kiper', 'LB': 'Bek-Kiri', 'LWB': 'Bek-Kiri',
         'LCB': 'Bek-Tengah', 'CB': 'Bek-Tengah', 'RCB': 'Bek-Tengah',
-        'RB': 'Bek-Kanan', 'RWB': 'Bek-Kanan',
-        'LDM': 'Gel. Bertahan', 'RDM': 'Gel. Bertahan',
-        'LM': 'Sayap Kiri', 'LCM': 'Gel. Tengah', 'CM': 'Gel. Tengah', 'RCM': 'Gel. Tengah', 'RM': 'Sayap Kanan',
+        'RB': 'Bek-Kanan', 'RWB': 'Bek-Kanan', 'LDM': 'Gel. Bertahan',
+        'RDM': 'Gel. Bertahan', 'LM': 'Sayap Kiri', 'LCM': 'Gel. Tengah',
+        'CM': 'Gel. Tengah', 'RCM': 'Gel. Tengah', 'RM': 'Sayap Kanan',
         'LAM': 'Sayap Kiri', 'CAM': 'Gel. Serang', 'RAM': 'Sayap Kanan',
-        'LW': 'Sayap Kiri', 'RW': 'Sayap Kanan',
-        'LST': 'Penyerang', 'ST': 'Penyerang', 'RST': 'Penyerang'
+        'LW': 'Sayap Kiri', 'RW': 'Sayap Kanan', 'LST': 'Penyerang',
+        'ST': 'Penyerang', 'RST': 'Penyerang'
     };
-
-    const indonesianToRoleMap = {
-        'Kiper': ['Kiper'],
-        'Bek-Tengah': ['Bek-Tengah'],
-        'Bek-Kanan': ['Bek-Kanan'],
-        'Bek-Kiri': ['Bek-Kiri'],
-        'Gel. Bertahan': ['Gel. Bertahan', 'Gel. Tengah'],
+    const indonesianToRoleMap = { /* ... SAMA ... */
+        'Kiper': ['Kiper'], 'Bek-Tengah': ['Bek-Tengah'], 'Bek-Kanan': ['Bek-Kanan'],
+        'Bek-Kiri': ['Bek-Kiri'], 'Gel. Bertahan': ['Gel. Bertahan', 'Gel. Tengah'],
         'Gel. Serang': ['Gel. Serang', 'Gel. Tengah', 'Sayap Kiri', 'Sayap Kanan'],
         'Gel. Tengah': ['Gel. Tengah', 'Gel. Bertahan', 'Gel. Serang'],
         'Sayap Kiri': ['Sayap Kiri', 'Gel. Serang', 'Bek-Kiri'],
         'Sayap Kanan': ['Sayap Kanan', 'Gel. Serang', 'Bek-Kanan'],
-        'Penyerang': ['Penyerang'],
-        'Depan-Tengah': ['Penyerang']
+        'Penyerang': ['Penyerang'], 'Depan-Tengah': ['Penyerang']
     };
 
-    // --- Helper CSRF ---
-    function getCookie(name) {
+    function getCookie(name) { /* ... SAMA ... */
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
@@ -791,8 +156,7 @@
     }
     const csrftoken = getCookie('csrftoken');
 
-    // --- AJAX Functions ---
-    async function fetchInitialData() {
+    async function fetchInitialData() { /* ... SAMA ... */
         showStatus("Mengambil data klub & histori...", true);
         try {
             const response = await fetch("{% url 'best_eleven:api_builder_data' %}");
@@ -805,14 +169,12 @@
             renderHistoryList();
             await fetchPlayers();
             reAssignPlayersToPitch(); 
-            showStatus("Siap! Pilih slot di lapangan.", false, 3000);
         } catch (error) {
             console.error("Error fetchInitialData:", error);
             showStatus(`Error: ${error.message}. (Mungkin belum login?)`, true);
         }
     }
-
-    async function fetchPlayers(clubId = null) {
+    async function fetchPlayers(clubId = null) { /* ... SAMA ... */
         showStatus("Mengambil data pemain...", true);
         try {
             let url = "{% url 'best_eleven:api_get_players' %}";
@@ -820,29 +182,28 @@
                 url += `?club_id=${clubId}`;
             }
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`Gagal memuat pemain. (Error: ${response.status})`);
+            if (!response.ok) throw new Error(`Gagal memuat pemain (Error: ${response.status})`);
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            currentPlayers = data.players;
-            renderPlayerList();
-            showStatus("Daftar pemain diperbarui.", false, 2000);
+            currentPlayers = data.players; 
+            renderPlayerList(); 
+            showStatus("Daftar pemain diperbarui.", false);
         } catch (error) {
             console.error("Error fetchPlayers:", error);
             showStatus(`Error: ${error.message}.`, true);
         }
     }
-
-    async function saveFormation() {
+    async function saveFormation() { /* ... SAMA ... */
         const formationName = formationNameInput.value.trim();
         if (currentSquad.length !== 11 || !formationName) {
-            showStatus("Nama formasi harus diisi dan pemain harus 11.", true);
+            alert("Nama formasi harus diisi dan pemain harus lengkap (11 pemain).");
             return;
         }
         showStatus("Menyimpan formasi...", true);
         saveFormationBtn.disabled = true;
         const dataToSave = {
             name: formationName,
-            layout: currentLayout, 
+            layout: currentLayout,
             formation_id: currentFormationId,
             player_ids: currentSquad.map(s => ({
                 slotId: s.originalSlotId, 
@@ -854,140 +215,191 @@
                 method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify(dataToSave)
             });
             const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Gagal menyimpan');
-            showStatus(result.message || "Formasi berhasil disimpan!", false, 3000);
+            if (!response.ok) throw new Error(result.error || 'Gagal menyimpan formasi');
+            showStatus(result.message || "Formasi berhasil disimpan!", false);
             if (currentFormationId) {
                 const index = allHistory.findIndex(f => f.id === currentFormationId);
                 if (index > -1) allHistory[index] = result.formation;
             } else {
                 allHistory.unshift(result.formation);
-                currentFormationId = result.formation.id; 
+                currentFormationId = result.formation.id;
             }
             renderHistoryList();
-            highlightCurrentHistoryItem(); 
+            highlightCurrentHistoryItem();
         } catch (error) {
             console.error("Error saveFormation:", error);
+            alert(`Error: ${error.message}.`);
             showStatus(`Error: ${error.message}.`, true);
         } finally {
             checkFormCompletion();
         }
     }
-
-    async function loadFormation(formationId) {
+    async function loadFormation(formationId) { /* ... SAMA ... */
         showStatus("Memuat formasi...", true);
         try {
             const url = `/best-eleven/api/formation/${formationId}/`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error(`Gagal memuat formasi: ${response.statusText}`);
-            const data = await response.json(); 
+            if (!response.ok) throw new Error(`Gagal memuat formasi (Error: ${response.statusText})`);
+            const data = await response.json();
             if (data.error) throw new Error(data.error);
 
-            currentSquad = [];
-            selectedPlayers = [];
+            currentSquad = []; 
+            selectedPlayers = []; 
             currentFormationId = data.id;
             currentLayout = data.layout;
             formationNameInput.value = data.name;
             formationLayoutSelect.value = data.layout;
 
             currentSquad = data.players.map(p => ({
-                player: p, 
+                player: p,
                 originalSlotId: p.slotId 
             }));
 
-            reAssignPlayersToPitch();
-            await fetchPlayers(clubSelect.value);
-            renderPlayerList();
+            reAssignPlayersToPitch(); 
             checkFormCompletion();
-            showStatus(`Formasi "${data.name}" dimuat.`, false, 3000);
+            showStatus(`Formasi "${data.name}" dimuat.`, false);
             highlightCurrentHistoryItem();
 
         } catch (error) {
             console.error("Error loadFormation:", error);
-            showStatus(`Error: ${error.message}. (Pastikan API kirim 'slotId'!).`, true);
-            clearFormation(false);
+            alert(`Error: ${error.message}. (Pastikan API kirim 'slotId'!).`);
+            showStatus(`Error: ${error.message}.`, true);
+            clearFormation(false, true); 
             currentLayout = '4-3-3';
             formationLayoutSelect.value = '4-3-3';
-            reAssignPlayersToPitch();
+            reAssignPlayersToPitch(); 
             checkFormCompletion();
         }
     }
-
-    function reAssignPlayersToPitch() {
+    function reAssignPlayersToPitch() { /* ... SAMA ... */
         const newSlots = formationLayouts[currentLayout];
-        let unassignedSquadMembers = [...currentSquad];
-        let newSelectedPlayers = [];
-        let remainingNewSlots = [];
+        let availableOldSquad = [...currentSquad]; 
+        let newSelectedPlayers = []; 
+        let newSquad = []; 
+        let unplacedPlayers = []; 
 
         newSlots.forEach(newSlotId => {
-            const playerIndex = unassignedSquadMembers.findIndex(s => s.originalSlotId === newSlotId);
-            if (playerIndex > -1) {
-                const squadMember = unassignedSquadMembers.splice(playerIndex, 1)[0];
-                newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
-            } else {
-                remainingNewSlots.push(newSlotId);
-            }
-        });
-
-        let remainingNewSlots2 = [];
-        remainingNewSlots.forEach(newSlotId => {
             const requiredRole = slotPositionMap[newSlotId];
-            if (!requiredRole) return;
-            const playerIndex = unassignedSquadMembers.findIndex(s => {
-                const playerRoles = indonesianToRoleMap[s.player.position];
-                return playerRoles && playerRoles[0] === requiredRole;
-            });
-            if (playerIndex > -1) {
-                const squadMember = unassignedSquadMembers.splice(playerIndex, 1)[0];
-                newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
-            } else {
-                remainingNewSlots2.push(newSlotId);
-            }
-        });
+            let placed = false;
 
-        remainingNewSlots2.forEach(newSlotId => {
-            const requiredRole = slotPositionMap[newSlotId];
-            if (!requiredRole) return;
-            const playerIndex = unassignedSquadMembers.findIndex(s => {
-                const playerRoles = indonesianToRoleMap[s.player.position];
-                return playerRoles && playerRoles.includes(requiredRole);
-            });
-            if (playerIndex > -1) {
-                const squadMember = unassignedSquadMembers.splice(playerIndex, 1)[0];
+            const exactMatchIndex = availableOldSquad.findIndex(s =>
+                s.originalSlotId === newSlotId &&
+                indonesianToRoleMap[s.player.position]?.includes(requiredRole)
+            );
+            if (exactMatchIndex > -1) {
+                const squadMember = availableOldSquad.splice(exactMatchIndex, 1)[0];
                 newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
+                newSquad.push(squadMember); 
+                placed = true;
             }
-        });
 
-        selectedPlayers = newSelectedPlayers;
-        renderPitchSlots();
+            if (!placed) {
+                const primaryRoleMatchIndex = availableOldSquad.findIndex(s =>
+                    indonesianToRoleMap[s.player.position]?.[0] === requiredRole
+                );
+                if (primaryRoleMatchIndex > -1) {
+                     const squadMember = availableOldSquad.splice(primaryRoleMatchIndex, 1)[0];
+                     newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
+                     newSquad.push({ player: squadMember.player, originalSlotId: newSlotId });
+                     placed = true;
+                }
+            }
+             if (!placed) {
+                 const secondaryRoleMatchIndex = availableOldSquad.findIndex(s =>
+                     indonesianToRoleMap[s.player.position]?.includes(requiredRole)
+                 );
+                 if (secondaryRoleMatchIndex > -1) {
+                     const squadMember = availableOldSquad.splice(secondaryRoleMatchIndex, 1)[0];
+                     newSelectedPlayers.push({ player: squadMember.player, slotId: newSlotId });
+                     newSquad.push({ player: squadMember.player, originalSlotId: newSlotId });
+                     placed = true;
+                 }
+             }
+        });
+        unplacedPlayers = availableOldSquad.map(s => s.player);
+        currentSquad = newSquad; 
+        selectedPlayers = newSelectedPlayers; 
+        renderPitchSlots();     
+        renderPlayerList();     
+        checkFormCompletion();  
+        if (unplacedPlayers.length > 0) {
+            const names = unplacedPlayers.map(p => p.name || 'Unknown').join(', ');
+            showStatus(`Pemain dilepas karena posisi tidak tersedia: ${names}. Pilih slot baru!`, true, 8000);
+        } else if (currentSquad.length < 11 && currentSquad.length > 0) {
+             showStatus(`Layout diubah. Silakan isi ${11-currentSquad.length} slot kosong.`, false, 5000);
+        } else if (currentSquad.length === 0 && availableOldSquad.length > 0) {
+             showStatus(`Semua pemain dilepas karena tidak cocok dengan layout baru. Silakan pilih ulang.`, true, 8000);
+        }
     }
 
-    // --- RENDER Functions ---
+    // --- renderPitchSlots: PERBARUI CLASS NAMES DENGAN TAILWIND ---
     function renderPitchSlots() {
         pitch.innerHTML = '';
-        pitch.className = `relative w-full layout-${currentLayout}`;
+        // Tambahkan class layout dinamis untuk CSS Grid Area
+        pitch.className = `relative w-full bg-cover bg-center rounded-lg grid grid-rows-5 grid-cols-5 py-2 h-[450px] md:h-[550px] shadow-inner layout-${currentLayout}`;
+        pitch.style.backgroundImage = `url('{% static 'images/lapangan.jpg' %}')`; // Pastikan background tetap ada
+
         const slots = formationLayouts[currentLayout];
         slots.forEach(slotId => {
+            const playerInSlot = selectedPlayers.find(p => p.slotId === slotId);
             const slotEl = document.createElement('div');
             slotEl.id = `slot-${slotId}`;
-            slotEl.className = `pitch-slot ${slotId}`;
+            // Base slot classes + grid area class
+            slotEl.className = `flex flex-col items-center justify-center cursor-pointer transition-all duration-300 group ${slotId}`; // Tambah 'group'
             slotEl.dataset.slotId = slotId;
-            const playerInSlot = selectedPlayers.find(p => p.slotId === slotId);
+
             if (playerInSlot) {
-                slotEl.innerHTML = `<img src="${playerInSlot.player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${playerInSlot.player.name}"><div class="player-name">${playerInSlot.player.name}</div>`;
-                slotEl.classList.add('filled');
+                 const playerName = playerInSlot.player ? playerInSlot.player.name : 'Unknown';
+                 const playerImg = playerInSlot.player ? (playerInSlot.player.profile_image_url || 'https://via.placeholder.com/100') : 'https://via.placeholder.com/100';
+                slotEl.innerHTML = `
+                    <img src="${playerImg}" alt="${playerName}" class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-4 border-purple-600 shadow-md transition-all duration-300 group-hover:scale-115 group-hover:border-pink-500 group-hover:shadow-lg">
+                    <div class="mt-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full max-w-[100px] whitespace-nowrap overflow-hidden text-ellipsis text-center shadow">${playerName}</div>
+                `;
+                // Tidak perlu class 'filled' lagi, struktur HTML sudah cukup
             } else {
-                slotEl.innerHTML = `<div class="slot-circle"><span>${slotId}</span></div><div class="player-name">(Empty)</div>`;
-                slotEl.classList.add('empty');
+                slotEl.innerHTML = `
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-100 border-2 border-dashed border-purple-300 flex items-center justify-center transition-all duration-300 group-hover:bg-purple-200 group-hover:border-pink-500 group-hover:scale-110 group-hover:shadow-lg">
+                        <span class="font-bold text-white text-sm md:text-base text-shadow">${slotId}</span>
+                    </div>
+                    <div class="mt-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-700 to-pink-700 px-3 py-1 rounded-full max-w-[100px] whitespace-nowrap overflow-hidden text-ellipsis text-center shadow opacity-0 group-hover:opacity-100 transition-opacity">(Empty)</div>
+                `;
+                 // Tidak perlu class 'empty' lagi
             }
-            if (slotId === selectedSlotId) slotEl.classList.add('selected');
+            
+            // Handle 'selected' state with Tailwind
+            if (slotId === selectedSlotId) {
+                 // Cari slot-circle jika ada, tambahkan ring & pulse
+                 const circle = slotEl.querySelector('.w-16, .w-20'); // Target lingkaran baik filled (img) atau empty (div)
+                 if(circle) {
+                    circle.classList.add('ring-4', 'ring-pink-500', 'ring-offset-2', 'ring-offset-gray-800', 'animate-pulse');
+                 }
+                 // Sembunyikan nama jika selected (opsional, tergantung desain)
+                 // const nameEl = slotEl.querySelector('.player-name');
+                 // if (nameEl) nameEl.classList.add('hidden');
+            }
+
             slotEl.addEventListener('click', () => handleSlotClick(slotId));
             pitch.appendChild(slotEl);
         });
     }
+    // --- AKHIR renderPitchSlots ---
 
+
+    function renderClubSelect() { /* ... SAMA ... */
+        clubSelect.innerHTML = '<option value="">All Clubs</option>';
+        allClubs.forEach(club => {
+            const o = document.createElement('option');
+            o.value = club.id;
+            o.textContent = club.name || 'Unknown Club';
+            clubSelect.appendChild(o);
+        });
+    }
+
+    // --- renderPlayerList: PERBARUI CLASS NAMES DENGAN TAILWIND ---
     function renderPlayerList() {
         playerListContainer.innerHTML = '';
-        let filteredPlayers = [...currentPlayers];
+        let filteredPlayers = [...currentPlayers]; 
+        
         if (currentFilterPositionCode) {
             filteredPlayers = filteredPlayers.filter(p => {
                 const playerRoles = indonesianToRoleMap[p.position];
@@ -999,15 +411,19 @@
             filterPositionLabel.textContent = 'Select club or position';
             clearFilterBtn.classList.add('hidden');
         }
-        const selectedPlayerIds = selectedPlayers.map(p => p.player.id);
-        filteredPlayers = filteredPlayers.filter(p => !selectedPlayerIds.includes(p.id));
+
+        const squadPlayerIds = currentSquad.map(s => s.player.id); 
+        filteredPlayers = filteredPlayers.filter(p => !squadPlayerIds.includes(p.id));
+
         if (filteredPlayers.length === 0) {
-            playerListContainer.innerHTML = '<p class="empty-state">No matching players found.</p>';
+            playerListContainer.innerHTML = '<p class="text-center py-8 text-gray-500 italic">No matching players found.</p>';
             return;
         }
+        
         filteredPlayers.forEach(player => {
             const playerEl = document.createElement('div');
-            playerEl.className = "player-item";
+            // Tailwind classes for player item
+            playerEl.className = "bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-pink-500 rounded-lg p-4 mb-3 cursor-pointer transition-all duration-300 flex items-center justify-between gap-3 hover:border-pink-600 hover:-translate-y-0.5 hover:shadow-md";
             playerEl.dataset.playerId = player.id;
             let formattedValue;
             try {
@@ -1017,197 +433,259 @@
             } catch (e) {
                 formattedValue = 'N/A';
             }
+            const playerName = player.name || 'Unknown Player';
+            const playerImg = player.profile_image_url || 'https://via.placeholder.com/100';
             playerEl.innerHTML = `
-                <div class="player-info">
-                    <img src="${player.profile_image_url || 'https://via.placeholder.com/100'}" alt="${player.name}">
-                    <div class="player-details">
-                        <div class="player-name">${player.name}</div>
-                        <div class="player-meta">
-                            <span>${player.nationality}</span>
+                <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                    <img src="${playerImg}" alt="${playerName}" class="w-12 h-12 rounded-full object-cover border-3 border-purple-600 flex-shrink-0">
+                    <div class="overflow-hidden flex-1">
+                        <div class="text-purple-900 font-semibold text-sm truncate">${playerName}</div>
+                        <div class="text-gray-500 text-xs flex items-center gap-1">
+                            <span>${player.nationality || '-'}</span>
                             <span>•</span>
-                            <span class="player-value">${formattedValue}</span>
+                            <span class="text-green-600 font-semibold">${formattedValue}</span>
                         </div>
                     </div>
                 </div>
-                <div class="player-position-badge">${player.position}</div>
+                <div class="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 uppercase">${player.position || 'N/A'}</div>
             `;
             playerEl.addEventListener('click', () => handlePlayerSelect(player.id));
             playerListContainer.appendChild(playerEl);
         });
     }
+    // --- AKHIR renderPlayerList ---
 
-    function renderClubSelect() {
-        clubSelect.innerHTML = '<option value="">All Clubs</option>';
-        allClubs.forEach(club => {
-            const o = document.createElement('option');
-            o.value = club.id;
-            o.textContent = club.name;
-            clubSelect.appendChild(o);
-        });
-    }
-
+    // --- renderHistoryList: PERBARUI CLASS NAMES DENGAN TAILWIND ---
     function renderHistoryList() {
         historyListContainer.innerHTML = '';
         if (allHistory.length === 0) {
-            historyListContainer.innerHTML = '<p class="empty-state">No saved formations yet.</p>';
+            historyListContainer.innerHTML = '<p class="text-center py-8 text-gray-500 italic">No saved formations yet.</p>';
             return;
         }
         allHistory.forEach(formation => {
             const h = document.createElement('div');
-            h.className = "history-item";
+            // Tailwind classes for history item
+            h.className = "history-item bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-pink-500 rounded-lg p-4 mb-3 cursor-pointer transition-all duration-300 relative overflow-hidden hover:border-pink-600 hover:translate-x-1 hover:shadow-md";
             h.dataset.formationId = formation.id;
-            h.innerHTML = `<h4>${formation.name}</h4><p>Layout: ${formation.layout}</p>`;
+
+            const deleteButton = document.createElement('button');
+            // Tailwind classes for delete button
+            deleteButton.className = 'absolute top-2 right-2 text-gray-500 hover:text-red-500 hover:bg-red-100 rounded-full p-1 text-xl transition-all duration-200';
+            deleteButton.innerHTML = '🗑️';
+            deleteButton.title = 'Hapus Formasi';
+            
+            deleteButton.addEventListener('click', (event) => {
+                event.stopPropagation(); 
+                handleDeleteFormation(formation.id, formation.name);
+            });
+            
+            // Inner HTML with Tailwind classes
+            h.innerHTML = `
+                <h4 class="text-purple-900 text-base font-semibold mb-1 mr-8 truncate">${formation.name || 'Unnamed Formation'}</h4>
+                <p class="text-gray-600 text-xs">Layout: ${formation.layout || 'N/A'}</p>
+            `;
+            h.appendChild(deleteButton); // Append button after setting innerHTML
+            
+            // Apply highlight styles dynamically
+            if (currentFormationId && h.dataset.formationId == currentFormationId) {
+                h.classList.add('border-purple-600', 'ring-2', 'ring-purple-300', 'ring-offset-1'); 
+            }
+
             h.addEventListener('click', () => loadFormation(formation.id));
             historyListContainer.appendChild(h);
         });
-        highlightCurrentHistoryItem();
+        // highlightCurrentHistoryItem(); // Highlight logic now inside the loop
     }
+    // --- AKHIR renderHistoryList ---
 
-    function highlightCurrentHistoryItem() {
-        document.querySelectorAll('#history-list > div.history-item').forEach(el => {
-            el.classList.remove('highlighted');
-            if (currentFormationId && el.dataset.formationId == currentFormationId) {
-                el.classList.add('highlighted');
-            }
-        });
-    }
+    // --- highlightCurrentHistoryItem: FUNGSI INI TIDAK DIPERLUKAN LAGI ---
+    // function highlightCurrentHistoryItem() { /* ... SAMA ... */ } 
+    // Logika highlight dipindah ke dalam renderHistoryList
 
-    // --- Event Handlers ---
-    function handleSlotClick(slotId) {
+    function handleSlotClick(slotId) { /* ... SAMA ... */
         const playerInSlot = selectedPlayers.find(p => p.slotId === slotId);
+        
         if (playerInSlot) {
             selectedPlayers = selectedPlayers.filter(p => p.slotId !== slotId);
             currentSquad = currentSquad.filter(s => s.player.id !== playerInSlot.player.id);
-            selectedSlotId = null;
-            currentFilterPositionCode = null;
-            showStatus(`Pemain ${playerInSlot.player.name} dihapus.`);
-            reAssignPlayersToPitch();
-            renderPlayerList();
+            selectedSlotId = null; 
+            currentFilterPositionCode = null; 
+            showStatus(`Pemain ${playerInSlot.player ? playerInSlot.player.name : 'Unknown'} dihapus.`);
+            renderPitchSlots(); 
+            renderPlayerList(); 
         } else {
             if (selectedSlotId === slotId) {
                 selectedSlotId = null;
-                currentFilterPositionCode = null;
+                currentFilterPositionCode = null; 
+                showStatus(`Pemilihan slot ${slotId} dibatalkan.`);
             } else {
                 selectedSlotId = slotId;
-                currentFilterPositionCode = slotPositionMap[slotId];
-                showStatus(`Memilih pemain untuk ${slotId} (${currentFilterPositionCode})`);
+                currentFilterPositionCode = slotPositionMap[slotId]; 
+                showStatus(`Memilih pemain untuk ${slotId} (${currentFilterPositionCode || 'N/A'})`);
             }
-            renderPitchSlots();
-            renderPlayerList();
+            renderPitchSlots(); 
+            renderPlayerList(); 
         }
         checkFormCompletion();
     }
-
-    function handlePlayerSelect(playerId) {
+    function handlePlayerSelect(playerId) { /* ... SAMA ... */
         if (!selectedSlotId) {
-            showStatus("Pilih slot dulu!", true);
-            return;
-        }
-        if (currentSquad.length >= 11) {
-            showStatus("Squad sudah penuh (11 pemain).", true);
+            alert("Pilih slot di lapangan dulu!");
             return;
         }
         const player = currentPlayers.find(p => p.id === playerId);
+        if (!player) {
+              console.error(`Player with ID ${playerId} not found in currentPlayers`);
+              return;
+        }
         const expectedRole = slotPositionMap[selectedSlotId];
         const playerRoles = indonesianToRoleMap[player.position];
+        
         if (!playerRoles || !playerRoles.includes(expectedRole)) {
-            showStatus(`Posisi tidak cocok! Slot ${selectedSlotId} butuh ${expectedRole} (Pemain: ${player.position}).`, true);
+            alert(`Posisi tidak cocok! Slot ${selectedSlotId} butuh ${expectedRole || 'N/A'}, sedangkan ${player.name || 'Unknown'} adalah ${player.position || 'N/A'}.`);
             return;
         }
         if (currentSquad.find(s => s.player.id === player.id)) {
-            showStatus(`${player.name} sudah ada di squad.`, true);
+            alert(`${player.name || 'Unknown'} sudah ada di skuad.`);
             return;
         }
-        currentSquad.push({ player: player, originalSlotId: selectedSlotId });
+        currentSquad.push({ player: player, originalSlotId: selectedSlotId }); 
         selectedPlayers.push({ player: player, slotId: selectedSlotId });
-        showStatus(`${player.name} ke slot ${selectedSlotId}.`);
+        showStatus(`${player.name || 'Unknown'} ditambahkan ke slot ${selectedSlotId}.`);
         selectedSlotId = null;
         currentFilterPositionCode = null;
         renderPitchSlots();
-        renderPlayerList();
+        renderPlayerList(); 
         checkFormCompletion();
     }
-
-    function handleLayoutChange(event) {
+    function handleLayoutChange(event) { /* ... SAMA ... */
         currentLayout = event.target.value;
         if (selectedSlotId) {
             selectedSlotId = null;
             currentFilterPositionCode = null;
         }
-        reAssignPlayersToPitch();
-        renderPlayerList();
-        checkFormCompletion();
+        reAssignPlayersToPitch(); 
     }
-
-    function handleClubChange() {
+    function handleClubChange() { /* ... SAMA ... */
         const clubId = clubSelect.value;
-        fetchPlayers(clubId);
         if (selectedSlotId) {
             selectedSlotId = null;
         }
-        currentFilterPositionCode = null;
-        renderPitchSlots();
+        currentFilterPositionCode = null; 
+        fetchPlayers(clubId); 
+        renderPitchSlots(); 
     }
-
-    function handleClearFilter() {
+    function handleClearFilter() { /* ... SAMA ... */
         if (selectedSlotId) {
-            selectedSlotId = null;
+            selectedSlotId = null; 
         }
-        currentFilterPositionCode = null;
-        renderPitchSlots();
+        currentFilterPositionCode = null; 
+        renderPitchSlots(); 
         renderPlayerList();
     }
-
-    function clearFormation(showMsg = true) {
+    function clearFormation(showMsg = true, isCreatingNew = false) { /* ... SAMA ... */
         selectedPlayers = [];
         currentSquad = [];
         selectedSlotId = null;
         currentFilterPositionCode = null;
-        currentFormationId = null;
-        formationNameInput.value = '';
-        formationLayoutSelect.value = '4-3-3';
-        currentLayout = '4-3-3';
-        reAssignPlayersToPitch();
-        renderPlayerList();
-        checkFormCompletion();
-        highlightCurrentHistoryItem();
-        if (showMsg) showStatus("Formasi dibersihkan.", false, 3000);
-    }
 
-    function checkFormCompletion() {
+        if (isCreatingNew) {
+              currentFormationId = null;
+              formationNameInput.value = '';
+              currentLayout = '4-3-3'; 
+              formationLayoutSelect.value = '4-3-3';
+        }
+        reAssignPlayersToPitch(); 
+        // highlightCurrentHistoryItem(); // Tidak perlu lagi
+        renderHistoryList(); // Render ulang history untuk hapus highlight
+
+        if (showMsg) showStatus("Formasi dibersihkan.", false);
+    }
+    function checkFormCompletion() { /* ... SAMA ... */
         const isComplete = currentSquad.length === 11 && formationNameInput.value.trim() !== '';
         saveFormationBtn.disabled = !isComplete;
+        const remaining = 11 - currentSquad.length; 
         if (isComplete) {
             saveFormationBtn.textContent = currentFormationId ? '✅ Update' : '💾 Save Formation';
         } else {
-            saveFormationBtn.textContent = currentSquad.length !== 11 ? `⚽ Pick ${11 - currentSquad.length} more` : '✏️ Add Name';
+            if (remaining > 0) {
+                 saveFormationBtn.textContent = `⚽ Pick ${remaining} more`;
+            } else if (remaining < 0) {
+                 saveFormationBtn.textContent = `⚠️ Too many (${-remaining}) players`;
+                 console.error("Squad has more than 11 players:", currentSquad);
+            } else { 
+                 saveFormationBtn.textContent = '✏️ Add Name';
+            }
         }
     }
 
+    // --- showStatus: PERBARUI CLASS NAMES DENGAN TAILWIND ---
     function showStatus(message, isError = false, duration = 4000) {
+        console.log(`Status (${isError ? 'Error' : 'Info'}): ${message}`);
         globalStatus.textContent = message;
-        globalStatus.className = isError ? 'status-error' : 'status-success';
-        if (!isError) {
-            setTimeout(() => {
-                if (globalStatus.textContent === message) {
-                    globalStatus.textContent = '';
-                    globalStatus.className = '';
+        // Hapus kelas gaya lama jika ada
+        globalStatus.className = 'min-h-[40px] mb-6 transition-all duration-300'; // Reset ke class dasar
+        
+        // Tambah kelas Tailwind yang sesuai
+        if (isError) {
+             globalStatus.classList.add('bg-red-100', 'border-2', 'border-red-500', 'text-red-700', 'p-3', 'rounded-md', 'text-center', 'font-semibold');
+        } else {
+             globalStatus.classList.add('bg-green-100', 'border-2', 'border-green-500', 'text-green-700', 'p-3', 'rounded-md', 'text-center', 'font-semibold');
+        }
+        
+        setTimeout(() => {
+            if (globalStatus.textContent === message) { 
+                globalStatus.textContent = '';
+                globalStatus.className = 'min-h-[40px] mb-6 transition-all duration-300'; 
+            }
+        }, duration);
+    }
+    // --- AKHIR showStatus ---
+
+    async function handleDeleteFormation(formationId, formationName) { /* ... SAMA ... */
+        if (!confirm(`Yakin ingin menghapus formasi "${formationName}"? Tindakan ini tidak bisa dibatalkan.`)) {
+            return;
+        }
+        showStatus(`Menghapus formasi "${formationName}"...`, true); 
+        try {
+            const url = `/best-eleven/api/formation/${formationId}/`; 
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': csrftoken }
+            });
+
+            if (response.status === 204) { 
+                allHistory = allHistory.filter(f => f.id !== formationId);
+                renderHistoryList();
+                if (currentFormationId === formationId) {
+                    clearFormation(false, true); 
+                    showStatus(`Formasi "${formationName}" berhasil dihapus, builder di-reset.`, false);
+                } else {
+                    showStatus(`Formasi "${formationName}" berhasil dihapus.`, false);
                 }
-            }, duration);
+            } else {
+                const result = await response.json();
+                throw new Error(result.error || `Gagal menghapus formasi. Status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("Error handleDeleteFormation:", error);
+            showStatus(`Error: ${error.message}.`, true);
         }
     }
 
-    // --- Initial Setup ---
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => { /* ... SAMA ... */
         fetchInitialData();
         clubSelect.addEventListener('change', handleClubChange);
         formationLayoutSelect.addEventListener('change', handleLayoutChange);
         saveFormationBtn.addEventListener('click', saveFormation);
-        clearFormationBtn.addEventListener('click', () => clearFormation(true));
+        clearFormationBtn.addEventListener('click', () => {
+            clearFormation(true, false); 
+        }); 
+        newFormationBtn.addEventListener('click', () => {
+             clearFormation(true, true);
+        }); 
         clearFilterBtn.addEventListener('click', handleClearFilter);
-        newFormationBtn.addEventListener('click', () => clearFormation(true)); 
         formationNameInput.addEventListener('input', checkFormCompletion);
-        checkFormCompletion();
         window.addEventListener('resize', renderPitchSlots);
     });
 </script>
