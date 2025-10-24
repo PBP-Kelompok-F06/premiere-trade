@@ -19,5 +19,20 @@ class Reply(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # --- PERUBAHAN UTAMA DI SINI ---
+    # Menambahkan 'parent' yang menunjuk ke Reply lain.
+    # 'null=True' berarti ini adalah balasan level atas (top-level).
+    parent = models.ForeignKey(
+        'self', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name='child_replies'
+    )
+    # --------------------------------
+
     def __str__(self):
+        # Memperbarui __str__ agar lebih deskriptif
+        if self.parent:
+            return f'Reply by {self.author} to {self.parent.author} on {self.post.title}'
         return f'Reply by {self.author} on {self.post.title}'
