@@ -32,6 +32,7 @@
 .add-forum-btn {
     display: block; 
     margin: 0 auto 20px; 
+    margin-top: -10px;
     padding: 10px 18px;
     background-color: purple; 
     color: white; 

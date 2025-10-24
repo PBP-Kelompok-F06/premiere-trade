@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     "main",
     "community",
-    "accounts",
+    "accounts", 
     'player_transaction',
 ]   
 
@@ -87,7 +87,6 @@ WSGI_APPLICATION = "premiere_trade.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 # Database configuration
 if PRODUCTION:
     # Production: gunakan PostgreSQL dengan kredensial dari environment variables
