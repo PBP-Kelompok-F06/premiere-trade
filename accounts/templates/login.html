@@ -140,7 +140,6 @@
           if (response.ok && data.status === "success") {
             loginMessage.className = `${baseMessageClasses} bg-green-100 text-green-800`;
 
-            // --- BAGIAN BARU ---
             // Cek flag 'is_superuser' dari response
             setTimeout(() => {
               if (data.is_superuser) {
@@ -151,7 +150,7 @@
                 // Jika bukan, redirect ke homepage
                 window.location.href = "{% url 'main:homepage' %}";
               }
-            }, 1500); // Tunggu 1.5 detik agar pesan sukses terbaca
+            }, 500);
           } else {
             loginMessage.className = `${baseMessageClasses} bg-red-100 text-red-800`;
           }

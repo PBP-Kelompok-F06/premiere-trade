@@ -144,7 +144,7 @@
               "X-CSRFToken": csrftoken,
             },
             body: JSON.stringify({
-              username: username, // key 'username' dipertahankan untuk backend
+              username: username, 
               password: password,
               password2: password2,
             }),
@@ -160,7 +160,7 @@
             registerMessage.className = `${baseMessageClasses} bg-green-100 text-green-800`;
             setTimeout(() => {
               window.location.href = "{% url 'main:homepage' %}";
-            }, 1500);
+            }, 500);
           } else {
             registerMessage.className = `${baseMessageClasses} bg-red-100 text-red-800`;
           }
