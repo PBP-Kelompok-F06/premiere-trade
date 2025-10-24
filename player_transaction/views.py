@@ -18,25 +18,70 @@ from player_transaction.models import Negotiation
 def club_admin_required(user):
     return user.is_authenticated and user.is_club_admin
 
-@login_required(login_url='/login')
-def menampilkan_list_pemain_yang_sedang_dijual(request):
-    pemain_list = Player.objects.filter(sedang_dijual = True)
+@login_required(login_url='/accounts/login/')
+def list_pemain_dijual_view(request):
+    """Menampilkan halaman list pemain yang sedang dijual (HTML)"""
+    return render(request, "list_pemain_dijual.html")
 
-    context = {
-        'pemain_list': pemain_list,
-    }
+@login_required(login_url='/accounts/login/')
+def list_pemain_dijual_json(request):
+    """Endpoint AJAX: Mengembalikan daftar pemain yang sedang dijual (JSON)"""
+    pemain_list = Player.objects.filter(sedang_dijual=True).select_related('current_club')
 
-    return render(request, "list_pemain_dijual.html", context)
+    data = [
+        {
+            "id": p.id,
+            "nama_pemain": p.nama_pemain,
+            "posisi": p.position,
+            "umur": p.umur,
+            "negara": p.negara,
+            "match": p.jumlah_match,
+            "goal": p.jumlah_goal,
+            "assist": p.jumlah_asis,
+            "market_value": p.market_value,
+            "thumbnail": p.thumbnail,
+            "nama_klub": p.current_club.name if p.current_club else "-",
+        }
+        for p in pemain_list
+    ]
 
-@login_required(login_url='/login')
+    return JsonResponse(data, safe=False)
+
+@login_required(login_url='/accounts/login/')
 def list_pemain_saya(request):
-    """Tampilkan pemain milik klub admin yang sedang login"""
+    """Endpoint AJAX: mengembalikan daftar pemain milik klub user login (format JSON)."""
     profile = get_object_or_404(Profile, user=request.user)
-    pemain_list = Player.objects.filter(current_club=profile.managed_club)
-    return render(request, "club_saya.html", {"pemain_list": pemain_list})
+    klub = profile.managed_club
+
+    # Ambil semua pemain klub yang dikelola user login
+    pemain_list = Player.objects.filter(current_club=klub).select_related('current_club')
+
+    data = [
+        {
+            "id": p.id,
+            "nama_pemain": p.nama_pemain,
+            "posisi": p.position,
+            "umur": p.umur,
+            "negara": p.negara,
+            "match": p.jumlah_match,
+            "goal": p.jumlah_goal,
+            "assist": p.jumlah_asis,
+            "market_value": p.market_value,
+            "sedang_dijual": p.sedang_dijual,
+            "thumbnail": p.thumbnail,
+        }
+        for p in pemain_list
+    ]
+
+    return JsonResponse(data, safe=False)
+
+@login_required(login_url='/accounts/login/')
+def club_saya_view(request):
+    """Menampilkan halaman My Club (HTML)"""
+    return render(request, "club_saya.html")
 
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def jual_pemain_ajax(request, player_id):
     """Ubah status pemain jadi sedang dijual (AJAX)"""
@@ -53,7 +98,7 @@ def jual_pemain_ajax(request, player_id):
         'nama': player.nama_pemain,
     })
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def batalkan_jual_pemain_ajax(request, player_id):
     """Batalkan penjualan pemain milik klub sendiri"""
@@ -71,7 +116,7 @@ def batalkan_jual_pemain_ajax(request, player_id):
         'message': f"Penjualan {player.nama_pemain} telah dibatalkan."
     })
 
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @require_POST
 def beli_pemain_ajax(request, player_id):
     """Admin club membeli pemain dari transfer market"""
@@ -86,13 +131,15 @@ def beli_pemain_ajax(request, player_id):
     player.sedang_dijual = False
     player.save()
 
+    Negotiation.objects.filter(player=player, status='pending').update(status='cancelled')
+
     return JsonResponse({
         'success': True,
         'message': f"{player.nama_pemain} berhasil dibeli oleh {pembeli_club.name}!"
     })
 
 # --- Inbox (hanya untuk admin club) ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 def negotiation_inbox(request):
     profile = get_object_or_404(Profile, user=request.user)
@@ -112,7 +159,7 @@ def negotiation_inbox(request):
 
 
 # --- Kirim tawaran (dari halaman pemain dijual) ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
 def send_negotiation(request, player_id):
@@ -142,7 +189,7 @@ def send_negotiation(request, player_id):
 
 
 # --- Aksi accept/reject ---
-@login_required(login_url='/login')
+@login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
 def respond_negotiation(request, nego_id, action):
@@ -156,8 +203,20 @@ def respond_negotiation(request, nego_id, action):
 
     if action == 'accept':
         nego.status = 'accepted'
+        nego.save()
+
+        player = nego.player
+        player.current_club = nego.from_club  # 🔥 Pemain berpindah ke klub pembeli
+        player.sedang_dijual = False
+        player.save()
+
+        # ✅ Batalkan semua negosiasi lain pada pemain ini
+        Negotiation.objects.filter(player=player).exclude(id=nego.id).update(status='cancelled')
+
     elif action == 'reject':
         nego.status = 'rejected'
+        nego.save()
+        message = f"Tawaran dari {nego.from_club.name} ditolak."
     else:
         return JsonResponse({'success': False, 'message': 'Aksi tidak valid.'})
 
@@ -190,18 +249,18 @@ def respond_negotiation(request, nego_id, action):
 
 
 def show_xml(request):
-     pemain_list = Pemain.objects.all()
+     pemain_list = Player.objects.all()
      xml_data = serializers.serialize("xml", pemain_list)
      return HttpResponse(xml_data, content_type="application/xml")
 
 def show_json(request):
-    pemain_list = Pemain.objects.select_related('user').all()
+    pemain_list = Player.objects.select_related('current_club').all()
     
     data = [
         {
             'id': str(pemain.id),
             'nama_pemain': pemain.nama_pemain,
-            'club': pemain.club,
+            'club': pemain.current_club.name,
             'umur': pemain.umur,
             'market_value': pemain.market_value,
             'negara': pemain.negara,
@@ -209,29 +268,28 @@ def show_json(request):
             'jumlah_asis': pemain.jumlah_asis,
             'jumlah_match': pemain.jumlah_match,
             'sedang_dijual': pemain.sedang_dijual,
-            'user_id': pemain.user.id if pemain.user else None,
         }
         for pemain in pemain_list
     ]
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=False, json_dumps_params={'indent': 2})
 
 
 def show_xml_by_id(request, product_id):
    try:
-       product_item = Pemain.objects.filter(pk=product_id)
+       product_item = Player.objects.filter(pk=product_id)
        xml_data = serializers.serialize("xml", product_item)
        return HttpResponse(xml_data, content_type="application/xml")
-   except Pemain.DoesNotExist:
+   except Player.DoesNotExist:
        return HttpResponse(status=404)
 
 def show_json_by_id(request, product_id):
     try:
-        pemain = Pemain.objects.select_related('user').get(pk=product_id)
+        pemain = Player.objects.select_related('current_club').get(pk=product_id)
         data = {
             'id': str(pemain.id),
             'nama_pemain': pemain.nama_pemain,
-            'club': pemain.club,
+            'club': pemain.current_club.name,
             'umur': pemain.umur,
             'market_value': pemain.market_value,
             'negara': pemain.negara,
@@ -239,8 +297,7 @@ def show_json_by_id(request, product_id):
             'jumlah_asis': pemain.jumlah_asis,
             'jumlah_match': pemain.jumlah_match,
             'sedang_dijual': pemain.sedang_dijual,
-            'user_username': pemain.user.username if pemain.user else 'Anonymous'
         }
         return JsonResponse(data)
-    except Pemain.DoesNotExist:
+    except Player.DoesNotExist:
         return JsonResponse({'detail': 'Not found'}, status=404)
