@@ -34,14 +34,14 @@
             {% csrf_token %}
             <div>
               <label
-                for="login_email"
+                for="login_username"
                 class="block text-sm font-medium text-gray-700"
               >
-                Email
+                Username
               </label>
               <input
                 type="text"
-                id="login_email"
+                id="login_username"
                 name="username"
                 placeholder="Enter your username here"
                 required
@@ -115,8 +115,7 @@
 
       loginForm.addEventListener("submit", async function (e) {
         e.preventDefault();
-        // **PENTING**: Mengambil value dari ID input yang sudah diubah
-        const username = document.getElementById("login_email").value;
+        const username = document.getElementById("login_username").value;
         const password = document.getElementById("login_password").value;
 
         try {
@@ -140,9 +139,19 @@
 
           if (response.ok && data.status === "success") {
             loginMessage.className = `${baseMessageClasses} bg-green-100 text-green-800`;
+
+            // --- BAGIAN BARU ---
+            // Cek flag 'is_superuser' dari response
             setTimeout(() => {
-              window.location.href = "{% url 'main:homepage' %}";
-            }, 1500);
+              if (data.is_superuser) {
+                // Jika superuser, redirect ke dashboard
+                window.location.href =
+                  "{% url 'accounts:superuser_dashboard' %}";
+              } else {
+                // Jika bukan, redirect ke homepage
+                window.location.href = "{% url 'main:homepage' %}";
+              }
+            }, 1500); // Tunggu 1.5 detik agar pesan sukses terbaca
           } else {
             loginMessage.className = `${baseMessageClasses} bg-red-100 text-red-800`;
           }
