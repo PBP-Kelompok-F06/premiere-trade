@@ -57,7 +57,7 @@ def register_ajax(request):
 
         user = CustomUser.objects.create_user(username=username, password=password)
         # Otomatis buat profile saat user register
-        Profile.objects.create(user=user)  # BARU: Agar tes Profile .exists() lolos
+        Profile.objects.create(user=user)
 
         login(request, user)
 
@@ -66,7 +66,7 @@ def register_ajax(request):
                 "status": "success",
                 "message": "Registrasi berhasil! Anda akan dialihkan...",
             },
-            status=201,  # DIUBAH: Sesuai ekspektasi tes (201 Created)
+            status=201, 
         )
 
     except Exception as e:
@@ -135,7 +135,7 @@ def _is_superuser_check(user):
 def superuser_dashboard(request):
     if not _is_superuser_check(request.user):
         raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
-    # --- Pengecekan Hak Akses ---
+    # Pengecekan Hak Akses
     # Dapatkan user yang sedang login
     user = request.user
 
@@ -151,7 +151,7 @@ def superuser_dashboard(request):
         # Jika tidak memenuhi syarat, lempar error 403 Forbidden
         raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
 
-    # --- Pengambilan Data untuk Dashboard ---
+    # Pengambilan Data untuk Dashboard
     all_users = CustomUser.objects.all().order_by("username")
     all_clubs = Club.objects.all().order_by("name")
 
@@ -271,14 +271,13 @@ def edit_profile(request):
 
 
 @login_required
-@require_POST  # Pastikan view ini hanya bisa diakses via POST
+@require_POST
 def delete_account(request):
     user = request.user
     # Lakukan logout sebelum menghapus untuk membersihkan session
     logout(request)
     # Hapus user dari database
     user.delete()
-    # Beri pesan (meskipun user sudah logout, ini berguna jika ada redirect ke halaman publik)
     messages.success(request, "Akun Anda telah berhasil dihapus secara permanen.")
     # Redirect ke halaman utama atau halaman login
     return redirect("main:homepage")

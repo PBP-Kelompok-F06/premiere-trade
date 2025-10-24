@@ -1,8 +1,6 @@
 from django.urls import path
 from . import views
 
-# Ini penting agar kita bisa memanggil URL 
-# seperti 'accounts:login_ajax'
 app_name = 'accounts'
 
 urlpatterns = [

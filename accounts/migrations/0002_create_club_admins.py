@@ -2,7 +2,6 @@
 
 from django.db import migrations
 
-
 CLUBS_DATA = [
     {
         "name": "Chelsea",
@@ -70,7 +69,6 @@ def create_clubs_and_admins(apps, schema_editor):
             print(f"--> Admin '{username}' sudah ada.\n")
 
 
-# --- FUNGSI BARU UNTUK PROSES MUNDUR (UNDO) ---
 def delete_clubs_and_admins(apps, schema_editor):
     """Fungsi untuk MUNDUR: Menghapus klub dan admin yang dibuat."""
     Club = apps.get_model("main", "Club")
