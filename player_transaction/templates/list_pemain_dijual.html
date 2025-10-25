@@ -9,7 +9,8 @@
   <h1 class="text-center mb-1 text-[28px] text-[#333] font-semibold">Transfer Market</h1>
   <p class="text-center text-gray-500 mb-6">Lihat semua pemain yang sedang dijual oleh klub lain</p>
 
-  <table class="w-full border-collapse bg-white rounded-lg overflow-hidden">
+  <div class="overflow-x-auto w-full">
+  <table class="min-w-[1150px] w-full border-collapse bg-white rounded-lg overflow-hidden">
     <thead>
       <tr class="bg-gradient-to-r from-indigo-800 via-purple-700 to-purple-500 text-white">
         <th class="p-3"></th>
@@ -32,6 +33,7 @@
       <tr><td colspan="11" class="text-center py-6 text-gray-500">Memuat data pemain...</td></tr>
     </tbody>
   </table>
+  </div>
 </div>
 
 <!-- 🔹 Modal -->
@@ -48,6 +50,7 @@
 
       <div class="modal-info mx-2 space-y-3">
         <h2 id="modal-nama" class="text-2xl font-semibold mb-1"></h2>
+        <p><b>Club Asal:</b> <span id="modal-club"></span></p>
         <p><b>Posisi:</b> <span id="modal-posisi"></span></p>
         <p><b>Umur:</b> <span id="modal-umur"></span></p>
         <p><b>Negara:</b> <span id="modal-negara"></span></p>
@@ -56,11 +59,12 @@
         <p><b>Total Assist:</b> <span id="modal-assist"></span></p>
         <p><b>Market Value:</b> Rp<span id="modal-value"></span></p>
 
-        <!-- 🔹 Input Negosiasi -->
+        <!-- Input Negosiasi -->
         <div id="nego-input-container" class="hidden mt-2">
           <label for="nego-input" class="block font-semibold text-[14px] text-gray-800 mb-1">Masukkan Harga Penawaran (Rp):</label>
           <input id="nego-input" type="number" min="1"
-            class="w-full px-3 py-[6px] border border-gray-300 rounded-md text-[14px] focus:outline-none focus:ring-2 focus:ring-purple-300">
+            class="w-full px-3 py-[6px] border border-gray-300 rounded-md text-[14px] focus:outline-none focus:ring-2 focus:ring-purple-300"
+            >
         </div>
       </div>
     </div>
@@ -78,6 +82,16 @@
   from {opacity: 0; transform: scale(0.95);}
   to {opacity: 1; transform: scale(1);}
 }
+
+#nego-input::-webkit-outer-spin-button,
+#nego-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+#nego-input[type=number] {
+  -moz-appearance: textfield;
+}
 </style>
 
 
@@ -92,6 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalContent = modal.querySelector(".modal-content");
 
   const nama = document.getElementById("modal-nama");
+  const club = document.getElementById("modal-club");
   const posisi = document.getElementById("modal-posisi");
   const umur = document.getElementById("modal-umur");
   const negara = document.getElementById("modal-negara");
@@ -105,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentAction = null;
   let currentPlayerId = null;
 
-  // 🔹 Load data pemain via AJAX
+  // Load data pemain via AJAX
   fetch("{% url 'player_transaction:list_pemain_dijual_json' %}", {
     headers: { "X-Requested-With": "XMLHttpRequest" }
   })
@@ -188,6 +203,7 @@ document.addEventListener("DOMContentLoaded", () => {
             currentPlayerId = playerId;
 
             nama.textContent = row.children[1].textContent;
+            club.textContent = row.children[2].textContent;
             posisi.textContent = row.children[3].textContent;
             umur.textContent = row.children[4].textContent;
             negara.textContent = row.children[5].textContent;
@@ -203,14 +219,17 @@ document.addEventListener("DOMContentLoaded", () => {
               confirmBtn.textContent = "Confirm Purchase";
               negoInputContainer.style.display = "none";
               confirmBtn.className = "bg-green-300 hover:bg-green-400 text-black px-4 py-2 rounded-md transition";
+              modalContent.className = "modal-content bg-white w-[600px] h-[450px] rounded-xl shadow-2xl relative p-5 pt-[5px] transition-all duration-300 animate-[fadeIn_0.3s_ease]"
             } else if (action === "nego") {
               confirmBtn.textContent = "Negosiasi";
               negoInputContainer.style.display = "block";
               confirmBtn.className = "bg-yellow-300 hover:bg-yellow-400 text-black px-4 py-2 rounded-md transition";
+              modalContent.className = "modal-content bg-white w-[600px] h-[520px] rounded-xl shadow-2xl relative p-5 pt-[5px] transition-all duration-300 animate-[fadeIn_0.3s_ease]"
             } else {
               confirmBtn.textContent = "Batalkan Penjualan";
               negoInputContainer.style.display = "none";
               confirmBtn.className = "bg-[#ff3838] text-white px-4 py-2 rounded-md hover:bg-[#e02828] transition";
+              modalContent.className = "modal-content bg-white w-[600px] h-[450px] rounded-xl shadow-2xl relative p-5 pt-[5px] transition-all duration-300 animate-[fadeIn_0.3s_ease]"
             }
             modal.style.display = "flex";
           });
@@ -219,13 +238,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 🔹 Modal close handlers
+  // Modal close handlers
   const closeModal = () => { modal.style.display = "none"; };
   closeBtn.addEventListener("click", closeModal);
   cancelBtn.addEventListener("click", closeModal);
   window.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
-  // 🔹 Konfirmasi aksi (buy/nego/cancel)
+  // Konfirmasi aksi (buy/nego/cancel)
   confirmBtn.addEventListener("click", async () => {
     if (!currentAction || !currentPlayerId) return;
 

@@ -27,7 +27,6 @@ def list_pemain_dijual_view(request):
 def list_pemain_dijual_json(request):
     """Endpoint AJAX: Mengembalikan daftar pemain yang sedang dijual (JSON)"""
     pemain_list = Player.objects.filter(sedang_dijual=True).select_related('current_club')
-
     data = [
         {
             "id": p.id,
@@ -141,21 +140,57 @@ def beli_pemain_ajax(request, player_id):
 # --- Inbox (hanya untuk admin club) ---
 @login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
-def negotiation_inbox(request):
+def negotiation_inbox_view(request):
+    """Render halaman inbox negosiasi (HTML kosong, isi via AJAX)"""
     profile = get_object_or_404(Profile, user=request.user)
     club = profile.managed_club
 
     if not club:
-        return render(request, 'error.html', {"message": "Anda belum memiliki klub untuk dikelola."})
+        return render(request, 'error.html', {"message": "Anda bukan admin klub."})
 
-    received_offers = Negotiation.objects.filter(to_club=club).order_by('-created_at')
-    sent_offers = Negotiation.objects.filter(from_club=club).order_by('-created_at')
+    return render(request, 'negotiation_inbox.html', {"club": club})
 
-    return render(request, 'negotiation_inbox.html', {
-        'received_offers': received_offers,
-        'sent_offers': sent_offers,
-        'club': club,
-    })
+
+@login_required(login_url='/accounts/login/')
+@user_passes_test(club_admin_required)
+def negotiation_inbox_json(request):
+    """Endpoint AJAX — mengembalikan data negosiasi dalam format JSON"""
+    profile = get_object_or_404(Profile, user=request.user)
+    club = profile.managed_club
+
+    if not club:
+        return JsonResponse({"error": "Anda bukan admin klub."}, status=400)
+
+    received_offers = Negotiation.objects.filter(to_club=club).select_related('from_club', 'player').order_by('-created_at')
+    sent_offers = Negotiation.objects.filter(from_club=club).select_related('to_club', 'player').order_by('-created_at')
+
+    data = {
+        "received_offers": [
+            {
+                "id": n.id,
+                "from_club": n.from_club.name,
+                "player": n.player.nama_pemain,
+                "offered_price": float(n.offered_price),
+                "status": n.get_status_display(),  # biar tampil "Accepted" bukan "accepted"
+                "created_at": n.created_at.strftime("%d %B %Y, %H:%M"),
+            }
+            for n in received_offers
+        ],
+        "sent_offers": [
+            {
+                "id": n.id,
+                "to_club": n.to_club.name,
+                "player": n.player.nama_pemain,
+                "offered_price": float(n.offered_price),
+                "status": n.get_status_display(),
+                "created_at": n.created_at.strftime("%d %B %Y, %H:%M"),
+            }
+            for n in sent_offers
+        ]
+    }
+
+    return JsonResponse(data)
+
 
 
 # --- Kirim tawaran (dari halaman pemain dijual) ---
@@ -206,22 +241,24 @@ def respond_negotiation(request, nego_id, action):
         nego.save()
 
         player = nego.player
-        player.current_club = nego.from_club  # 🔥 Pemain berpindah ke klub pembeli
+        player.current_club = nego.from_club  #  Pemain berpindah ke klub pembeli
         player.sedang_dijual = False
         player.save()
 
-        # ✅ Batalkan semua negosiasi lain pada pemain ini
-        Negotiation.objects.filter(player=player).exclude(id=nego.id).update(status='cancelled')
+        #  Batalkan semua negosiasi lain pada pemain ini
+        Negotiation.objects.filter(player=player).exclude(id=nego.id).filter(status='pending').update(status='cancelled')
+        new_status = "Accepted"
 
     elif action == 'reject':
         nego.status = 'rejected'
         nego.save()
         message = f"Tawaran dari {nego.from_club.name} ditolak."
+        new_status = "Rejected"
     else:
         return JsonResponse({'success': False, 'message': 'Aksi tidak valid.'})
 
     nego.save()
-    return JsonResponse({'success': True, 'message': f'Tawaran {action}ed!'})
+    return JsonResponse({'success': True, 'message': f'Tawaran {action}ed!', 'new_status': new_status})
 
 
 
