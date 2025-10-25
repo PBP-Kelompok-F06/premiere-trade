@@ -1,428 +1,243 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Club Saya - Premiere Trade{% endblock %}
 
 {% block content %}
-<a href="{% url 'main:homepage' %}">
-<div class="tombol-back">&lt; Back to homepage</div>
-</a>
+<div class="club-saya-container mx-20 mt-5">
+  <h1 class="text-3xl font-bold mb-4">My Club</h1>
 
-<div class = "club-saya-container">
+  {% if user.profile.managed_club.name == "Manchester City" %}
+  <div class="flex items-center bg-[#6CABDD] text-white rounded-lg">
+    <img class="logo-club height-500 w-20 mr-8 ml-5"
+      src="https://tmssl.akamaized.net//images/wappen/head/9265.png?lm=1467356331 py-5" alt="">
+    <h1 class="nama-club text-2xl font-semibold">{{ user.profile.managed_club }}</h1>
+  </div>
+  {% elif user.profile.managed_club.name == "Chelsea" %}
+  <div class="flex items-center bg-[#034694] text-white rounded-lg">
+    <img class="logo-club height-500 w-20 mr-8 ml-5"
+      src="https://tmssl.akamaized.net//images/wappen/head/41573.png?lm=1682435911 py-5" alt="">
+    <h1 class="nama-club text-2xl font-semibold">{{ user.profile.managed_club }}</h1>
+  </div>
+  {% elif user.profile.managed_club.name == "Arsenal" %}
+  <div class="flex items-center bg-[#EF0107] text-white rounded-lg">
+    <img class="logo-club height-500 w-20 mr-8 ml-5"
+      src="https://tmssl.akamaized.net//images/wappen/head/41571.png?lm=1489787850 py-5" alt="">
+    <h1 class="nama-club text-2xl font-semibold">{{ user.profile.managed_club }}</h1>
+  </div>
+  {% elif user.profile.managed_club.name == "Liverpool" %}
+  <div class="flex items-center bg-white text-black rounded-lg border border-gray-200 py-5">
+    <img class="logo-club height-500 w-20 mr-8 ml-5"
+      src="https://tmssl.akamaized.net//images/wappen/head/45333.png?lm=1727873452" alt="">
+    <h1 class="nama-club text-2xl font-semibold">{{ user.profile.managed_club }}</h1>
+  </div>
+  {% endif %}
 
-    {%if user.profile.managed_club.name == "Manchester City"%}
-        <div class = "club-saya-header-city">
-            <img class="logo-club" src="https://tmssl.akamaized.net//images/wappen/head/9265.png?lm=1467356331" alt="">
-            <h1 class="nama-club">{{ user.profile.managed_club }}</h1>
-        </div>
-    {%elif user.profile.managed_club.name == "Chelsea"%}
-        <div class = "club-saya-header-chelsea">
-            <img class="logo-club" src="https://tmssl.akamaized.net//images/wappen/head/41573.png?lm=1682435911" alt="">
-            <h1 class="nama-club">{{ user.profile.managed_club }}</h1>
-        </div>
-    {%elif user.profile.managed_club.name == "Arsenal"%}
-        <div class = "club-saya-header-arsenal">
-            <img class="logo-club" src="https://tmssl.akamaized.net//images/wappen/head/41571.png?lm=1489787850" alt="">
-            <h1 class="nama-club">{{ user.profile.managed_club }}</h1>
-        </div>
-    {%elif user.profile.managed_club.name == "Liverpool"%}
-        <div class = "club-saya-header-liverpool">
-            <img class="logo-club" src="https://tmssl.akamaized.net//images/wappen/head/45333.png?lm=1727873452" alt="">
-            <h1 class="nama-club">{{ user.profile.managed_club }}</h1>
-        </div>
-    {%endif%}
+  <div class="list-pemain mt-8">
+    <h1 class="text-3xl font-semibold mb-3">Daftar Pemain</h1>
 
-    <br>
-    
-    <div class="list-pemain">
-        <h1>Daftar Pemain</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Nama Pemain</th>
-                    <th>Posisi</th>
-                    <th>Umur</th>
-                    <th>Negara</th>
-                    <th>Match</th>
-                    <th>Goal</th>
-                    <th>Assist</th>
-                    <th>Market Value</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for player in user.profile.managed_club.players.all %}
-                <tr data-player-id="{{ player.id }}">
-                    <td><img class="foto-pemain" src="{{ player.thumbnail }}" alt=""></td>
-                    <td class="nama-pemain">{{ player.nama_pemain }}</td>
-                    <td>{{ player.position }}</td>
-                    <td>{{ player.umur }}</td>
-                    <td>{{ player.negara }}</td>
-                    <td>{{ player.jumlah_match }}</td>
-                    <td>{{ player.jumlah_asis }}</td>
-                    <td>{{ player.jumlah_goal }}</td>
-                    <td>Rp{{ player.market_value|floatformat:0 }}</td>
-                    <td><button class="sell-button">Jual</button></td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="9" style="text-align:center;">Belum ada pemain yang terdaftar.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="overflow-x-auto w-full">
+    <table class="min-w-[1150px] w-full border-collapse bg-white rounded-lg overflow-hidden shadow mb-12">
+      <thead>
+        <tr class="bg-gradient-to-r from-indigo-800 via-purple-700 to-purple-500 text-white text-center">
+          <th class="py-5 px-2"></th>
+          <th class="py-5 px-2">Nama Pemain</th>
+          <th class="py-5 px-2">Posisi</th>
+          <th class="py-5 px-2">Umur</th>
+          <th class="py-5 px-2">Negara</th>
+          <th class="py-5 px-2">Match</th>
+          <th class="py-5 px-2">Goal</th>
+          <th class="py-5 px-2">Assist</th>
+          <th class="py-5 px-2">Market Value</th>
+          <th class="py-5 px-2">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="player-table-body">
+        <!-- Akan diisi otomatis lewat AJAX -->
+        <tr id="loading-row">
+          <td colspan="10" class="text-center py-6 text-gray-500">Memuat data pemain...</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
+  </div>
 
-    <!-- MODAL -->
-    <div id="sellModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
+  <!-- MODAL -->
+  <div id="sellModal"
+    class="modal hidden fixed inset-0 z-10 bg-black bg-opacity-50 flex items-center justify-center align-items-center">
+    <div
+      class="modal-content bg-white w-[600px] h-[450px] rounded-xl shadow-2xl relative p-5 pt-2 mt-[100px] ml-[450px] animate-[fadeIn_0.3s_ease]">
+      <span class="close absolute right-5 top-2 text-[28px] text-gray-400 hover:text-black cursor-pointer">&times;</span>
 
-        <div class="modal-body">
-            <div class="modal-image-container">
-                <img id="modal-thumbnail" class="modal-img" src="" alt="Player photo">
-                <img id="modal-logo" src="{% static 'images/logo.png' %}" alt="Logo">
-            </div>
-        <div class="modal-info">
-            <h2 id="modal-nama"></h2>
-            <p><b>Posisi:</b> <span id="modal-posisi"></span></p>
-            <p><b>Umur:</b> <span id="modal-umur"></span></p>
-            <p><b>Negara:</b> <span id="modal-negara"></span></p>
-            <p><b>Total Match:</b> <span id="modal-match"></span></p>
-            <p><b>Total Goal:</b> <span id="modal-goal"></span></p>
-            <p><b>Total Assist:</b> <span id="modal-assist"></span></p>
-            <p><b>Market Value:</b> Rp<span id="modal-value"></span></p>
-            
-        </div>
+      <div class="modal-body flex items-center gap-5 mt-[30px]">
+        <div class="modal-image-container flex flex-col justify-center items-center gap-2">
+          <img id="modal-thumbnail" class="modal-img w-[200px] rounded-md" src="" alt="Player photo">
+          <img id="modal-logo" src="{% static 'images/logo.png' %}" alt="Logo" class="modal-logo w-[100px]">
         </div>
 
-        <div class="modal-footer">
-        <button id="cancelButton" class="cancel-btn">Cancel</button>
-        <button id="confirmSellButton" class="confirm-btn">Sell Player</button>
+        <div class="modal-info mx-2 space-y-3">
+          <h2 id="modal-nama" class="text-2xl font-semibold mb-1"></h2>
+          <p><b>Posisi:</b> <span id="modal-posisi"></span></p>
+          <p><b>Umur:</b> <span id="modal-umur"></span></p>
+          <p><b>Negara:</b> <span id="modal-negara"></span></p>
+          <p><b>Total Match:</b> <span id="modal-match"></span></p>
+          <p><b>Total Goal:</b> <span id="modal-goal"></span></p>
+          <p><b>Total Assist:</b> <span id="modal-assist"></span></p>
+          <p><b>Market Value:</b> Rp<span id="modal-value"></span></p>
         </div>
+      </div>
+
+      <div class="modal-footer flex justify-end mt-5">
+        <button id="cancelButton"
+          class="cancel-btn bg-gray-300 text-black px-4 py-2 rounded-md hover:bg-gray-400 transition mr-3">Cancel</button>
+        <button id="confirmSellButton"
+          class="confirm-btn bg-[#ff3838] text-white px-4 py-2 rounded-md hover:bg-[#e02828] transition">Sell
+          Player</button>
+      </div>
     </div>
-    </div>
-
-
-
-
-
-
-
-
-
+  </div>
 </div>
 
+<!-- Tailwind Animation -->
 <style>
-    .tombol-back{
-        margin-top: 20px;
-        margin-left: 80px;
-        color: gray;
-        cursor: pointer;
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
     }
 
-    a:hover{
-        text-decoration: none;
+    to {
+      opacity: 1;
+      transform: scale(1);
     }
-
-    .club-saya-container{
-        margin: 80px;
-        margin-top: 20px;
-    }
-
-    .logo-club{
-        height: auto;
-        margin-right: 30px;
-        margin-left: 20px;
-    }
-
-    .nama-club{
-        align-self: center;
-    }
-
-    .club-saya-header-city{
-        display: flex;
-        background-color: #6CABDD;
-        color: white;
-        border-radius: 8px;
-    }
-
-    .logo{
-        height: auto;
-        margin-right: 40px;
-    }
-
-    .club-saya-header-chelsea{
-        display: flex;
-        background-color: #034694;
-        color: white;
-        border-radius: 8px;
-    }
-    .club-saya-header-arsenal{
-        display: flex;
-        background-color: #EF0107;
-        color: white;
-        border-radius: 8px;
-    }
-    .club-saya-header-liverpool{
-        display: flex;
-        background-color: white;
-        color: black;
-        border-radius: 8px;
-    }
-
-    .list-pemain{
-        margin-top: 30px;
-
-    }
-
-    table {
-        background-color: white;
-        border-collapse: collapse;
-        align-items: center;
-        width: 100%;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    th{
-        text-align: center;
-        padding-top: 20px;
-        padding-bottom: 20px;
-        background-color: #1c2a4a;
-        color: white;
-    }
-
-    td{
-        padding: 5px;
-        text-align: center;
-    }
-
-    .foto-pemain{
-        width: 50px;
-        height: auto;
-        border-radius: 8px;
-    }
-
-    .sell-button{
-        border: 1px solid #ff3838;
-        color: #ff3838;
-        background-color: white;
-        padding: 6px 10px;
-        border-radius: 4px;
-        cursor: pointer; 
-        border-width: 1.5px;
-    }
-
-    .sell-button:hover{
-        background-color: #ff3838;
-        color: white;
-    }
-
-
-    /* Modal Styles */
-    /* Overlay gelap */
-    .modal {
-        display: none; /* sembunyikan default */
-        position: fixed;
-        z-index: 10;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.5);
-        align-items: center;
-    }
-
-    /* Kotak modal */
-    .modal-content {
-        background-color: #fff;
-        margin: 10% auto;
-        margin-top: 100px;
-        padding: 20px;
-        padding-top: 5px;
-        width: 600px;
-        height: 450px;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        animation: fadeIn 0.3s ease;
-    }
-
-    /* Animasi halus */
-    @keyframes fadeIn {
-        from {opacity: 0; transform: scale(0.95);}
-        to {opacity: 1; transform: scale(1);}
-    }
-
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        cursor: pointer;
-    }
-    .close:hover {
-        color: black;
-    }
-
-    .modal-body {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-top: 30px;
-    }
-
-
-    .modal-image-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;   /* pusatkan secara vertikal (dalam kolom) */
-        align-items: center;       /* 🔥 pusatkan secara horizontal */
-        gap: 8px;                  /* jarak antara foto & logo */
-    }
-
-    .modal-img {
-        width: 200px;
-        border-radius: 8px;
-    }
-
-    .modal-logo {
-        width: 10px;
-    }
-
-    .modal-info {
-        margin-left: 10px;
-        margin-right: 10px; 
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 20px;
-    }
-
-    .cancel-btn, .confirm-btn {
-        border: none;
-        padding: 8px 14px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: 0.3s;
-    }
-
-    .cancel-btn {
-        background-color: #ccc;
-        margin-right: 10px;
-    }
-    .cancel-btn:hover {
-        background-color: #999;
-    }
-
-    .confirm-btn {
-        background-color: #ff3838;
-        color: white;
-    }
-    .confirm-btn:hover {
-        background-color: #e02828;
-    }
-
-
+  }
 </style>
 
 <script>
-      const csrfToken = "{{ csrf_token }}";
-    document.addEventListener("DOMContentLoaded", function() {
-        const modal = document.getElementById("sellModal");
-        const closeBtn = document.querySelector(".close");
-        const cancelBtn = document.getElementById("cancelButton");
-        const confirmBtn = document.getElementById("confirmSellButton");
+  const csrfToken = "{{ csrf_token }}";
 
-        const modalImg = document.getElementById("modal-thumbnail");
-        const modalNama = document.getElementById("modal-nama");
-        const modalPosisi = document.getElementById("modal-posisi");
-        const modalUmur = document.getElementById("modal-umur");
-        const modalNegara = document.getElementById("modal-negara");
-        const modalMatch = document.getElementById("modal-match");
-        const modalGoal = document.getElementById("modal-goal");
-        const modalAssist = document.getElementById("modal-assist");
-        const modalValue = document.getElementById("modal-value");
+  document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("sellModal");
+    const closeBtn = document.querySelector(".close");
+    const cancelBtn = document.getElementById("cancelButton");
+    const confirmBtn = document.getElementById("confirmSellButton");
+    const modalImg = document.getElementById("modal-thumbnail");
+    const modalNama = document.getElementById("modal-nama");
+    const modalPosisi = document.getElementById("modal-posisi");
+    const modalUmur = document.getElementById("modal-umur");
+    const modalNegara = document.getElementById("modal-negara");
+    const modalMatch = document.getElementById("modal-match");
+    const modalGoal = document.getElementById("modal-goal");
+    const modalAssist = document.getElementById("modal-assist");
+    const modalValue = document.getElementById("modal-value");
 
-        // Saat tombol "Jual" diklik
-        document.querySelectorAll(".sell-button").forEach(button => {
-            button.addEventListener("click", function() {
-                const row = this.closest("tr");
-                const nama = row.querySelector(".nama-pemain").innerText;
-                const posisi = row.children[2].innerText;
-                const umur = row.children[3].innerText;
-                const negara = row.children[4].innerText;
-                const match = row.children[5].innerText;
-                const goal = row.children[6].innerText;
-                const assist = row.children[7].innerText;
-                const value = row.children[8].innerText.replace("Rp", "");
-                const foto = row.querySelector(".foto-pemain").src;
+    const tbody = document.getElementById("player-table-body");
 
-                // Isi data ke modal
-                modalImg.src = foto;
-                modalNama.innerText = nama;
-                modalPosisi.innerText = posisi;
-                modalUmur.innerText = umur;
-                modalNegara.innerText = negara;
-                modalMatch.innerText = match;
-                modalGoal.innerText = goal;
-                modalAssist.innerText = assist;
-                modalValue.innerText = value;
+    // 🔹 Ambil data pemain via AJAX
+    fetch("{% url 'player_transaction:list_pemain_saya' %}", {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+      .then(res => res.json())
+      .then(data => {
+        tbody.innerHTML = ""; // kosongkan tbody
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-gray-500">Belum ada pemain yang terdaftar.</td></tr>`;
+          return;
+        }
 
-                modal.style.display = "block";
-            });
+        data.forEach(p => {
+          const row = document.createElement("tr");
+          row.dataset.playerId = p.id;
+          row.className = "text-center border-b hover:bg-[#f4f8ff]";
+          row.innerHTML = `
+            <td><img class="foto-pemain w-[50px] rounded-md inline-block" src="${p.thumbnail}" alt=""></td>
+            <td class="nama-pemain font-medium py-5">${p.nama_pemain}</td>
+            <td>${p.posisi}</td>
+            <td>${p.umur}</td>
+            <td>${p.negara}</td>
+            <td>${p.match}</td>
+            <td>${p.goal}</td>
+            <td>${p.assist}</td>
+            <td>Rp${parseInt(p.market_value).toLocaleString("id-ID")}</td>
+            <td>
+              ${p.sedang_dijual
+              ? `<button class="sell-button border border-gray-300 bg-gray-200 text-gray-500 px-3 py-1 rounded-md cursor-not-allowed opacity-60" disabled>Sedang Dijual</button>`
+              : `<button class="sell-button border-[1.5px] border-[#ff3838] text-[#ff3838] bg-white px-3 py-[6px] rounded-md hover:bg-[#ff3838] hover:text-white transition cursor-pointer">Jual</button>`
+            }
+            </td>
+          `;
+          tbody.appendChild(row);
         });
 
-        // Tutup modal
-        closeBtn.onclick = () => modal.style.display = "none";
-        cancelBtn.onclick = () => modal.style.display = "none";
+        attachSellButtonHandlers();
+      })
+      .catch(() => {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-red-500">Gagal memuat data pemain.</td></tr>`;
+      });
 
-        // Klik luar modal → tutup
-        window.onclick = (e) => {
-            if (e.target == modal) modal.style.display = "none";
-        };
+    // 🔹 Fungsi untuk aktifkan event listener pada tombol jual
+    function attachSellButtonHandlers() {
+      document.querySelectorAll(".sell-button").forEach(button => {
+        button.addEventListener("click", function () {
+          const row = this.closest("tr");
+          const nama = row.querySelector(".nama-pemain").innerText;
+          const posisi = row.children[2].innerText;
+          const umur = row.children[3].innerText;
+          const negara = row.children[4].innerText;
+          const match = row.children[5].innerText;
+          const goal = row.children[6].innerText;
+          const assist = row.children[7].innerText;
+          const value = row.children[8].innerText.replace("Rp", "");
+          const foto = row.querySelector(".foto-pemain").src;
 
-        // Tombol confirm sell
-        confirmBtn.onclick = () => {
-            const playerName = modalNama.innerText;
-            const playerRow = Array.from(document.querySelectorAll(".nama-pemain"))
-                .find(td => td.innerText === playerName);
+          modalImg.src = foto;
+          modalNama.innerText = nama;
+          modalPosisi.innerText = posisi;
+          modalUmur.innerText = umur;
+          modalNegara.innerText = negara;
+          modalMatch.innerText = match;
+          modalGoal.innerText = goal;
+          modalAssist.innerText = assist;
+          modalValue.innerText = value;
+          modal.style.display = "block";
+        });
+      });
+    }
 
-            if (!playerRow) return;
+    // 🔹 Modal handler
+    closeBtn.onclick = () => modal.style.display = "none";
+    cancelBtn.onclick = () => modal.style.display = "none";
+    window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
 
-            // Ambil player_id dari data di tabel (kita tambahkan di bawah)
-            const playerId = playerRow.closest("tr").dataset.playerId;
+    // 🔹 Konfirmasi jual
+    confirmBtn.onclick = () => {
+      const playerName = modalNama.innerText;
+      const playerRow = Array.from(document.querySelectorAll(".nama-pemain"))
+        .find(td => td.innerText === playerName);
+      if (!playerRow) return;
 
-            fetch(`/player_transaction/jual/${playerId}/`, {
-                method: "POST",
-                headers: {
-                    "X-CSRFToken": csrfToken,
-                    "X-Requested-With": "XMLHttpRequest",
-                },
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert(`✅ ${data.message}`);
-                    modal.style.display = "none";
-
-                    // Ubah tampilan tombol jadi "Sedang Dijual"
-                    const sellButton = playerRow.closest("tr").querySelector(".sell-button");
-                    sellButton.innerText = "Sedang Dijual";
-                    sellButton.disabled = true;
-                    sellButton.style.opacity = 0.6;
-                } else {
-                    alert("❌ Gagal menjual pemain.");
-                }
-            })
-            .catch(() => alert("Terjadi kesalahan saat menghubungi server."));
-        };
-    });
+      const playerId = playerRow.closest("tr").dataset.playerId;
+      fetch(`/player_transaction/jual/${playerId}/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert(`✅ ${data.message}`);
+            modal.style.display = "none";
+            const sellButton = playerRow.closest("tr").querySelector(".sell-button");
+            sellButton.innerText = "Sedang Dijual";
+            sellButton.disabled = true;
+            sellButton.classList.add("opacity-60", "cursor-not-allowed");
+          } else {
+            alert("❌ Gagal menjual pemain.");
+          }
+        })
+        .catch(() => alert("Terjadi kesalahan saat menghubungi server."));
+    };
+  });
 </script>
-
-
-
 {% endblock %}
