@@ -420,12 +420,17 @@ async function handleDeleteFormation(formationId, formationName){
   try{
     const url = formationApiUrlTemplate.replace('0', formationId);
     const resp = await fetch(url, { method:'DELETE', headers: {'X-CSRFToken': csrftoken} });
+    
     if(resp.status === 204){
-      allHistory = allHistory.filter(h => h.id !== formationId);
-      renderHistoryList();
-      if(currentFormationId === formationId){
-        clearFormation(true, true);
+      // DIUBAH: Gunakan '!=' (loose equality) untuk membandingkan angka dengan string
+      allHistory = allHistory.filter(h => h.id != formationId); 
+      
+      renderHistoryList(); // Ini akan me-render ulang daftar tanpa item yang dihapus
+
+      if(currentFormationId == formationId){ 
+        clearFormation(true, true); // Bersihkan form jika yang dihapus adalah yang sedang aktif
       }
+      
       showStatus(`Formation "${formationName}" deleted.`, false, 3000); 
     } else {
       const res = await resp.json();
