@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+</head>
+<body class="bg-gradient-to-br ...">
+
+    {% include 'partials/navbar.html' %} 
+
+    <main class="p-4 md:p-8"> {# Pastikan hanya ada satu tag <main> #}
+        {% block content %}
+        {% endblock content %}
+    </main>
+
+</body>
+</html>

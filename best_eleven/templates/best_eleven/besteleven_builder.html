@@ -1,0 +1,939 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Best XI Team Builder{% endblock title %}
+
+{% block content %}
+
+<style>
+  :root{
+    --primary-purple: #6B46C1;
+    --accent-pink: #D946A6;
+    --card-border: #4A2C7C;
+    --card-bg: #f5f8fc;
+    --dark-bg: #f5f8fc;
+    --text-light: #4A2C7C;
+    --text-muted: rgb(46,15,50);
+    --success-green: #10B981;
+    --error-red: #EF4444;
+  }
+
+  /* Pitch background image */
+  #pitch{
+    background-image: url("{% static 'images/lapangan.jpg' %}");
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Grid positions for pitch slots */
+  .GK{ grid-area: 5 / 3 / 6 / 4; }
+  .LB{ grid-area: 4 / 1 / 5 / 2; } 
+  .LCB{ grid-area: 4 / 2 / 5 / 3; } 
+  .RCB{ grid-area: 4 / 4 / 5 / 5; } 
+  .RB{ grid-area: 4 / 5 / 5 / 6; }
+  .layout-4-3-3 .LCM{ grid-area:3/2/4/3; } 
+  .layout-4-3-3 .CM{ grid-area:3/3/4/4; } 
+  .layout-4-3-3 .RCM{ grid-area:3/4/4/5; }
+  .layout-4-3-3 .LW{ grid-area:2/1/3/2; } 
+  .layout-4-3-3 .ST{ grid-area:2/3/3/4; } 
+  .layout-4-3-3 .RW{ grid-area:2/5/3/6; }
+
+  .layout-4-4-2 .LM{ grid-area:3/1/4/2; } 
+  .layout-4-4-2 .LCM{ grid-area:3/2/4/3;} 
+  .layout-4-4-2 .RCM{ grid-area:3/4/4/5;} 
+  .layout-4-4-2 .RM{ grid-area:3/5/4/6;} 
+  .layout-4-4-2 .LST{ grid-area:2/2/3/3;} 
+  .layout-4-4-2 .RST{ grid-area:2/4/3/5;}
+
+  .layout-3-5-2 .LCB{ grid-area:4/2/5/3; } 
+  .layout-3-5-2 .CB{ grid-area:4/3/5/4; } 
+  .layout-3-5-2 .RCB{ grid-area:4/4/5/5; }
+  .layout-3-5-2 .LWB{ grid-area:3/1/4/2; } 
+  .layout-3-5-2 .LCM{ grid-area:3/2/4/3; } 
+  .layout-3-5-2 .CAM{ grid-area:3/3/4/4; } 
+  .layout-3-5-2 .RCM{ grid-area:3/4/4/5; } 
+  .layout-3-5-2 .RWB{ grid-area:3/5/4/6; } 
+  .layout-3-5-2 .LST{ grid-area:2/2/3/3; } 
+  .layout-3-5-2 .RST{ grid-area:2/4/3/5; }
+
+  .layout-4-2-3-1 .LDM{ grid-area:3/2/4/3; } 
+  .layout-4-2-3-1 .RDM{ grid-area:3/4/4/5; } 
+  .layout-4-2-3-1 .LAM{ grid-area:2/1/3/2; } 
+  .layout-4-2-3-1 .CAM{ grid-area:2/3/3/4; } 
+  .layout-4-2-3-1 .RAM{ grid-area:2/5/3/6; } 
+  .layout-4-2-3-1 .ST{ grid-area:1/3/2/4; }
+
+  /* Pulse animation for selected slot */
+  @keyframes pulse{ 
+    0%,100%{ transform:scale(1); opacity:1 } 
+    50%{ transform:scale(1.08); opacity:.8 } 
+  }
+  .pitch-slot.selected .slot-circle{ 
+    animation: pulse 1.5s infinite; 
+  }
+</style>
+
+<div class="max-w-[1400px] mx-auto px-4 py-8 min-h-screen" style="background: linear-gradient(135deg,#f5f8fc 0%, #f2f1f3 100%);">
+  <h1 style="font-size: 3rem; text-align: center; margin-bottom: 1.25rem; font-weight: 800; color: purple;">
+  Best XI Team Builder
+</h1>
+
+  <div id="global-status" class="min-h-[40px] mb-4 text-center font-semibold px-2 py-2 rounded-lg" aria-live="polite">
+
+  </div>
+
+    <div id="main-grid-layout" class="grid grid-cols-1 lg:grid-cols-[1fr_2fr_1fr] gap-6">
+
+    <div id="history-card" class="bg-[#f5f8fc] border-2 border-[#4A2C7C] rounded-2xl p-6 shadow-[0_10px_30px_rgba(105,70,193,0.12)]">
+        <h2 class="flex items-center justify-between gap-2 m-0 mb-4 pb-4 border-b-2 border-[#4A2C7C] text-lg text-[#4A2C7C]">
+            <span class="font-bold">💾 Formasi Tersimpan</span>
+        </h2>
+
+      <div id="history-list" class="overflow-y-auto max-h-[calc(80vh-180px)]">
+        <p class="text-center py-5 text-[#2e0f32] italic">Memuat riwayat...</p>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-dashed border-black/[0.06]">
+        <button
+        id="new-formation-btn"
+        class="w-full font-semibold py-3 px-5 rounded-lg border-none cursor-pointer inline-flex gap-2 items-center justify-center text-white"
+        style="background-color: purple;">
+        + FORMASI BARU
+        </button>
+      </div>
+    </div>
+
+    <div id="pitch-card" class="bg-[#f5f8fc] border-2 border-[#4A2C7C] rounded-2xl p-6 shadow-[0_10px_30px_rgba(105,70,193,0.12)]">
+      <div class="flex flex-col md:flex-row gap-4 mb-4">
+        <input id="formation-name" type="text" placeholder="✏️ Nama Formasi (cth: Tim Impian)" 
+          class="flex-1 py-3 px-4 rounded-lg border-2 border-[#4A2C7C] bg-[#f5f8fc] text-[#4A2C7C] text-base outline-none">
+        <select id="formation-layout-select" aria-label="Pilih tata letak formasi"
+          class="flex-1 py-3 px-4 rounded-lg border-2 border-[#4A2C7C] bg-[#f5f8fc] text-[#4A2C7C] text-base outline-none">
+          <option value="4-3-3">4-3-3</option>
+          <option value="4-4-2">4-4-2</option>
+          <option value="3-5-2">3-5-2</option>
+          <option value="4-2-3-1">4-2-3-1</option>
+        </select>
+      </div>
+        
+      <div id="pitch" class="relative w-full rounded-xl grid grid-rows-5 grid-cols-5 py-2.5 h-[450px] md:h-[550px] shadow-[inset_0_0_40px_rgba(0,0,0,0.3)]" 
+        data-formation-url-template="{% url 'best_eleven:api_get_formation_details' pk=0 %}">
+      </div>
+      
+      <div class="flex gap-4 items-center mt-4">
+        <button
+            id="clear-formation-btn"
+            class="font-semibold py-3 px-5 rounded-lg border-none cursor-pointer inline-flex gap-2 items-center text-white"
+            style="background-color: purple;">
+            Kosongkan Pemain
+        </button>
+
+        <button id="save-formation-btn" class="flex-1 font-semibold py-3 px-5 rounded-lg border-none cursor-pointer inline-flex gap-2 items-center justify-center text-white disabled:opacity-50 disabled:cursor-not-allowed" style="background: purple;" disabled>
+          💾 Simpan Formasi
+        </button>
+      </div>
+    </div>
+
+    <div id="player-list-card" class="bg-[#f5f8fc] border-2 border-[#4A2C7C] rounded-2xl p-6 shadow-[0_10px_30px_rgba(105,70,193,0.12)]">
+        <h2 class="flex items-center justify-between gap-2 m-0 mb-4 pb-4 border-b-2 border-[#4A2C7C] text-lg text-[#4A2C7C]">
+        <span class="font-bold">📋 Daftar Pemain</span>
+        </h2>
+
+
+      <div class="mb-4">
+        <label for="club-select" class="block mb-2 text-sm font-medium text-[#4A2C7C]">Filter berdasarkan Klub</label>
+        <select id="club-select" class="w-full py-3 px-4 rounded-lg border-2 border-[#4A2C7C] bg-[#f5f8fc] text-[#4A2C7C] text-base outline-none">
+          <option value="">Memuat klub...</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label for="player-search-input" class="block mb-2 text-sm font-medium text-[#4A2C7C]">Cari Nama Pemain</label>
+        <input id="player-search-input" type="text" placeholder="Ketik nama pemain...." 
+          class="w-full py-3 px-4 rounded-lg border-2 border-[#4A2C7C] bg-[#f5f8fc] text-[#4A2C7C] text-base outline-none">
+      </div>
+
+      <div class="flex justify-between items-center mb-2">
+        <span id="filter-position-label" class="text-sm text-[#4A2C7C]">Pilih klub atau posisi</span>
+        <button id="clear-filter-btn" class="bg-transparent border-none text-red-400 cursor-pointer text-sm hidden hover:text-red-500">
+          ✕ Hapus Filter
+        </button>
+      </div>
+
+      <div id="player-list" class="overflow-y-auto max-h-[calc(80vh-300px)]">
+        <p class="text-center py-5 text-[#2e0f32] italic">Memuat pemain...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm hidden">
+    <div class="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+      <button id="detail-modal-close" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+      
+      <h2 id="detail-modal-title" class="text-3xl font-bold text-purple-800 mb-2">Detail Formasi</h2>
+      <p id="detail-modal-layout" class="text-lg text-gray-600 mb-4 border-b pb-3"></p>
+      
+      <div id="detail-modal-player-list" class="space-y-3 max-h-[60vh] overflow-y-auto">
+        <p>Memuat detail...</p>
+      </div>
+
+      <div class="mt-6 text-right">
+          <button id="detail-modal-back-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-5 rounded-lg">
+              Kembali
+          </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- State ---------- */
+let allClubs = [];
+let allHistory = [];
+let currentPlayers = [];
+let currentSquad = [];
+let selectedPlayers = [];
+let selectedSlotId = null;
+let currentFilterPositionCode = null;
+let currentLayout = '4-3-3';
+let currentFormationId = null;
+
+/* ---------- Element refs ---------- */
+const pitch = document.getElementById('pitch');
+const clubSelect = document.getElementById('club-select');
+const formationLayoutSelect = document.getElementById('formation-layout-select');
+const formationNameInput = document.getElementById('formation-name');
+const playerListContainer = document.getElementById('player-list');
+const playerSearchInput = document.getElementById('player-search-input');
+const historyListContainer = document.getElementById('history-list');
+const saveFormationBtn = document.getElementById('save-formation-btn');
+const clearFormationBtn = document.getElementById('clear-formation-btn');
+const clearFilterBtn = document.getElementById('clear-filter-btn');
+const globalStatus = document.getElementById('global-status');
+const filterPositionLabel = document.getElementById('filter-position-label');
+const newFormationBtn = document.getElementById('new-formation-btn');
+const formationApiUrlTemplate = document.getElementById('pitch').dataset.formationUrlTemplate;
+const mainGridLayout = document.getElementById('main-grid-layout');
+const historyCard = document.getElementById('history-card');
+const pitchCard = document.getElementById('pitch-card');
+const playerListCard = document.getElementById('player-list-card');
+
+// Referensi Elemen Modal
+const detailModal = document.getElementById('detail-modal');
+const detailModalCloseBtn = document.getElementById('detail-modal-close');
+const detailModalBackBtn = document.getElementById('detail-modal-back-btn');
+const detailModalTitle = document.getElementById('detail-modal-title');
+const detailModalLayout = document.getElementById('detail-modal-layout');
+const detailModalPlayerList = document.getElementById('detail-modal-player-list');
+
+/* ---------- Mappings ---------- */
+const formationLayouts = {
+  '4-3-3': ['GK','LB','LCB','RCB','RB','LCM','CM','RCM','LW','ST','RW'],
+  '4-4-2': ['GK','LB','LCB','RCB','RB','LM','LCM','RCM','RM','LST','RST'],
+  '3-5-2': ['GK','LCB','CB','RCB','LWB','LCM','RCM','RWB','CAM','LST','RST'],
+  '4-2-3-1': ['GK','LB','LCB','RCB','RB','LDM','RDM','LAM','CAM','RAM','ST']
+};
+
+const slotPositionMap = {
+  'GK':'Kiper',
+  'LB':'Bek-Kiri','LWB':'Bek-Kiri',
+  'LCB':'Bek-Tengah','CB':'Bek-Tengah','RCB':'Bek-Tengah',
+  'RB':'Bek-Kanan','RWB':'Bek-Kanan',
+  'LDM':'Gel. Bertahan','RDM':'Gel. Bertahan',
+  'LM':'Sayap Kiri','LCM':'Gel. Tengah','CM':'Gel. Tengah','RCM':'Gel. Tengah','RM':'Sayap Kanan',
+  'LAM':'Sayap Kiri','CAM':'Gel. Serang','RAM':'Sayap Kanan',
+  'LW':'Sayap Kiri','RW':'Sayap Kanan','LST':'Penyerang','ST':'Penyerang','RST':'Penyerang'
+};
+
+const indonesianToRoleMap = {
+  'Kiper':['Kiper'],
+  'Bek-Tengah':['Bek-Tengah'],
+  'Bek-Kanan':['Bek-Kanan'],
+  'Bek-Kiri':['Bek-Kiri'],
+  'Gel. Bertahan':['Gel. Bertahan','Gel. Tengah'],
+  'Gel. Serang':['Gel. Serang','Gel. Tengah','Sayap Kiri','Sayap Kanan'],
+  'Gel. Tengah':['Gel. Tengah','Gel. Bertahan','Gel. Serang'],
+  'Sayap Kiri':['Sayap Kiri','Gel. Serang','Bek-Kiri'],
+  'Sayap Kanan':['Sayap Kanan','Gel. Serang','Bek-Kanan'],
+  'Penyerang':['Penyerang'],
+  'Depan-Tengah':['Penyerang']
+};
+
+/* ---------- CSRF helper ---------- */
+function getCookie(name){
+  let cookieValue = null;
+  if(document.cookie && document.cookie !== ''){
+    const cookies = document.cookie.split(';');
+    for(let i=0;i<cookies.length;i++){
+      const c = cookies[i].trim();
+      if(c.substring(0, name.length+1) === (name + '=')){
+        cookieValue = decodeURIComponent(c.substring(name.length+1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+/* ---------- UI helpers ---------- */
+function showStatus(message, isError=false, duration=4000){
+  if(!message){
+    globalStatus.textContent = '';
+    globalStatus.className = 'min-h-[40px] mb-4 text-center font-semibold px-2 py-2 rounded-lg';
+    return;
+  }
+  globalStatus.textContent = message;
+  const baseClasses = 'min-h-[40px] mb-4 text-center font-semibold px-2 py-2 rounded-lg border-2';
+  
+  if(isError){
+    globalStatus.className = baseClasses + ' border-[#F25022] text-[#F25022] bg-[#F25022]/[0.06]';
+  } else {
+    globalStatus.className = baseClasses + ' border-[#7FBA00] text-[#7FBA00] bg-[#7FBA00]/[0.06]';
+  }
+
+  if(duration>0){
+    setTimeout(()=>{
+      if(globalStatus.textContent === message){
+        globalStatus.textContent = '';
+        globalStatus.className = 'min-h-[40px] mb-4 text-center font-semibold px-2 py-2 rounded-lg';
+      }
+    }, duration);
+  }
+}
+
+/* ---------- Fetch initial data ---------- */
+async function fetchInitialData(){
+  showStatus('Memuat klub & riwayat...', false, 10000); 
+  try{
+    const resp = await fetch("{% url 'best_eleven:api_builder_data' %}");
+    if(!resp.ok) throw new Error(`Error ${resp.status}`);
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error || 'Unknown error');
+    allClubs = data.clubs || [];
+    allHistory = data.history || [];
+    renderClubSelect();
+    renderHistoryList();
+    await fetchPlayers();
+    reAssignPlayersToPitch();
+    showStatus('Siap! Pilih slot di lapangan.', false, 3000); 
+  }catch(err){
+    console.error('fetchInitialData:', err);
+    showStatus(`Error: ${err.message}`, true, 8000);
+  }
+}
+
+/* ---------- Fetch players ---------- */
+async function fetchPlayers(clubId=null){
+  showStatus('Memuat daftar pemain...', false, 2000); 
+  try{
+    let url = "{% url 'best_eleven:api_get_players' %}";
+    if(clubId) url += `?club_id=${encodeURIComponent(clubId)}`;
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`Error ${resp.status}`);
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error || 'Unknown error');
+    currentPlayers = data.players || [];
+    renderPlayerList();
+    showStatus('Daftar pemain diperbarui.', false, 2000); 
+  }catch(err){
+    console.error('fetchPlayers:', err);
+    showStatus(`Error: ${err.message}`, true, 4000);
+  }
+}
+
+/* ---------- Save formation ---------- */
+async function saveFormation(){
+  const name = formationNameInput.value.trim();
+  if(currentSquad.length !== 11 || !name){
+    alert('Nama formasi wajib diisi dan Anda harus memiliki 11 pemain.'); 
+    return;
+  }
+  showStatus('Menyimpan formasi...', false, 10000); 
+  saveFormationBtn.disabled = true;
+  const payload = {
+    name: name,
+    layout: currentLayout,
+    formation_id: currentFormationId,
+    player_ids: currentSquad.map(s => ({ slotId: s.originalSlotId, playerId: s.player.id }))
+  };
+  try{
+    const resp = await fetch("{% url 'best_eleven:api_save_formation' %}", {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken':csrftoken},
+      body: JSON.stringify(payload)
+    });
+    const result = await resp.json();
+    if(!resp.ok) throw new Error(result.error || 'Failed to save');
+    if(currentFormationId){
+      const idx = allHistory.findIndex(h => h.id === currentFormationId);
+      if(idx>-1) allHistory[idx] = result.formation;
+    } else {
+      allHistory.unshift(result.formation);
+      currentFormationId = result.formation.id;
+    }
+    renderHistoryList();
+    highlightCurrentHistoryItem();
+    showStatus(result.message || 'Formasi disimpan!', false, 3000); 
+  }catch(err){
+    console.error('saveFormation:', err);
+    showStatus(`Error: ${err.message}`, true, 6000);
+    alert(`Error: ${err.message}`);
+  }finally{
+    checkFormCompletion();
+    saveFormationBtn.disabled = false;
+  }
+}
+
+/* ---------- Load formation ---------- */
+async function loadFormation(formationId){
+  showStatus('Memuat formasi...', false, 5000); 
+  try{
+    const url = formationApiUrlTemplate.replace('0', formationId);
+    const resp = await fetch(url);
+    if(!resp.ok) throw new Error(`Error ${resp.status}`);
+    const data = await resp.json();
+    if(data.error) throw new Error(data.error);
+    currentFormationId = data.id;
+    currentLayout = data.layout || '4-3-3';
+    formationNameInput.value = data.name || '';
+    formationLayoutSelect.value = currentLayout;
+    currentSquad = (data.players || []).map(p => ({ player: p, originalSlotId: p.slotId }));
+    reAssignPlayersToPitch();
+    await fetchPlayers(clubSelect.value || null);
+    renderPlayerList();
+    checkFormCompletion();
+    highlightCurrentHistoryItem();
+    showStatus(`Formasi "${data.name}" dimuat.`, false, 3000); 
+  }catch(err){
+    console.error('loadFormation:', err);
+    showStatus(`Error: ${err.message}`, true, 8000);
+    alert(`Error: ${err.message} (pastikan API mengirim 'slotId' pada pemain)`); 
+    clearFormation(false, true);
+  }
+}
+
+/* ---------- Delete formation (AJAX) ---------- */
+async function handleDeleteFormation(formationId, formationName){
+  if(!confirm(`Apakah Anda yakin ingin menghapus "${formationName}"?`)) return; 
+  showStatus(`Menghapus "${formationName}"...`, false, 5000); 
+  try{
+    const url = formationApiUrlTemplate.replace('0', formationId);
+    const resp = await fetch(url, { method:'DELETE', headers: {'X-CSRFToken': csrftoken} });
+    
+    if(resp.status === 204){
+      // DIUBAH: Gunakan '!=' (loose equality) untuk membandingkan angka dengan string
+      allHistory = allHistory.filter(h => h.id != formationId); 
+      
+      renderHistoryList(); // Ini akan me-render ulang daftar tanpa item yang dihapus
+
+      if(currentFormationId == formationId){ 
+        clearFormation(true, true); // Bersihkan form jika yang dihapus adalah yang sedang aktif
+      }
+      
+      showStatus(`Formasi "${formationName}" dihapus.`, false, 3000); 
+    } else {
+      const res = await resp.json();
+      throw new Error(res.error || `Status ${resp.status}`);
+    }
+  }catch(err){
+    console.error('handleDeleteFormation:', err);
+    showStatus(`Error: ${err.message}`, true, 6000);
+  }
+}
+
+/* ---------- Show Formation Details (AJAX MODAL) ---------- */
+async function showFormationDetails(formationId) {
+  // 1. Tampilkan modal & set loading state
+  detailModal.classList.remove('hidden');
+  detailModalTitle.textContent = 'Memuat...';
+  detailModalLayout.textContent = 'Mengambil data...';
+  detailModalPlayerList.innerHTML = '<p class="text-center py-5 text-gray-500 italic">Memuat detail...</p>';
+
+  try {
+    // 2. Fetch data (kita sudah punya API-nya)
+    const url = formationApiUrlTemplate.replace('0', formationId);
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Error ${resp.status}`);
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    // 3. Populate modal dengan data
+    detailModalTitle.textContent = data.name || 'Formasi Tanpa Nama';
+    detailModalLayout.textContent = `Formasi: ${data.layout || 'N/A'}`;
+    
+    if (!data.players || data.players.length === 0) {
+      detailModalPlayerList.innerHTML = '<p class="text-gray-500 italic">Tidak ada pemain di formasi ini.</p>';
+      return;
+    }
+
+    // 4. Render daftar pemain
+    detailModalPlayerList.innerHTML = ''; // Kosongkan loading
+    data.players.forEach(player => {
+      const pEl = document.createElement('div');
+      pEl.className = "flex items-center bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm";
+      const pimg = player.profile_image_url || 'https://via.placeholder.com/100';
+      
+      pEl.innerHTML = `
+        <img src="${pimg}" alt="${player.name}" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-200">
+        <div class="ml-4 flex-1">
+          <div class="text-base font-semibold text-gray-900">${player.name}</div>
+          <div class="text-sm text-gray-500">${player.position || 'N/A'}</div>
+        </div>
+        <div class="text-right">
+          <span class="px-3 py-1 inline-block rounded-full bg-purple-100 text-purple-800 text-sm font-medium">
+            Slot: ${player.slotId || 'N/A'}
+          </span>
+        </div>
+      `;
+      detailModalPlayerList.appendChild(pEl);
+    });
+
+  } catch (err) {
+    console.error('showFormationDetails:', err);
+    detailModalTitle.textContent = 'Kesalahan';
+    detailModalLayout.textContent = 'Tidak dapat memuat detail.';
+    detailModalPlayerList.innerHTML = `<p class="text-red-600 italic">${err.message}</p>`;
+  }
+}
+
+function hideDetailModal() {
+  detailModal.classList.add('hidden');
+  // Kosongkan konten saat ditutup
+  detailModalTitle.textContent = '';
+  detailModalLayout.textContent = '';
+  detailModalPlayerList.innerHTML = '';
+}
+
+
+/* ---------- Reassign players to pitch (main logic) ---------- */
+function reAssignPlayersToPitch(){
+  const newSlots = formationLayouts[currentLayout] || [];
+  let availableOld = currentSquad.slice();
+  const newSelected = [];
+  const newSquad = [];
+
+  newSlots.forEach(slotId => {
+    const requiredRole = slotPositionMap[slotId];
+    let placed = false;
+
+    const exactIdx = availableOld.findIndex(s => s.originalSlotId === slotId && indonesianToRoleMap[s.player.position]?.includes(requiredRole));
+    if(exactIdx > -1){
+      const m = availableOld.splice(exactIdx,1)[0];
+      newSelected.push({ player: m.player, slotId });
+      newSquad.push(m);
+      placed = true;
+    }
+
+    if(!placed){
+      const primIdx = availableOld.findIndex(s => indonesianToRoleMap[s.player.position]?.[0] === requiredRole);
+      if(primIdx > -1){
+        const m = availableOld.splice(primIdx,1)[0];
+        newSelected.push({ player: m.player, slotId });
+        newSquad.push({ player: m.player, originalSlotId: slotId });
+        placed = true;
+      }
+    }
+
+    if(!placed){
+      const secIdx = availableOld.findIndex(s => indonesianToRoleMap[s.player.position]?.includes(requiredRole));
+      if(secIdx > -1){
+        const m = availableOld.splice(secIdx,1)[0];
+        newSelected.push({ player: m.player, slotId });
+        newSquad.push({ player: m.player, originalSlotId: slotId });
+        placed = true;
+      }
+    }
+  });
+
+  const unplaced = availableOld.map(s => s.player);
+
+  currentSquad = newSquad.slice();
+  selectedPlayers = newSelected.slice();
+
+  renderPitchSlots();
+  renderPlayerList();
+  checkFormCompletion();
+
+  if(unplaced.length > 0){
+    const names = unplaced.map(p => p.name || 'Tidak Dikenal').join(', ');
+    showStatus(`Pemain dihapus (posisi tidak tersedia): ${names}`, true, 8000); 
+  } else if(currentSquad.length > 0 && currentSquad.length < 11){
+    showStatus(`Formasi berubah. Harap isi ${11 - currentSquad.length} slot yang kosong.`, false, 5000); 
+  }
+}
+
+/* ---------- Render functions ---------- */
+function renderPitchSlots(){
+  pitch.innerHTML = '';
+  pitch.className = `relative w-full rounded-xl grid grid-rows-5 grid-cols-5 py-2.5 h-[450px] md:h-[550px] shadow-[inset_0_0_40px_rgba(0,0,0,0.3)] layout-${currentLayout}`;
+  const slots = formationLayouts[currentLayout] || [];
+  slots.forEach(slotId => {
+    const playerInSlot = selectedPlayers.find(s => s.slotId === slotId);
+    const slotEl = document.createElement('div');
+    slotEl.id = `slot-${slotId}`;
+    slotEl.className = `pitch-slot ${slotId} flex flex-col items-center justify-center cursor-pointer transition-all duration-[180ms] ease-in-out`;
+    slotEl.dataset.slotId = slotId;
+
+    if(playerInSlot){
+      const pname = playerInSlot.player?.name || 'Tidak Dikenal';
+      const pimg = playerInSlot.player?.profile_image_url || 'https://via.placeholder.com/100';
+      slotEl.innerHTML = `    
+        <img src="${pimg}" alt="${pname}" class="w-[60px] h-[60px] md:w-20 md:h-20 rounded-full object-cover border-4 border-[#6B46C1] shadow-[0_5px_12px_rgba(0,0,0,0.25)]">
+        <div class="player-name mt-2 px-2.5 py-1 rounded-2xl text-[#4A2C7C] font-semibold text-xs max-w-[100px] text-center whitespace-nowrap overflow-hidden text-ellipsis">${pname}</div>
+      `;
+      slotEl.classList.add('filled');
+    } else {
+      slotEl.innerHTML = `
+        <div class="slot-circle w-[60px] h-[60px] md:w-20 md:h-20 rounded-full flex items-center justify-center border-[3px] border-dashed border-purple-300/60" style="background: rgba(107,70,193,0.28);">
+          <span class="text-white font-bold">${slotId}</span>
+        </div>
+        <div class="player-name mt-2 px-2.5 py-1 rounded-2xl text-white font-semibold text-xs max-w-[100px] text-center whitespace-nowrap overflow-hidden text-ellipsis" style="background: linear-gradient(135deg, rgba(107,70,193,0.9), rgba(217,70,166,0.9));">(Kosong)</div>
+      `;
+      slotEl.classList.add('empty');
+      slotEl.addEventListener('mouseenter', (e) => {
+        const circle = e.currentTarget.querySelector('.slot-circle');
+        if(circle && !e.currentTarget.classList.contains('selected')){
+          circle.style.transform = 'scale(1.06)';
+          circle.style.borderColor = '#D946A6';
+          circle.style.boxShadow = '0 0 20px rgba(217,70,166,0.12)';
+        }
+      });
+      slotEl.addEventListener('mouseleave', (e) => {
+        const circle = e.currentTarget.querySelector('.slot-circle');
+        if(circle && !e.currentTarget.classList.contains('selected')){
+          circle.style.transform = '';
+          circle.style.borderColor = '';
+          circle.style.boxShadow = '';
+        }
+      });
+    }
+
+    if(slotId === selectedSlotId){
+      slotEl.classList.add('selected');
+      const circle = slotEl.querySelector('.slot-circle');
+      if(circle){
+        circle.style.background = 'rgba(217,70,166,0.45)';
+        circle.style.borderColor = '#D946A6';
+      }
+      const playerNameEl = slotEl.querySelector('.player-name');
+      if(playerNameEl) playerNameEl.style.display = 'none';
+    }
+
+    slotEl.addEventListener('click', () => handleSlotClick(slotId));
+    pitch.appendChild(slotEl);
+  });
+}
+
+function renderPlayerList(){
+  playerListContainer.innerHTML = '';
+  const searchTerm = playerSearchInput.value.toLowerCase().trim();
+  let filtered = currentPlayers.slice();
+
+  if(searchTerm){
+    filtered = filtered.filter(p => 
+      (p.name || 'Pemain Tidak Dikenal').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  if(currentFilterPositionCode){
+    filtered = filtered.filter(p => indonesianToRoleMap[p.position] && indonesianToRoleMap[p.position].includes(currentFilterPositionCode));
+    filterPositionLabel.textContent = `Filter: ${currentFilterPositionCode}`;
+    clearFilterBtn.classList.remove('hidden');
+  } else {
+    filterPositionLabel.textContent = 'Pilih klub atau posisi';
+    clearFilterBtn.classList.add('hidden');
+  }
+
+  const squadIds = currentSquad.map(s => s.player.id);
+  filtered = filtered.filter(p => !squadIds.includes(p.id));
+
+  if(filtered.length === 0){
+    playerListContainer.innerHTML = '<p class="text-center py-5 text-[#2e0f32] italic">Tidak ada pemain yang cocok.</p>';
+    return;
+  }
+
+  filtered.forEach(player=>{
+    const pEl = document.createElement('div');
+    pEl.className = 'flex gap-3 items-center justify-between py-4 px-4 rounded-xl border-2 border-[#4A2C7C] mb-3 cursor-pointer transition-all duration-[180ms] ease-in-out hover:-translate-y-1 hover:shadow-[0_6px_18px_rgba(217,70,166,0.08)] hover:border-[#D946A6]';
+    pEl.style.background = 'linear-gradient(135deg,#f5f8fc,#f5f8fc)';
+    pEl.dataset.playerId = player.id;
+    const pname = player.name || 'Pemain Tidak Dikenal';
+    const pimg = player.profile_image_url || 'https://via.placeholder.com/100';
+    let formattedValue = 'N/A';
+    try{
+    const v = parseFloat(player.market_value);
+    if(!isNaN(v) && v > 0){
+        formattedValue = new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0, 
+        maximumFractionDigits: 0  
+        }).format(v);
+    }
+    }catch(e){ 
+    console.error("Gagal format harga:", player.market_value, e);
+    formattedValue='N/A'; 
+    }
+
+    pEl.innerHTML = `
+      <div class="flex gap-3 items-center overflow-hidden flex-1">
+        <img src="${pimg}" alt="${pname}" class="w-[50px] h-[50px] rounded-full object-cover border-[3px] border-[#6B46C1] flex-shrink-0">
+        <div class="overflow-hidden flex-1">
+          <div class="font-semibold text-[#4A2C7C] whitespace-nowrap overflow-hidden text-ellipsis">${pname}</div>
+          <div class="text-[#2e0f32] text-[0.85rem] flex gap-2 items-center">
+            <span>${player.nationality || '-'}</span>
+            <span>•</span>
+            <span class="text-[#10B981] font-semibold">${formattedValue}</span>
+          </div>
+        </div>
+      </div>
+      <div class="ml-4">
+        <div class="text-sm font-medium text-[#4A2C7C] bg-purple-100 px-2 py-1 rounded">${player.position || 'N/A'}</div>
+      </div>
+    `;
+    pEl.addEventListener('click', ()=> handlePlayerSelect(player.id));
+    playerListContainer.appendChild(pEl);
+  });
+}
+
+function renderClubSelect(){
+  clubSelect.innerHTML = '<option value="">Semua Klub</option>';
+  allClubs.forEach(c=>{
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.name || 'Klub Tidak Dikenal';
+    clubSelect.appendChild(o);
+  });
+}
+
+function renderHistoryList(){
+  historyListContainer.innerHTML = '';
+  if(!allHistory || allHistory.length === 0){
+    historyListContainer.innerHTML = '<p class="text-center py-5 text-[#2e0f32] italic">Belum ada formasi tersimpan.</p>';
+    return;
+  }
+  allHistory.forEach(f=>{
+    const h = document.createElement('div');
+    
+    // Menambahkan class 'group' untuk styling hover
+    h.className = 'group relative border-2 border-[#4A2C7C] rounded-xl py-4 px-4 mb-3 cursor-pointer overflow-hidden transition-all duration-[180ms] ease-in-out hover:border-[#D946A6] hover:translate-x-1 hover:shadow-[0_6px_20px_rgba(217,70,166,0.12)]';
+    h.style.background = 'linear-gradient(135deg,#f5f8fc,#f5f8fc)';
+    h.dataset.formationId = f.id;
+
+    // Mengganti emoji dengan SVG dan menatanya dalam satu container
+    h.innerHTML = `
+      <div class="absolute top-2.5 right-2.5 z-10 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        
+        <button 
+           data-detail-id="${f.id}"
+           title="Lihat Detail Formasi"
+           class="detail-btn p-1.5 rounded-full bg-white/60 backdrop-blur-sm text-gray-600 hover:text-purple-700 hover:bg-white"
+           >
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        </button>
+        
+        <button
+           data-delete-id="${f.id}"
+           data-delete-name="${f.name || 'Formasi Tanpa Nama'}"
+           title="Hapus formasi"
+           class="delete-btn p-1.5 rounded-full bg-white/60 backdrop-blur-sm text-gray-600 hover:text-red-700 hover:bg-white"
+           >
+           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+      </div>
+
+      <h4 class="m-0 mr-10 text-base text-[#4A2C7C] font-semibold">${f.name || 'Formasi Tanpa Nama'}</h4>
+      <p class="mt-1.5 mb-0 text-[#2e0f32] text-[0.9rem]">Formasi: ${f.layout || 'N/A'}</p>
+    `;
+
+    // Menggunakan 'querySelector' untuk listener tombol baru
+    const detailBtn = h.querySelector('.detail-btn');
+    detailBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation(); // Mencegah 'loadFormation'
+        showFormationDetails(ev.currentTarget.dataset.detailId);
+    });
+
+    const deleteBtn = h.querySelector('.delete-btn');
+    deleteBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation(); // Mencegah 'loadFormation'
+        const ds = ev.currentTarget.dataset;
+        handleDeleteFormation(ds.deleteId, ds.deleteName);
+    });
+
+    // Kode ini tetap sama
+    h.addEventListener('click', ()=> loadFormation(f.id));
+    historyListContainer.appendChild(h);
+  });
+  highlightCurrentHistoryItem();
+}
+
+function highlightCurrentHistoryItem(){
+  document.querySelectorAll('#history-list .relative').forEach(el=>{
+    if(currentFormationId && el.dataset.formationId == currentFormationId){
+      el.style.background = 'linear-gradient(135deg,#e3dcef,#f0d8e6)';
+      el.style.boxShadow = '0 0 20px rgba(217,70,166,0.08)';
+      el.style.borderColor = '#D946A6';
+    } else {
+      el.style.background = 'linear-gradient(135deg,#f5f8fc,#f5f8fc)';
+      el.style.boxShadow = '';
+      el.style.borderColor = '#4A2C7C';
+    }
+  });
+}
+
+/* ---------- Handlers ---------- */
+function handleSlotClick(slotId){
+  const inSlot = selectedPlayers.find(s => s.slotId === slotId);
+  if(inSlot){
+    selectedPlayers = selectedPlayers.filter(s => s.slotId !== slotId);
+    currentSquad = currentSquad.filter(s => s.player.id !== inSlot.player.id);
+    selectedSlotId = null;
+    currentFilterPositionCode = null;
+    showStatus(`Pemain ${inSlot.player.name || 'Tidak Dikenal'} dihapus.`, false, 3000); 
+    renderPitchSlots();
+    renderPlayerList();
+  } else {
+    if(selectedSlotId === slotId){
+      selectedSlotId = null;
+      currentFilterPositionCode = null;
+      showStatus(`Pemilihan slot ${slotId} dibatalkan.`, false, 2500); 
+    } else {
+      selectedSlotId = slotId;
+      currentFilterPositionCode = slotPositionMap[slotId];
+      showStatus(`Memilih pemain untuk ${slotId} (${currentFilterPositionCode || 'N/A'})`, false, 2000); 
+    }
+    renderPitchSlots();
+    renderPlayerList();
+  }
+  checkFormCompletion();
+}
+
+function handlePlayerSelect(playerId){
+  if(!selectedSlotId){
+    alert('Harap pilih slot di lapangan terlebih dahulu!'); 
+    return;
+  }
+  if(currentSquad.length >= 11){
+    showStatus('Skuad penuh (11 pemain).', true, 3000); 
+    return;
+  }
+  const player = currentPlayers.find(p => p.id === playerId);
+  if(!player) { console.error('Player not found', playerId); return; }
+
+  const expectedRole = slotPositionMap[selectedSlotId];
+  const playerRoles = indonesianToRoleMap[player.position];
+
+  if(!playerRoles || !playerRoles.includes(expectedRole)){
+    alert(`Posisi tidak cocok! Slot ${selectedSlotId} membutuhkan ${expectedRole || 'N/A'}, tapi pemain ini adalah ${player.position || 'N/A'}.`); 
+    return;
+  }
+
+  if(currentSquad.find(s => s.player.id === player.id)){
+    showStatus(`${player.name || 'Pemain'} sudah ada di skuad.`, true, 3000); 
+    return;
+  }
+
+  currentSquad.push({ player, originalSlotId: selectedSlotId });
+  selectedPlayers.push({ player, slotId: selectedSlotId });
+
+  showStatus(`${player.name || 'Pemain'} ditambahkan ke slot ${selectedSlotId}.`, false, 3000); 
+
+  selectedSlotId = null;
+  currentFilterPositionCode = null;
+  renderPitchSlots();
+  renderPlayerList();
+  checkFormCompletion();
+}
+
+function handleLayoutChange(e){
+  currentLayout = e.target.value;
+  if(selectedSlotId){
+    selectedSlotId = null;
+    currentFilterPositionCode = null;
+  }
+  reAssignPlayersToPitch();
+}
+
+function handleClubChange(){
+  const clubId = clubSelect.value || null;
+  selectedSlotId = null;
+  currentFilterPositionCode = null;
+  fetchPlayers(clubId);
+  renderPitchSlots();
+}
+
+function handleClearFilter(){
+  selectedSlotId = null;
+  currentFilterPositionCode = null;
+  renderPitchSlots();
+  renderPlayerList();
+}
+
+function clearFormation(showMsg=true, isCreatingNew=false){
+  selectedPlayers = [];
+  currentSquad = [];
+  selectedSlotId = null;
+  currentFilterPositionCode = null;
+  if(isCreatingNew){
+    currentFormationId = null;
+    formationNameInput.value = '';
+    currentLayout = '4-3-3';
+    formationLayoutSelect.value = currentLayout;
+  }
+  reAssignPlayersToPitch();
+  highlightCurrentHistoryItem();
+  if(showMsg) showStatus('Formasi dikosongkan.', false, 3000); 
+}
+
+function checkFormCompletion(){
+  const isComplete = currentSquad.length === 11 && formationNameInput.value.trim() !== '';
+  saveFormationBtn.disabled = !isComplete;
+  const remaining = 11 - currentSquad.length;
+  if(isComplete){
+    saveFormationBtn.textContent = currentFormationId ? 'Perbarui' : 'Simpan Formasi';
+  } else {
+    if(remaining > 0){
+      saveFormationBtn.textContent = `Pilih ${remaining} lagi`;
+    } else {
+      saveFormationBtn.textContent = '✏️ Tambah Nama';
+    }
+  }
+}
+
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', async ()=>{ 
+  const initialLoadId = '{{ load_formation_id|default_if_none:"" }}';
+  await fetchInitialData();
+  
+  const detailIdFromUrl = '{{ show_detail_id|default_if_none:"" }}';
+
+  if(initialLoadId){
+    loadFormation(initialLoadId);
+  } else if (detailIdFromUrl) {
+    showFormationDetails(detailIdFromUrl);
+  }
+  
+  // Daftarkan semua event listener
+  clubSelect.addEventListener('change', handleClubChange);
+  formationLayoutSelect.addEventListener('change', handleLayoutChange);
+  playerSearchInput.addEventListener('input', renderPlayerList);
+  saveFormationBtn.addEventListener('click', saveFormation);
+  clearFormationBtn.addEventListener('click', ()=> clearFormation(true,false));
+  newFormationBtn.addEventListener('click', ()=> clearFormation(true,true));
+  clearFilterBtn.addEventListener('click', handleClearFilter);
+  formationNameInput.addEventListener('input', checkFormCompletion);
+  window.addEventListener('resize', renderPitchSlots);
+
+  // Event listener untuk Modal
+  detailModalCloseBtn.addEventListener('click', hideDetailModal);
+  detailModalBackBtn.addEventListener('click', hideDetailModal);
+  detailModal.addEventListener('click', (e) => {
+    if (e.target === detailModal) {
+      hideDetailModal();
+    }
+  });
+});
+</script>
+
+{% endblock content %}

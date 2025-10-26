@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 py-8 px-4 relative">
+  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Rumor Transfer Terkini</h1>
+
+  <!-- Filter Form -->
+  <div class="bg-white shadow-sm rounded-lg p-6 mb-8 max-w-5xl mx-auto">
+    <form id="filter-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemain</label>
+        <input type="text" id="filter-nama" name="nama"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Klub Asal</label>
+        <select id="filter-asal" name="asal"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Semua Klub</option>
+          {% for club in clubs %}
+            <option value="{{ club.id }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Klub Tujuan</label>
+        <select id="filter-tujuan" name="tujuan"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Semua Klub</option>
+          {% for club in clubs %}
+            <option value="{{ club.id }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- List Rumors -->
+  <div id="rumor-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+    {% include 'partials/rumor_list.html' %}
+  </div>
+
+  <!-- Floating Create Button -->
+  {% if not request.user.is_club_admin %}
+  <a href="{% url 'rumors:create_rumors' %}"
+     class="fixed bottom-8 right-8 bg-white rounded-full shadow-lg p-4 text-purple-600 hover:scale-110 hover:shadow-xl transition">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+         stroke-width="2.5" stroke="currentColor" class="w-8 h-8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+  </a>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('filter-form');
+  const rumorList = document.getElementById('rumor-list');
+
+  function applyFilter() {
+    const params = new URLSearchParams(new FormData(form));
+    fetch(`/rumors/?${params.toString()}`, {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+      .then(res => res.text())
+      .then(html => {
+        rumorList.innerHTML = html;
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error applying filters.');
+      });
+  }
+
+  // Apply filter setiap input berubah
+  form.addEventListener('input', applyFilter);
+  form.addEventListener('change', applyFilter);
+});
+</script>
+{% endblock %}
