@@ -1,5 +1,5 @@
 {% load static %}
-<nav class="navbar">
+<nav class="navbar sticky top-0 z-50">
     
     <div class="logo">
         <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
@@ -9,16 +9,16 @@
         <a href="{% url 'main:homepage' %}">Home</a>
         <a href="{% url 'community:community_home' %}">Community</a>
 
-        <a href="#">Best XI</a>
+        <a href="{% url 'best_eleven:team_builder' %}">Best XI</a>
         {% if user.is_club_admin %}
-            <a href="#">My Club</a>
+            <a href="{% url 'player_transaction:club_saya' %}">My Club</a>
         {% endif %}
         <a href="{% url 'rumors:show_rumors_main' %}">Rumor</a>
-        <a href="#">Transfer</a> 
+        <a href="{% url 'player_transaction:list_pemain_dijual' %}">Transfer</a>
         
 
         {% if user.is_club_admin %}
-            <a href="#">Inbox</a>
+            <a href="{% url 'player_transaction:negotiation_inbox' %}">Inbox</a>
         {% endif %}
     </div>
 

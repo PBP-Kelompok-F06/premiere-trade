@@ -18,6 +18,7 @@ class Negotiation(models.Model):
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
+        ('cancelled', 'Cancelled'), 
     ]
 
     from_club = models.ForeignKey(Club, related_name='offers_sent', on_delete=models.CASCADE)

@@ -30,13 +30,15 @@ SECRET_KEY = "django-insecure-n=temx@qa5k-w!b*=!2vuuvf3wa!$#q=z&qsbm@b7#^eg-82a1
 PRODUCTION = os.getenv("PRODUCTION", "False").lower() == "true"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = not PRODUCTION
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "adryan-muhammad-premieretrade.pbp.cs.ui.ac.id",
 ]
+
+CSRF_TRUSTED_ORIGINS = ["https://walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id"]
 
 
 # Application definition
@@ -48,7 +50,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django.contrib.humanize',
+    "django.contrib.humanize",
+    "best_eleven",
     "main",
     "community",
     "accounts", 
@@ -58,12 +61,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = "premiere_trade.urls"
@@ -110,8 +115,8 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-    
-AUTH_USER_MODEL = 'accounts.CustomUser'
+
+AUTH_USER_MODEL = "accounts.CustomUser"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -147,11 +152,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+if DEBUG:
+    STATICFILES_DIRS = [
+        BASE_DIR / "static"  # merujuk ke /static root project pada mode development
+    ]
+else:
+    STATIC_ROOT = (
+        BASE_DIR / "static"
+    )  # merujuk ke /static root project pada mode production
 
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
