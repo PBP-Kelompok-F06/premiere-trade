@@ -93,7 +93,7 @@ def create_rumors(request):
 
     context = {
         'form': form,
-        'clubs': clubs,   # <---- penting
+        'clubs': clubs, 
     }
 
     return render(request, "create_rumors.html", context)
