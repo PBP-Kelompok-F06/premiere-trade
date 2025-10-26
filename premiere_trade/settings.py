@@ -51,11 +51,13 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "best_eleven",
     "main",
     "community",
-    "accounts",
-    "player_transaction",
-]
+    "accounts", 
+    'player_transaction',
+    "rumors",
+]   
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -66,6 +68,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = "premiere_trade.urls"
@@ -137,12 +140,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "id"
 
 TIME_ZONE = "Asia/Jakarta"
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
