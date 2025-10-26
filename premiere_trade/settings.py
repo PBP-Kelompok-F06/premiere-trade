@@ -35,7 +35,7 @@ DEBUG = not PRODUCTION
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id",
+    "adryan-muhammad-premieretrade.pbp.cs.ui.ac.id",
 ]
 
 CSRF_TRUSTED_ORIGINS = ["https://walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id"]
@@ -54,9 +54,10 @@ INSTALLED_APPS = [
     "best_eleven",
     "main",
     "community",
-    "accounts",
-    "player_transaction",
-]
+    "accounts", 
+    'player_transaction',
+    "rumors",
+]   
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -139,12 +140,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "id"
 
 TIME_ZONE = "Asia/Jakarta"
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
 
 
