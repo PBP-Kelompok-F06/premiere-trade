@@ -143,7 +143,7 @@ def save_formation_api(request):
         return JsonResponse({
             'success': True,
             'formation': {'id': formation.id, 'name': formation.name, 'layout': formation.layout},
-            'message': 'Formation has been successfully saved!'
+            'message': 'Formasi berhasil disimpan!'
         })
     except Player.DoesNotExist as e:
         print(traceback.format_exc())
@@ -155,7 +155,6 @@ def save_formation_api(request):
         print(traceback.format_exc())
         return JsonResponse({'error': f'Gagal menyimpan formasi: {str(e)}'}, status=500)
 
-# get_formation_details_api sudah pakai require_http_methods(["GET", "DELETE"]), tidak perlu diubah
 @login_required
 @csrf_exempt
 @require_http_methods(["GET", "DELETE"])
