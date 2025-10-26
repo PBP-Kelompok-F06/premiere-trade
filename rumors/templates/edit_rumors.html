@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load number_filters %}
+
 
 {% block content %}
 <form style="display:none;">{% csrf_token %}</form>
@@ -9,8 +11,8 @@
 
     {% if rumor.status == "verified" or rumor.status == "denied" %}
     <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 text-sm p-4 rounded-lg mb-6">
-      ⚠️ Rumor ini berstatus <strong>{{ rumor.status|capfirst }}</strong>.
-      Mengedit rumor akan mengubah status menjadi <strong>Pending</strong> untuk diverifikasi ulang.
+      ⚠️ Rumor ini berstatus <strong>{{ rumor.status|translate_status }}</strong>.
+      Mengedit rumor akan mengubah status menjadi <strong>Menunggu Verifikasi</strong> untuk diverifikasi ulang.
     </div>
     {% endif %}
 

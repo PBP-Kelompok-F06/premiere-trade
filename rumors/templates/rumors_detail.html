@@ -18,7 +18,7 @@
         {% elif rumor.status == 'pending' %} bg-yellow-100 text-yellow-700
         {% elif rumor.status == 'denied' %} bg-red-100 text-red-700
         {% endif %}">
-        {{ rumor.status|capfirst }}
+        {{ rumor.status|translate_status }}
       </span>
     </div>
 
@@ -57,7 +57,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-4 text-center border-t border-gray-200">
       <div class="py-4">
         <h3 class="text-base font-semibold text-gray-800">
-          {{ rumor.pemain.market_value|shorten_value }} €
+          {{ rumor.pemain.market_value|format_rupiah }}
         </h3>
         <p class="text-xs text-gray-500 uppercase tracking-wider">Nilai Pasar</p>
       </div>

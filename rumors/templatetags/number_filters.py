@@ -41,3 +41,31 @@ def timesince_id(value):
     diff = diff.replace("months", "bulan").replace("month", "bulan")
     diff = diff.replace("years", "tahun").replace("year", "tahun")
     return f"{diff} lalu"
+
+@register.filter
+def translate_status(value):
+    mapping = {
+        "verified": "Terverifikasi",
+        "pending": "Menunggu Verifikasi",
+        "denied": "Ditolak",
+    }
+    return mapping.get(value.lower(), value)
+
+@register.filter
+def format_rupiah(value):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return value  # kalau bukan angka, biarin aja
+
+    # Format singkat berdasarkan besar nilai
+    if value >= 1_000_000_000:
+        formatted = f"{value / 1_000_000_000:.2f}".rstrip("0").rstrip(".") + "M"
+    elif value >= 1_000_000:
+        formatted = f"{value / 1_000_000:.2f}".rstrip("0").rstrip(".") + "JT"
+    elif value >= 1_000:
+        formatted = f"{value:,.0f}".replace(",", ".")
+    else:
+        formatted = str(int(value))
+
+    return f"Rp{formatted}"

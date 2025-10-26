@@ -74,7 +74,7 @@ def create_rumors(request):
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({
                     "success": True,
-                    "message": "Rumor created successfully!",
+                    "message": "✏️ Rumor berhasil dibuat! ✏️",
                     "id": str(rumor.id)
                 })
 
@@ -156,9 +156,9 @@ def edit_rumors(request, id):
             updated_rumor.save()
 
             message = (
-                "Rumor updated successfully!"
+                "✅ Rumor berhasil diperbarui!"
                 if changed
-                else "No changes made."
+                else "Tidak ada perubahan✍️"
             )
 
 
