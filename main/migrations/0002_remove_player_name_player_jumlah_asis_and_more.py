@@ -50,14 +50,14 @@ class Migration(migrations.Migration):
             name='umur',
             field=models.IntegerField(default=0),
         ),
-        # migrations.AlterField(
-        #     model_name='player',
-        #     name='id',
-        #     field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
-        # ),
-        # migrations.AlterField(
-        #     model_name='player',
-        #     name='market_value',
-        #     field=models.IntegerField(default=0),
-        # ),
+        migrations.AlterField(
+            model_name='player',
+            name='id',
+            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
+        ),
+        migrations.AlterField(
+            model_name='player',
+            name='market_value',
+            field=models.IntegerField(default=0),
+        ),
     ]
