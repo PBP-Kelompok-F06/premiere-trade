@@ -1,7 +1,6 @@
 from django.urls import path 
 from .views import (
     BestElevenBuilderView, 
-    BestElevenUpdateView,
     get_builder_data,
     get_players_by_club_api,
     save_formation_api,
