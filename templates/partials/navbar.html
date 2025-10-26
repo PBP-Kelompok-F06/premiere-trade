@@ -1,5 +1,5 @@
 {% load static %}
-<nav class="navbar">
+<nav class="navbar sticky top-0 z-50">
     
     <div class="logo">
         <img src="{% static 'images/logo.png' %}" alt="Logo" height="30">
@@ -13,7 +13,7 @@
         {% if user.is_club_admin %}
             <a href="{% url 'player_transaction:club_saya' %}">My Club</a>
         {% endif %}
-        <a href="#">Rumor</a>
+        <a href="{% url 'rumors:show_rumors_main' %}">Rumor</a>
         <a href="{% url 'player_transaction:list_pemain_dijual' %}">Transfer</a>
         
 

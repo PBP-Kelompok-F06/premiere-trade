@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load number_filters %}
+
+{% block content %}
+<form style="display:none;">{% csrf_token %}</form>
+<div class="min-h-screen bg-gray-100 py-10 px-6 flex flex-col items-center">
+
+  <!-- ==================== SINGLE CARD ==================== -->
+  <div class="bg-white w-full max-w-6xl rounded-2xl shadow-md overflow-hidden">
+
+    <!-- Header -->
+    <div class="relative border-b py-5 px-8">
+      <h1 class="text-center text-xl font-semibold text-gray-800 tracking-wide">RUMOR TRANSFER</h1>
+
+      <span id="status-badge" class="absolute right-8 top-4 px-3 py-1 text-sm font-semibold rounded-full shadow-sm
+        {% if rumor.status == 'verified' %} bg-green-100 text-green-700
+        {% elif rumor.status == 'pending' %} bg-yellow-100 text-yellow-700
+        {% elif rumor.status == 'denied' %} bg-red-100 text-red-700
+        {% endif %}">
+        {{ rumor.status|capfirst }}
+      </span>
+    </div>
+
+    <!-- Player Section -->
+    <div class="flex flex-col items-center text-center py-8 px-6">
+      {% if rumor.pemain.thumbnail %}
+        <img src="{{ rumor.pemain.thumbnail }}" alt="{{ rumor.pemain.nama_pemain }}"
+             class="w-32 h-32 rounded-full object-cover object-center shadow-md mb-4">
+      {% else %}
+        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="default avatar"
+             class="w-32 h-32 rounded-full shadow-md mb-4">
+      {% endif %}
+      <h2 class="text-xl font-bold text-gray-900">{{ rumor.pemain.nama_pemain }}</h2>
+    </div>
+
+    <!-- Transfer Path -->
+    <div class="flex justify-center items-center gap-8 mb-6">
+      {% if rumor.club_asal.logo_url %}
+        <div class="flex flex-col items-center">
+          <img src="{{ rumor.club_asal.logo_url }}" alt="{{ rumor.club_asal.name }}" class="w-16 h-16 object-contain drop-shadow-sm mb-1">
+          <span class="text-sm text-gray-700">{{ rumor.club_asal.name }}</span>
+        </div>
+      {% endif %}
+
+      <span class="text-4xl font-light text-gray-600">→</span>
+
+      {% if rumor.club_tujuan.logo_url %}
+        <div class="flex flex-col items-center">
+          <img src="{{ rumor.club_tujuan.logo_url }}" alt="{{ rumor.club_tujuan.name }}" class="w-16 h-16 object-contain drop-shadow-sm mb-1">
+          <span class="text-sm text-gray-700">{{ rumor.club_tujuan.name }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Player Info Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 text-center border-t border-gray-200">
+      <div class="py-4">
+        <h3 class="text-base font-semibold text-gray-800">
+          {{ rumor.pemain.market_value|shorten_value }} €
+        </h3>
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Nilai Pasar</p>
+      </div>
+
+      <div class="py-4">
+        <h3 class="text-base font-semibold text-gray-800">{{ rumor.pemain.umur }}</h3>
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Umur</p>
+      </div>
+
+      <div class="py-4">
+        <h3 class="text-base font-semibold text-gray-800">{{ rumor.pemain.position }}</h3>
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Posisi</p>
+      </div>
+
+      <div class="py-4">
+        <h3 class="text-base font-semibold text-gray-800">{{ rumor.pemain.negara }}</h3>
+        <p class="text-xs text-gray-500 uppercase tracking-wider">Kebangsaan</p>
+      </div>
+    </div>
+
+    <!-- Latest News -->
+    <div class="px-10 py-8 border-t border-gray-200">
+      <h3 class="text-lg font-bold text-gray-800 mb-1">Deskripsi Rumor</h3>
+      <p class="text-gray-500 mb-5 italic">
+        {{ rumor.pemain.nama_pemain }} transfer dari {{ rumor.club_asal.name }} ke {{ rumor.club_tujuan.name }}
+      </p>
+
+      <div class="bg-white rounded-2xl shadow-[0_3px_20px_rgba(0,0,0,0.08)] p-6 border border-gray-100 relative overflow-hidden">
+        {% if rumor.content %}
+          <p class="text-gray-700 leading-relaxed text-justify mb-4 break-all">{{ rumor.content }}</p>
+        {% else %}
+          <p class="text-gray-400 italic mb-4">Belum ada informasi tambahan.</p>
+        {% endif %}
+
+        <div class="absolute bottom-3 right-4 flex items-center gap-1 text-xs font-medium text-red-600 bg-red-100 px-3 py-1 rounded-full shadow-sm">
+          <span class="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
+          {{ rumor.created_at|timesince_id }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Info -->
+    <div class="border-t border-gray-200 py-3 px-8 text-sm text-gray-500 flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-600">👤 <span class="font-medium text-gray-800">{{ rumor.author.username }}</span></span>
+        <span class="text-gray-400 text-sm">•</span>
+        <span id="view-count">{{ rumor.rumors_views }} kali dilihat</span>
+      </div>
+
+      {% if user == rumor.author %}
+      <div class="flex gap-3">
+        <button type="button"
+                id="delete-btn"
+                data-url="{% url 'rumors:delete_rumors' rumor.id %}"
+                class="text-red-500 hover:text-red-700 font-medium transition">
+          Hapus
+        </button>
+        <a href="{% url 'rumors:edit_rumors' rumor.id %}" class="text-blue-600 hover:text-blue-800 font-medium transition">Edit</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Admin Buttons -->
+    {% if is_authorized_admin %}
+    <div class="flex justify-center gap-4 py-6 bg-white border-t">
+      <button
+        data-action="verify"
+        data-url="{% url 'rumors:verify_rumor' rumor.id %}"
+        class="action-btn bg-green-500 hover:bg-green-600 text-white font-medium px-5 py-1.5 rounded-full shadow-md transition">
+        Verifikasi
+      </button>
+
+      <button
+        data-action="deny"
+        data-url="{% url 'rumors:deny_rumor' rumor.id %}"
+        class="action-btn bg-red-500 hover:bg-red-600 text-white font-medium px-5 py-1.5 rounded-full shadow-md transition">
+        Tolak
+      </button>
+
+      <button
+        data-action="revert"
+        data-url="{% url 'rumors:revert_rumor' rumor.id %}"
+        class="action-btn bg-yellow-400 hover:bg-yellow-500 text-white font-medium px-5 py-1.5 rounded-full shadow-md transition">
+        Revert
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const buttons = document.querySelectorAll('.action-btn');
+  const deleteBtn = document.getElementById('delete-btn');
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+  // VERIFY / DENY / REVERT buttons
+  buttons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const action = this.dataset.action;
+      const url = this.dataset.url;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          let msg = '';
+          if (action === 'verify') msg = 'Rumor verified successfully!';
+          else if (action === 'deny') msg = 'Rumor denied successfully!';
+          else if (action === 'revert') msg = 'Rumor reverted successfully!';
+          else msg = data.message || 'Action completed successfully!';
+
+          alert(msg);
+          window.location.href = '/rumors/';
+        } else {
+          alert(data.error || 'Action failed.');
+        }
+      })
+      .catch(() => alert('Error performing action.'));
+    });
+  });
+
+  // DELETE button
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function() {
+      if (!confirm('Are you sure you want to delete this rumor?')) return;
+
+      const url = this.dataset.url;
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message || 'Rumor deleted successfully!');
+          window.location.href = '/rumors/';
+        } else {
+          alert(data.error || 'Failed to delete rumor.');
+        }
+      })
+      .catch(() => alert('Error deleting rumor.'));
+    });
+  }
+});
+</script>
+
+{% endblock %}
