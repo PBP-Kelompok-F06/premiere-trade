@@ -24,65 +24,49 @@
             <h3 class="text-lg font-semibold text-gray-500">Total Clubs</h3>
             <p class="text-3xl font-bold text-gray-800">{{ club_count }}</p>
           </div>
+          <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Total Players</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ player_count }}</p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            
           <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">
-              Daftar Pengguna
-            </h2>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Pengguna</h2>
             <div class="overflow-y-auto h-96">
               <table class="w-full text-sm text-left text-gray-500">
-                <thead
-                  class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"
-                >
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
                   <tr>
                     <th scope="col" class="px-6 py-3">Username</th>
                     <th scope="col" class="px-6 py-3">Role</th>
-                    <th scope="col" class="px-6 py-3"></th>
+                    <th scope="col" class="px-6 py-3">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {% for u in all_users %} {% if u.username != "admin"%}
+                  {% for user in all_users %} {% if user.username != "admin" and not user.is_superuser%}
                   <tr class="bg-white border-b hover:bg-gray-50">
                     <td class="px-6 py-4 font-medium text-gray-900">
-                      {{ u.username }}
+                      {{ user.username }}
                     </td>
-                    <td class="px-6 py-4">
-                      {% if u.is_club_admin %}
-                      <span
-                        class="px-2 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full"
-                        >Admin Club</span
+                    <td class="px-6 py-4">{{ user.get_role_display }}</td>
+                    <td class="px-6 py-4 flex space-x-4">
+                      <a href="{% url 'accounts:edit_user' user.pk %}" class="font-medium text-blue-600 hover:underline">Edit</a>
+                      {% if user != request.user %}
+                      <button type="button" class="font-medium text-red-600 hover:underline"
+                          data-url="{% url 'accounts:delete_user' user.pk %}"
+                          data-username="{{ user.username }}"
+                          onclick="openDeleteModal(this, 'pengguna')"
                       >
-                      {% else %}
-                      <span
-                        class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full"
-                        >Fan</span
-                      >
+                          Hapus
+                      </button>
                       {% endif %}
                     </td>
-                    <td class="px-6 py-4 flex space-x-4">
-                      <a
-                        href="{% url 'accounts:edit_user' u.pk %}"
-                        class="font-medium text-blue-600 hover:underline"
-                        >Edit</a
-                      >
-
-                      <button
-                        type="button"
-                        class="font-medium text-red-600 hover:underline"
-                        data-url="{% url 'accounts:delete_user' u.pk %}"
-                        data-username="{{ u.username }}"
-                        onclick="openDeleteModal(this)"
-                      >
-                        Hapus
-                      </button>
-                    </td>
                   </tr>
-                  {% endif %}{% empty %}
+                  {% endif %} {% empty %}
                   <tr>
                     <td colspan="3" class="px-6 py-4 text-center">
-                      Tidak ada data pengguna.
+                      Tidak ada pengguna.
                     </td>
                   </tr>
                   {% endfor %}
@@ -90,30 +74,46 @@
               </table>
             </div>
           </div>
-
+          
           <div class="bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Klub</h2>
             <div class="overflow-y-auto h-96">
               <table class="w-full text-sm text-left text-gray-500">
-                <thead
-                  class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0"
-                >
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
                   <tr>
-                    <th scope="col" class="px-6 py-3">Nama Klub</th>
+                    <th scope="col" class="px-6 py-3">Logo</th> <th scope="col" class="px-6 py-3">Nama Klub</th>
                     <th scope="col" class="px-6 py-3">Negara</th>
+                    <th scope="col" class="px-6 py-3">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for club in all_clubs %} {% if club.name != "Admin"%}
                   <tr class="bg-white border-b hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        {% if club.logo_url %}
+                        <img src="{{ club.logo_url }}" alt="{{ club.name }} Logo" class="h-8 w-8 object-contain">
+                        {% else %}
+                        
+                        {% endif %}
+                    </td>
                     <td class="px-6 py-4 font-medium text-gray-900">
                       {{ club.name }}
                     </td>
                     <td class="px-6 py-4">{{ club.country }}</td>
+                    <td class="px-6 py-4 flex space-x-4">
+                        <a href="{% url 'accounts:edit_club' club.pk %}" class="font-medium text-blue-600 hover:underline">Edit</a>
+                        <button type="button" class="font-medium text-red-600 hover:underline"
+                            data-url="{% url 'accounts:delete_club' club.pk %}"
+                            data-username="{{ club.name }}"
+                            onclick="openDeleteModal(this, 'klub')"
+                        >
+                            Hapus
+                        </button>
+                    </td>
                   </tr>
                   {% endif %} {% empty %}
                   <tr>
-                    <td colspan="2" class="px-6 py-4 text-center">
+                    <td colspan="4" class="px-6 py-4 text-center">
                       Tidak ada data klub.
                     </td>
                   </tr>
@@ -122,76 +122,180 @@
               </table>
             </div>
           </div>
+          
         </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Pemain</h2>
+          <div class="overflow-y-auto h-96">
+            <table class="w-full text-sm text-left text-gray-500">
+              <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0">
+                <tr>
+                  <th scope="col" class="px-6 py-3">Foto</th> <th scope="col" class="px-6 py-3">Nama Pemain</th>
+                  <th scope="col" class="px-6 py-3">Klub</th>
+                  <th scope="col" class="px-6 py-3">Posisi</th>
+                  <th scope="col" class="px-6 py-3">Umur</th>
+                  <th scope="col" class="px-6 py-3">Goal/Asis/Match</th>
+                  <th scope="col" class="px-6 py-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for player in all_players %}
+                <tr class="bg-white border-b hover:bg-gray-50">
+                  <td class="px-6 py-4">
+                    {% if player.thumbnail %}
+                    <img src="{{ player.thumbnail }}" alt="{{ player.nama_pemain }} Foto" class="h-10 w-10 object-cover rounded-full">
+                    {% else %}
+                    
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 font-medium text-gray-900">
+                    {{ player.nama_pemain }}
+                  </td>
+                  <td class="px-6 py-4">
+                    {% if player.current_club %}{{ player.current_club.name }}{% else %}N/A{% endif %}
+                  </td>
+                  <td class="px-6 py-4">{{ player.position }}</td>
+                  <td class="px-6 py-4">{{ player.umur }}</td>
+                  <td class="px-6 py-4">{{ player.jumlah_goal }}/{{ player.jumlah_asis }}/{{ player.jumlah_match }}</td>
+                  <td class="px-6 py-4 flex space-x-4">
+                    <a href="{% url 'accounts:edit_player' player.pk %}" class="font-medium text-blue-600 hover:underline">Edit</a>
+                    <button type="button" class="font-medium text-red-600 hover:underline"
+                        data-url="{% url 'accounts:delete_player' player.pk %}"
+                        data-username="{{ player.nama_pemain }}"
+                        onclick="openDeleteModal(this, 'pemain')"
+                    >
+                        Hapus
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7" class="px-6 py-4 text-center">
+                    Tidak ada data pemain.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </main>
     </div>
+
     <div
       id="delete-modal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden"
+      class="fixed inset-0 z-50 overflow-y-auto hidden"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
     >
-      <div
-        class="relative mx-auto p-8 border w-full max-w-md shadow-lg rounded-md bg-white"
-      >
-        <div class="text-center">
-          <h3 class="text-2xl font-bold text-gray-900">
-            Konfirmasi Penghapusan
-          </h3>
-          <div class="mt-4 px-7 py-3">
-            <p class="text-md text-gray-600">
-              Apakah Anda yakin ingin menghapus pengguna
-              <strong id="delete-username" class="text-red-600"></strong> secara
-              permanen?
-            </p>
-          </div>
-          <form id="delete-form" method="POST" action="">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+        ></div>
+
+        <span
+          class="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+          >&#8203;</span
+        >
+
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+        >
+          <form method="POST" id="delete-form">
             {% csrf_token %}
-            <div class="flex justify-center items-center space-x-4 mt-6">
-              <button
-                id="cancel-btn"
-                type="button"
-                class="w-full justify-center rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-              >
-                Batal
-              </button>
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div class="sm:flex sm:items-start">
+                <div
+                  class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10"
+                >
+                  <svg
+                    class="h-6 w-6 text-red-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.398 16c-.77 1.333.192 3 1.732 3z"
+                    />
+                  </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3
+                    class="text-lg leading-6 font-medium text-gray-900"
+                    id="modal-title"
+                  >
+                    Hapus Data
+                  </h3>
+                  <div class="mt-2">
+                    <p class="text-md text-gray-600" id="modal-message">
+                      Apakah Anda yakin ingin menghapus data ini secara permanen?
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse"
+            >
               <button
                 type="submit"
-                class="w-full justify-center rounded-md border border-transparent bg-red-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-red-700"
+                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
               >
-                Ya, Hapus Pengguna
+                Ya, Hapus
+              </button>
+              <button
+                type="button"
+                id="cancel-btn"
+                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              >
+                Batal
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
+
     <script>
       const modal = document.getElementById("delete-modal");
       const deleteForm = document.getElementById("delete-form");
-      const deleteUsernameSpan = document.getElementById("delete-username");
       const cancelBtn = document.getElementById("cancel-btn");
 
-      // Fungsi untuk membuka modal
-      function openDeleteModal(button) {
-        const actionUrl = button.getAttribute('data-url');
-        const username = button.getAttribute('data-username');
-        deleteForm.action = actionUrl;
-        deleteUsernameSpan.textContent = username;
-        // Tampilkan modal
-        modal.classList.remove("hidden");
-      }
+      // Fungsi untuk membuka modal dan mengatur pesan/URL secara dinamis
+      function openDeleteModal(button, type = 'pengguna') {
+          const actionUrl = button.getAttribute('data-url');
+          const username = button.getAttribute('data-username');
+          
+          deleteForm.action = actionUrl;
+          
+          // Perbarui pesan konfirmasi
+          document.getElementById('modal-message').innerHTML = 
+              `Apakah Anda yakin ingin menghapus ${type} <strong>${username}</strong> secara permanen?`;
+          
+          // Perbarui teks tombol Hapus
+          document.querySelector('#delete-form button[type="submit"]').textContent = `Ya, Hapus ${type.charAt(0).toUpperCase() + type.slice(1)}`;
 
-      // Fungsi untuk menutup modal
-      function closeDeleteModal() {
-        modal.classList.add("hidden");
+          // Tampilkan modal
+          modal.classList.remove("hidden");
       }
 
       // Event listener untuk tombol batal
-      cancelBtn.addEventListener("click", closeDeleteModal);
+      cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
       // Event listener untuk menutup modal jika klik di luar area modal
       window.addEventListener("click", function (event) {
         if (event.target == modal) {
-          closeDeleteModal();
+          modal.classList.add("hidden");
         }
       });
     </script>

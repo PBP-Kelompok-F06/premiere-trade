@@ -1,45 +1,28 @@
 # main/views.py
 
 from django.shortcuts import render, get_object_or_404
-from .models import Club, Player # Pastikan model Club & Player ada di sini
+from .models import Club, Player
 
 def homepage(request):
     """
-    Menampilkan halaman utama dengan 4 klub unggulan 
+    Menampilkan halaman utama dengan semua klub non-Admin 
     dan 4 pemain termahal dari masing-masing klub.
     """
-    featured_club_names = ["Chelsea", "Arsenal", "Manchester City", "Liverpool"]
+    # Mengambil semua klub kecuali yang bernama 'Admin' (case-insensitive) dan diurutkan berdasarkan nama
+    clubs = Club.objects.exclude(name__iexact='Admin').prefetch_related('players').order_by('name')
     featured_clubs_data = []
 
-    for club_name in featured_club_names:
-        try:
-            # Ambil objek klub berdasarkan nama
-            club = Club.objects.get(name=club_name)
-            # Ambil 4 pemain termahal dari klub ini, urutkan descending
-            top_players = club.players.all().order_by('-market_value')[:4]
-            featured_clubs_data.append({
-                'club': club,
-                'top_players': top_players
-            })
-        except Club.DoesNotExist:
-            # Handle jika klub tidak ditemukan (opsional)
-            print(f"Peringatan: Klub '{club_name}' tidak ditemukan di database.")
-            featured_clubs_data.append({
-                'club': {'name': club_name, 'id': None}, # Sediakan nama & id dummy
-                'top_players': []
-            })
-        except Exception as e:
-             # Handle error lain jika perlu
-            print(f"Error saat mengambil data untuk {club_name}: {e}")
-            featured_clubs_data.append({
-                'club': {'name': club_name, 'id': None},
-                'top_players': []
-            })
-
+    for club in clubs:
+        # Ambil 4 pemain termahal dari klub ini, urutkan descending
+        top_players = club.players.all().order_by('-market_value')[:4]
+        featured_clubs_data.append({
+            'club': club,
+            'top_players': top_players
+        })
 
     context = {
         'user': request.user,
-        'featured_clubs_data': featured_clubs_data, # Kirim data klub & pemain
+        'featured_clubs_data': featured_clubs_data,
     }
     return render(request, 'main/homepage.html', context)
 

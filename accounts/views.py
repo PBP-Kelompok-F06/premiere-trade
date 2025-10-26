@@ -6,19 +6,21 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .forms import (
     UserUpdateForm,
-    ProfileUpdateForm,
     SuperUserEditForm,
     SuperUserCreateForm,
     PasswordChangeCustomForm,
+    ClubForm,
+    PlayerForm,
 )
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-from main.models import Club
+from main.models import Club, Player
 from django.shortcuts import get_object_or_404
 from .models import CustomUser, Profile
 import json
 
 # Create your views here.
+
 
 @ensure_csrf_cookie
 def login_page(request):
@@ -66,7 +68,7 @@ def register_ajax(request):
                 "status": "success",
                 "message": "Registrasi berhasil! Anda akan dialihkan...",
             },
-            status=201, 
+            status=201,
         )
 
     except Exception as e:
@@ -135,31 +137,24 @@ def _is_superuser_check(user):
 def superuser_dashboard(request):
     if not _is_superuser_check(request.user):
         raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
-    # Pengecekan Hak Akses
-    # Dapatkan user yang sedang login
-    user = request.user
-
-    # Cek apakah user memenuhi semua kriteria "superuser"
-    is_superuser = (
-        user.is_fan
-        and user.is_club_admin
-        and user.profile.managed_club is not None
-        and user.profile.managed_club.name.lower() == "admin"
-    )
-
-    if not is_superuser:
-        # Jika tidak memenuhi syarat, lempar error 403 Forbidden
-        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
 
     # Pengambilan Data untuk Dashboard
     all_users = CustomUser.objects.all().order_by("username")
     all_clubs = Club.objects.all().order_by("name")
+    all_players = Player.objects.all().order_by("nama_pemain")  # Tambahkan ini
+
+    # Hitung jumlah untuk ditampilkan di card
+    user_count = all_users.exclude(is_superuser=True).count()
+    club_count = all_clubs.count()
+    player_count = all_players.count()
 
     context = {
         "all_users": all_users,
         "all_clubs": all_clubs,
-        "user_count": all_users.count() - 1,
-        "club_count": all_clubs.count() - 1,
+        "all_players": all_players,
+        "user_count": user_count - 1,
+        "club_count": club_count - 1,
+        "player_count": player_count,
     }
 
     return render(request, "dashboard.html", context)
@@ -235,7 +230,6 @@ def edit_profile(request):
         password_form = PasswordChangeCustomForm(user=request.user, data=request.POST)
         if password_form.is_valid():
             user = password_form.save()
-            # Penting! Jaga agar user tidak logout setelah ganti password
             update_session_auth_hash(request, user)
             messages.success(request, "Password Anda berhasil diubah.")
             return redirect("accounts:edit_profile")
@@ -243,7 +237,6 @@ def edit_profile(request):
             messages.error(
                 request, "Gagal mengubah password. Silakan periksa error di bawah."
             )
-            # Siapkan form username agar tidak kosong saat halaman dirender ulang
             user_form = UserUpdateForm(instance=request.user)
 
     # Logika untuk form update username
@@ -255,7 +248,6 @@ def edit_profile(request):
             return redirect("accounts:edit_profile")
         else:
             messages.error(request, "Gagal memperbarui username.")
-            # Siapkan form password agar tidak kosong
             password_form = PasswordChangeCustomForm(user=request.user)
 
     # Jika method GET (pertama kali buka halaman)
@@ -313,3 +305,148 @@ def register_page(request):
     if request.user.is_authenticated:
         return redirect("main:homepage")
     return render(request, "register.html")
+
+
+@login_required
+def add_club(request):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    if request.method == "POST":
+        form = ClubForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, f"Klub '{form.cleaned_data['name']}' berhasil ditambahkan."
+            )
+            return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        form = ClubForm()
+
+    context = {"form": form, "title": "Tambah Klub Baru"}
+    return render(request, "club_form.html", context)
+
+
+@login_required
+def edit_club(request, pk):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    club_to_edit = get_object_or_404(Club, pk=pk)
+
+    if request.method == "POST":
+        form = ClubForm(request.POST, instance=club_to_edit)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, f"Klub '{club_to_edit.name}' berhasil diperbarui."
+            )
+            return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        form = ClubForm(instance=club_to_edit)
+
+    context = {
+        "form": form,
+        "club_to_edit": club_to_edit,
+        "title": f"Edit Klub: {club_to_edit.name}",
+    }
+    return render(request, "club_form.html", context)
+
+
+@login_required
+@require_POST
+def delete_club(request, pk):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied(
+            "Anda tidak memiliki akses untuk melakukan tindakan ini."
+        )
+
+    club_to_delete = get_object_or_404(Club, pk=pk)
+
+    club_name = club_to_delete.name
+    club_to_delete.delete()
+    messages.success(
+        request, f"Klub '{club_name}' dan semua pemain terkait berhasil dihapus."
+    )
+    return redirect("accounts:superuser_dashboard")
+
+
+@login_required
+def add_player(request):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    if request.method == "POST":
+        form = PlayerForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f"Pemain '{form.cleaned_data['nama_pemain']}' berhasil ditambahkan.",
+            )
+            return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        form = PlayerForm()
+
+    context = {"form": form, "title": "Tambah Pemain Baru"}
+    return render(request, "player_form.html", context)
+
+
+@login_required
+def edit_player(request, pk):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied("Anda tidak memiliki akses ke halaman ini.")
+
+    player_to_edit = get_object_or_404(Player, pk=pk)
+
+    if request.method == "POST":
+        form = PlayerForm(request.POST, instance=player_to_edit)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, f"Pemain '{player_to_edit.nama_pemain}' berhasil diperbarui."
+            )
+            return redirect("accounts:superuser_dashboard")
+        else:
+            messages.error(
+                request, "Terjadi kesalahan. Mohon periksa kembali isian Anda."
+            )
+    else:
+        form = PlayerForm(instance=player_to_edit)
+
+    context = {
+        "form": form,
+        "player_to_edit": player_to_edit,
+        "title": f"Edit Pemain: {player_to_edit.nama_pemain}",
+    }
+    return render(request, "player_form.html", context)
+
+
+@login_required
+@require_POST
+def delete_player(request, pk):
+    if not _is_superuser_check(request.user):
+        raise PermissionDenied(
+            "Anda tidak memiliki akses untuk melakukan tindakan ini."
+        )
+
+    player_to_delete = get_object_or_404(Player, pk=pk)
+
+    player_name = player_to_delete.nama_pemain
+    player_to_delete.delete()
+    messages.success(request, f"Pemain '{player_name}' berhasil dihapus.")
+    return redirect("accounts:superuser_dashboard")
+
+

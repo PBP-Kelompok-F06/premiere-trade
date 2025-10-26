@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Profile
-from main.models import Club
+from main.models import Club, Player
 from django.contrib.auth.forms import PasswordChangeForm
 
 User = get_user_model()
@@ -11,12 +11,6 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["username"]
-
-
-class ProfileUpdateForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ["managed_club"]
 
 
 ROLE_CHOICES = (
@@ -54,7 +48,7 @@ class SuperUserEditForm(forms.ModelForm):
 
             # Isi field managed_club
             if hasattr(user_instance, "profile"):
-                self.fields["managed_club"].initial = user_instance.profile.managed_club
+                self.fields["managed_club"].queryset = Club.objects.exclude(name__iexact="Admin")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -115,6 +109,10 @@ class SuperUserCreateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ["username", "password"]  # Hapus is_fan dan is_club_admin
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['managed_club'].queryset = Club.objects.exclude(name__iexact='Admin')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -152,3 +150,23 @@ class PasswordChangeCustomForm(PasswordChangeForm):
         self.fields["old_password"].label = "Password Lama"
         self.fields["new_password1"].label = "Password Baru"
         self.fields["new_password2"].label = "Konfirmasi Password Baru"
+        
+class ClubForm(forms.ModelForm):
+    class Meta:
+        model = Club
+        fields = ('name', 'country', 'logo_url') 
+
+class ClubDeleteForm(forms.Form):
+    pass
+
+# Forms untuk Player
+class PlayerForm(forms.ModelForm):
+    class Meta:
+        model = Player
+        exclude = ('id',)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['current_club'].queryset = Club.objects.exclude(name__iexact='Admin')
+
+class PlayerDeleteForm(forms.Form):
+    pass
