@@ -25,7 +25,7 @@ class Rumors(models.Model):
     def save(self, *args, **kwargs):
         # Generate title otomatis
         if self.club_asal and self.club_tujuan and self.pemain:
-            self.title = f"{self.pemain.nama_pemain} transfer from {self.club_asal.name} to {self.club_tujuan.name}"
+            self.title = f"{self.pemain.nama_pemain} transfer dari {self.club_asal.name} ke {self.club_tujuan.name}"
         super().save(*args, **kwargs)
 
     def increment_views(self):

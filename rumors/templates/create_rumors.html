@@ -1,131 +1,180 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Create New Transfer Rumor{% endblock %}
-
 {% block content %}
-<div class="flex justify-center items-center py-12 px-4">
-  <div class="bg-white shadow-lg rounded-xl p-8 w-full max-w-lg">
-    <h2 class="text-2xl font-bold text-center text-[#142850] mb-6">Create New Rumor</h2>
+<form style="display:none;">{% csrf_token %}</form>
+<div class="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-6">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-lg p-8">
+    <h1 class="text-center text-2xl font-bold text-gray-800 mb-6">Buat Rumor Baru</h1>
 
-    <form method="POST" id="rumor-form" class="space-y-5">
+    <form id="rumor-form" method="POST" class="space-y-5">
       {% csrf_token %}
-      {% if form.errors %}
-        <div class="bg-red-100 text-red-700 p-3 rounded-md mb-4 text-sm">
-          <ul class="list-disc pl-5">
-            {% for field, errors in form.errors.items %}
-              <li><strong>{{ field|capfirst }}:</strong> {{ errors|join:", " }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
 
       <!-- Current Club -->
       <div>
-        <label for="{{ form.club_asal.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
-          Current Club
-        </label>
-        {{ form.club_asal }}
+        <label for="club_asal" class="block text-sm font-medium text-gray-700 mb-1">Klub Asal</label>
+        <select id="club_asal" name="club_asal"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+          {% for club in clubs %}
+            <option value="{{ club.id }}" {% if club.name == "Arsenal" %}selected{% endif %}>{{ club.name }}</option>
+          {% endfor %}
+        </select>
       </div>
 
       <!-- Designated Club -->
       <div>
-        <label for="{{ form.club_tujuan.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
-          Designated Club
-        </label>
-        {{ form.club_tujuan }}
+        <label for="club_tujuan" class="block text-sm font-medium text-gray-700 mb-1">Klub Tujuan</label>
+        <select id="club_tujuan" name="club_tujuan"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+        </select>
       </div>
 
       <!-- Player -->
       <div>
-        <label for="{{ form.pemain.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
-          Player
-        </label>
-        {{ form.pemain }}
+        <label for="pemain" class="block text-sm font-medium text-gray-700 mb-1">Pemain</label>
+        <select id="pemain" name="pemain"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+        </select>
       </div>
 
-      <!-- Rumor Details -->
+      <!-- Rumor Content -->
       <div>
-        <label for="{{ form.content.id_for_label }}" class="font-semibold text-[#1c2a4a] block mb-1">
-          Rumor Details
-        </label>
-        {{ form.content }}
+        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Detail Rumor</label>
+        <textarea id="content" name="content" rows="4"
+          placeholder="Write your rumor details here..."
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500"></textarea>
       </div>
 
-      <!-- Submit Button -->
-      <div class="pt-4">
-        <button 
-        type="submit"
-        class="w-full bg-[rgb(128,0,128)] hover:bg-[rgb(100,0,100)] text-white font-semibold py-2.5 rounded-lg shadow-md transition-all">
-        Send Rumor
-        </button>
-
-      </div>
+      <button type="submit"
+        class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all">
+        Kirim Rumor
+      </button>
     </form>
   </div>
 </div>
 
+<!-- ================== SCRIPT ================== -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const currentClubSelect = document.getElementById('id_club_asal');
-    const designatedClubSelect = document.getElementById('id_club_tujuan');
-    const playerSelect = document.getElementById('id_pemain');
+document.addEventListener('DOMContentLoaded', async function() {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  const form = document.getElementById('rumor-form');
+  const clubAsalSelect = document.getElementById('club_asal');
+  const clubTujuanSelect = document.getElementById('club_tujuan');
+  const playerSelect = document.getElementById('pemain');
 
-    // Hilangkan "---------" default
-    if (currentClubSelect.options[0]?.text === '---------') currentClubSelect.remove(0);
-    if (designatedClubSelect.options[0]?.text === '---------') designatedClubSelect.remove(0);
-    if (playerSelect.options[0]?.text === '---------') playerSelect.remove(0);
+  // ======== Fungsi untuk load designated clubs ==========
+  async function loadDesignatedClubs(currentClubId) {
+    try {
+      console.log("🔹 Fetching designated clubs for:", currentClubId);
+      const res = await fetch(`/rumors/get-designated-clubs/?club_asal=${currentClubId}`);
+      const data = await res.json();
+      console.log("🔹 Clubs received:", data);
 
-    // Simpan semua opsi club tujuan (buat nanti direbuild)
-    const allClubs = Array.from(designatedClubSelect.options).map(opt => ({
-        value: opt.value,
-        text: opt.text
-    }));
+      clubTujuanSelect.innerHTML = '';
 
-    function refreshDesignatedClubs(excludeValue) {
-        designatedClubSelect.innerHTML = ''; // hapus semua dulu
-        allClubs.forEach(club => {
-            if (club.value !== excludeValue) {
-                const option = document.createElement('option');
-                option.value = club.value;
-                option.textContent = club.text;
-                designatedClubSelect.appendChild(option);
-            }
-        });
+      if (!data.length) {
+        const opt = document.createElement('option');
+        opt.textContent = 'Tidak ada klub yang tersedia';
+        opt.disabled = true;
+        opt.selected = true;
+        clubTujuanSelect.appendChild(opt);
+        return;
+      }
+
+      data.forEach((club, i) => {
+        const opt = document.createElement('option');
+        opt.value = club.id;
+        opt.textContent = club.name;
+        if (i === 0) opt.selected = true;
+        clubTujuanSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("❌ Error loading clubs:", err);
     }
+  }
 
-    function updatePlayers(clubId) {
-        playerSelect.innerHTML = '';
-        if (!clubId) return;
-        fetch(`/rumors/get-players/?club_id=${clubId}`)
-            .then(response => response.json())
-            .then(data => {
-                data.forEach(player => {
-                    const option = document.createElement('option');
-                    option.value = player.id;
-                    option.textContent = player.nama_pemain;
-                    playerSelect.appendChild(option);
-                });
-            });
+  // ======== Fungsi untuk load players ==========
+  async function loadPlayers(currentClubId) {
+    try {
+      const res = await fetch(`/rumors/get-players/?club_id=${currentClubId}`);
+      const data = await res.json();
+      console.log("Players received:", data);
+
+      playerSelect.innerHTML = '';
+      data.forEach((p, i) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nama_pemain;
+        if (i === 0) opt.selected = true;
+        playerSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("❌ Error loading players:", err);
     }
+  }
 
-    // Default: pilih club pertama dan isi dropdown tujuan tanpa club itu
-    if (currentClubSelect.options.length > 0) {
-        currentClubSelect.selectedIndex = 0;
-        refreshDesignatedClubs(currentClubSelect.value);
-        designatedClubSelect.selectedIndex = 0;
-        updatePlayers(currentClubSelect.value);
-    }
+  // ======== Inisialisasi default club (Arsenal) ==========
+  const defaultClub = [...clubAsalSelect.options].find(opt => opt.textContent.trim() === 'Arsenal');
+  if (defaultClub) {
+    defaultClub.selected = true;
+    const defaultId = defaultClub.value;
+    await loadDesignatedClubs(defaultId);
+    await loadPlayers(defaultId);
+  }
 
-    // Saat current club berubah
-    currentClubSelect.addEventListener('change', function() {
-        const selectedClubId = this.value;
-        refreshDesignatedClubs(selectedClubId);
-        designatedClubSelect.selectedIndex = 0;
-        updatePlayers(selectedClubId);
-    });
+  // ======== Event listener: ubah current club ==========
+  clubAsalSelect.addEventListener('change', async function() {
+    const clubId = this.value;
+    if (!clubId) return;
+    await loadDesignatedClubs(clubId);
+    await loadPlayers(clubId);
+  });
+
+  // ======== Submit pakai AJAX ==========
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    fetch("{% url 'rumors:create_rumors' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new FormData(form)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message || 'Rumor created successfully!');
+        window.location.href = '/rumors/';
+      } else {
+        alert(data.error || 'Failed to create rumor.');
+      }
+    })
+    .catch(() => alert('Error creating rumor.'));
+  });
 });
 </script>
 
 
+
+<style>
+  input, select, textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+    outline: none;
+    padding: 0.5rem 0.75rem;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: #7e22ce;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.5);
+  }
+
+  textarea {
+    min-height: 120px;
+  }
+</style>
 {% endblock %}

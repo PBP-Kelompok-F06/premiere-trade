@@ -13,4 +13,5 @@ urlpatterns = [
     path('get-players/', views.get_players_by_club, name='get_players_by_club'),  # /rumors/get-players/
     path('<uuid:id>/deny/', views.deny_rumor, name='deny_rumor'),
     path('<uuid:id>/revert/', views.revert_rumor, name='revert_rumor'),
+     path('get-designated-clubs/', views.get_available_designated_clubs, name='get_designated_clubs'),
 ]

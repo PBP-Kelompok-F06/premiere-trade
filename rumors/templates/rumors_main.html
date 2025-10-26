@@ -2,105 +2,82 @@
 {% load static %}
 
 {% block content %}
-
 <div class="min-h-screen bg-gray-100 py-8 px-4 relative">
-  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Latest Transfer Rumors</h1>
+  <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Rumor Transfer Terkini</h1>
 
-  <!-- Container grid dua kolom -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-
-    {% for rumor in rumors_list %}
-    <a href="{% url 'rumors:show_rumors_detail' rumor.id %}"
-       class="no-underline hover:no-underline relative flex items-center bg-white rounded-2xl shadow-md p-4 hover:shadow-xl hover:scale-[1.02] transition duration-200 cursor-pointer">
-
-      <!-- Status icon -->
-      <div class="absolute -left-3 top-1/2 transform -translate-y-1/2">
-        {% if rumor.status == "verified" %}
-          <div class="bg-green-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
-            ✓
-          </div>
-        {% elif rumor.status == "pending" %}
-          <div class="bg-yellow-400 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
-            ⏱
-          </div>
-        {% elif rumor.status == "denied" %}
-          <div class="bg-red-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow">
-            ✕
-          </div>
-        {% endif %}
+  <!-- Filter Form -->
+  <div class="bg-white shadow-sm rounded-lg p-6 mb-8 max-w-5xl mx-auto">
+    <form id="filter-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Nama Pemain</label>
+        <input type="text" id="filter-nama" name="nama"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
       </div>
 
-      <!-- Isi utama kartu -->
-      <div class="flex items-center w-full gap-4">
-
-    <!-- Foto pemain -->
-    <div class="flex-shrink-0">
-    {% if rumor.pemain.thumbnail %}
-        <div class="w-20 h-20 rounded-full overflow-hidden shadow-md">
-        <img src="{{ rumor.pemain.thumbnail }}" alt="{{ rumor.pemain.nama_pemain }}"
-            class="w-full h-full object-cover object-center">
-        </div>
-    {% else %}
-        <div class="w-20 h-20 rounded-full overflow-hidden shadow-md">
-        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="default avatar"
-            class="w-full h-full object-cover object-center">
-        </div>
-    {% endif %}
-    </div>
-
-
-
-        <!-- Nama pemain dan waktu -->
-        <div class="flex flex-col">
-          <span class="font-semibold text-lg text-gray-800">{{ rumor.pemain.nama_pemain }}</span>
-          <span class="inline-flex items-center gap-1 bg-red-100 text-red-600 text-[0.75rem] font-medium px-2.5 py-1 rounded-full mt-1 shadow-sm">
-            <span class="w-2 h-2 bg-red-500 rounded-full"></span>
-            {{ rumor.created_at|timesince }} ago
-            </span>
-        </div>
-
-        <!-- Spacer -->
-        <div class="flex-1"></div>
-
-<!-- Transfer logo -->
-<div class="flex items-center gap-4">
-  {% if rumor.club_asal.logo_url %}
-    <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-      <img src="{{ rumor.club_asal.logo_url }}" alt="{{ rumor.club_asal.name }}"
-           class="w-10 h-10 object-contain">
-    </div>
-  {% endif %}
-
-  <span class="text-3xl font-light text-gray-600">→</span>
-
-  {% if rumor.club_tujuan.logo_url %}
-    <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-200">
-      <img src="{{ rumor.club_tujuan.logo_url }}" alt="{{ rumor.club_tujuan.name }}"
-           class="w-10 h-10 object-contain">
-    </div>
-  {% endif %}
-</div>
-
-
-
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Klub Asal</label>
+        <select id="filter-asal" name="asal"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Semua Klub</option>
+          {% for club in clubs %}
+            <option value="{{ club.id }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
       </div>
-    </a>
-    {% empty %}
-      <p class="text-center text-gray-500 col-span-2">No Rumors available.</p>
-    {% endfor %}
 
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Klub Tujuan</label>
+        <select id="filter-tujuan" name="tujuan"
+          class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+          <option value="">Semua Klub</option>
+          {% for club in clubs %}
+            <option value="{{ club.id }}">{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- List Rumors -->
+  <div id="rumor-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+    {% include 'partials/rumor_list.html' %}
   </div>
 
   <!-- Floating Create Button -->
   {% if not request.user.is_club_admin %}
   <a href="{% url 'rumors:create_rumors' %}"
-  class="fixed bottom-8 right-8 bg-white rounded-full shadow-lg p-4 text-purple-600 hover:scale-110 hover:shadow-xl transition">
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            stroke-width="2.5" stroke="currentColor" class="w-8 h-8">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+     class="fixed bottom-8 right-8 bg-white rounded-full shadow-lg p-4 text-purple-600 hover:scale-110 hover:shadow-xl transition">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+         stroke-width="2.5" stroke="currentColor" class="w-8 h-8">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
     </svg>
-    </a>
-    {% endif %}
+  </a>
+  {% endif %}
+</div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('filter-form');
+  const rumorList = document.getElementById('rumor-list');
 
+  function applyFilter() {
+    const params = new URLSearchParams(new FormData(form));
+    fetch(`/rumors/?${params.toString()}`, {
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+      .then(res => res.text())
+      .then(html => {
+        rumorList.innerHTML = html;
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error applying filters.');
+      });
+  }
+
+  // Apply filter setiap input berubah
+  form.addEventListener('input', applyFilter);
+  form.addEventListener('change', applyFilter);
+});
+</script>
 {% endblock %}

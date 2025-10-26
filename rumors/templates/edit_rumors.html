@@ -2,62 +2,173 @@
 {% load static %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-12 flex items-center justify-center px-4">
-
-  <!-- Card container -->
-  <div class="bg-white rounded-2xl shadow-lg w-full max-w-2xl px-8 py-10">
-
-    <!-- Header -->
-    <h1 class="text-2xl font-semibold text-center text-gray-800 mb-6">
-      ✏️ Edit Transfer Rumor
-    </h1>
+<form style="display:none;">{% csrf_token %}</form>
+<div class="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-6">
+  <div class="bg-white w-full max-w-lg rounded-2xl shadow-lg p-8">
+    <h1 class="text-center text-2xl font-bold text-gray-800 mb-6">✏️ Edit Rumor Transfer</h1>
 
     {% if rumor.status == "verified" or rumor.status == "denied" %}
     <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 text-sm p-4 rounded-lg mb-6">
-    ⚠️ This rumor is currently <strong>{{ rumor.status }}</strong>.
-    Editing it will reset the status to <strong>Pending</strong>.
+      ⚠️ Rumor ini berstatus <strong>{{ rumor.status|capfirst }}</strong>.
+      Mengedit rumor akan mengubah status menjadi <strong>Pending</strong> untuk diverifikasi ulang.
     </div>
     {% endif %}
 
-
-
-    <!-- Form -->
-    <form method="POST" class="space-y-5">
+    <form id="edit-rumor-form" class="space-y-5">
       {% csrf_token %}
-      {{ form.non_field_errors }}
 
-      <!-- Loop fields -->
-      {% for field in form %}
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {{ field.label }}
-          </label>
-          {{ field }}
-          {% if field.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ field.errors|striptags }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
+      <!-- Current Club -->
+      <div>
+        <label for="club_asal" class="block text-sm font-medium text-gray-700 mb-1">Klub Asal</label>
+        <select id="club_asal" name="club_asal"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+          {% for club in form.fields.club_asal.queryset %}
+            <option value="{{ club.id }}" {% if rumor.club_asal.id == club.id %}selected{% endif %}>{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Designated Club -->
+      <div>
+        <label for="club_tujuan" class="block text-sm font-medium text-gray-700 mb-1">Klub Tujuan</label>
+        <select id="club_tujuan" name="club_tujuan"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+          {% for club in form.fields.club_tujuan.queryset %}
+            <option value="{{ club.id }}" {% if rumor.club_tujuan.id == club.id %}selected{% endif %}>{{ club.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Player -->
+      <div>
+        <label for="pemain" class="block text-sm font-medium text-gray-700 mb-1">Pemain</label>
+        <select id="pemain" name="pemain"
+          class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">
+          {% for player in form.fields.pemain.queryset %}
+            <option value="{{ player.id }}" {% if rumor.pemain.id == player.id %}selected{% endif %}>
+              {{ player.nama_pemain }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Content -->
+      <div>
+        <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Detail Rumor</label>
+      <textarea id="content" name="content" rows="4"
+        placeholder="Tulis deskripsi di sini..."
+        class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500">{{ rumor.content }}</textarea>
+      </div>
 
       <!-- Buttons -->
       <div class="flex justify-between items-center pt-6">
         <a href="{% url 'rumors:show_rumors_main' %}"
            class="text-gray-600 hover:text-gray-800 transition text-sm font-medium">
-          ← Cancel
+          ← Batal
         </a>
         <button type="submit"
-                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-2.5 rounded-full shadow-md transition">
-          💾 Update Rumor
+                id="submit-btn"
+                class="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-6 py-2.5 rounded-lg shadow-md transition">
+          💾 Perbarui Rumor
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Tailwind form styling -->
+<!-- ================== FIXED SCRIPT ================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  const form = document.getElementById('edit-rumor-form');
+  const url = window.location.pathname;
+
+  const clubAsalSelect = document.getElementById('club_asal');
+  const clubTujuanSelect = document.getElementById('club_tujuan');
+  const playerSelect = document.getElementById('pemain');
+
+  // Helper buat reset select
+  function resetSelect(select) {
+    select.innerHTML = '';
+  }
+
+  // === Update club_tujuan & pemain saat current club berubah ===
+  clubAsalSelect.addEventListener('change', function() {
+    const clubId = this.value;
+    if (!clubId) return;
+
+    resetSelect(clubTujuanSelect);
+    resetSelect(playerSelect);
+
+    // Update designated clubs (exclude current)
+    fetch(`/rumors/get-designated-clubs/?club_asal=${clubId}`)
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(club => {
+          const opt = document.createElement('option');
+          opt.value = club.id;
+          opt.textContent = club.name;
+          clubTujuanSelect.appendChild(opt);
+        });
+      });
+
+    // Update players (current club)
+    fetch(`/rumors/get-players/?club_id=${clubId}`)
+      .then(res => res.json())
+      .then(players => {
+        players.forEach(player => {
+          const opt = document.createElement('option');
+          opt.value = player.id;
+          opt.textContent = player.nama_pemain;
+          playerSelect.appendChild(opt);
+        });
+      });
+  });
+
+  // === Submit form pakai AJAX ===
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: new FormData(form)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message || 'Rumor updated successfully!');
+        window.location.href = '/rumors/';
+      } else {
+        alert(data.error || 'Failed to update rumor.');
+      }
+    })
+    .catch(() => alert('Error updating rumor.'));
+  });
+});
+
+
+</script>
 <style>
   input, select, textarea {
-    @apply w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition;
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* shadow-md */
+    transition: all 0.2s ease-in-out;
+    outline: none;
+    padding: 0.5rem 0.75rem;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: #7e22ce; /* purple-600 */
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.5); /* focus:ring-purple-400 + opacity */
+  }
+
+  textarea {
+    min-height: 120px;
   }
 </style>
 
