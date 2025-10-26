@@ -35,7 +35,7 @@ DEBUG = not PRODUCTION
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "adryan-muhammad-premieretrade.pbp.cs.ui.ac.id",
+    "walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id",
 ]
 
 CSRF_TRUSTED_ORIGINS = ["https://walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id"]
