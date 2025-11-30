@@ -2,7 +2,6 @@
 
 from django.contrib import admin
 from django.urls import path, include
-# JANGAN impor views dari community di sini
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,4 +13,5 @@ urlpatterns = [
     path('player_transaction/', include('player_transaction.urls')),    
     path("accounts/", include("accounts.urls")),          
     path('best_eleven/', include('best_eleven.urls')),    
+    path('auth/', include('authentication.urls')),
 ]

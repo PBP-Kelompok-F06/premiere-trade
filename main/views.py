@@ -1,6 +1,7 @@
 # main/views.py
 
 from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
 from .models import Club, Player
 
 def homepage(request):
@@ -40,3 +41,38 @@ def player_list_by_club(request, club_id):
     }   
     # Kita akan bikin template baru 'player_list.html'
     return render(request, 'main/player_list.html', context)
+
+def show_clubs_json(request):
+    """API untuk mengirim daftar klub sebagai JSON ke Flutter"""
+    clubs = Club.objects.exclude(name__iexact='Admin').order_by('name')
+    data = []
+    for club in clubs:
+        data.append({
+            'pk': club.pk,
+            'fields': {
+                'name': club.name,
+                'country': club.country,
+                'logo_url': club.logo_url,
+            }
+        })
+    return JsonResponse(data, safe=False)
+
+def show_players_by_club_json(request, club_id):
+    """API untuk mengirim daftar pemain per klub sebagai JSON ke Flutter"""
+    # Pastikan ambil object Club atau 404 jika tidak ada, biar aman
+    club = get_object_or_404(Club, pk=club_id)
+    players = club.players.all().order_by('nama_pemain')
+    
+    data = []
+    for player in players:
+        data.append({
+            'pk': str(player.id), # UUID convert ke string
+            'fields': {
+                'nama_pemain': player.nama_pemain,
+                'position': player.position,
+                'market_value': player.market_value,
+                'thumbnail': player.thumbnail,
+                # Tambahkan field lain jika perlu
+            }
+        })
+    return JsonResponse(data, safe=False)

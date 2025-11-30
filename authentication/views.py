@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 import json
+
+User = get_user_model()
 
 
 # Create your views here.
@@ -44,40 +46,56 @@ def login(request):
 @csrf_exempt
 def register(request):
     if request.method == "POST":
-        data = json.loads(request.body)
-        username = data["username"]
-        password1 = data["password1"]
-        password2 = data["password2"]
+        # 1. MENCOBA MEMBACA DATA (Support JSON & Form Data)
+        try:
+            # Coba baca sebagai JSON
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            # Jika gagal, berarti dikirim sebagai Form Data (default pbp_django_auth)
+            data = request.POST
 
-        # Check if the passwords match
-        if password1 != password2:
+        # 2. AMBIL DATA DENGAN KEY YANG BENAR
+        # Gunakan .get() agar tidak error 500 jika key tidak ada
+        username = data.get("username")
+        password = data.get("password")
+        password_confirm = data.get("password_confirm")
+
+        # 3. VALIDASI INPUT
+        if not username or not password or not password_confirm:
             return JsonResponse(
-                {"status": False, "message": "Passwords do not match."}, status=400
+                {"status": False, "message": "Semua field harus diisi."}, 
+                status=400
             )
 
-        # Check if the username is already taken
+        if password != password_confirm:
+            return JsonResponse(
+                {"status": False, "message": "Password tidak cocok."}, 
+                status=400
+            )
+
         if User.objects.filter(username=username).exists():
             return JsonResponse(
-                {"status": False, "message": "Username already exists."}, status=400
+                {"status": False, "message": "Username sudah digunakan."}, 
+                status=400
             )
 
-        # Create the new user
-        user = User.objects.create_user(username=username, password=password1)
+        # 4. BUAT USER
+        user = User.objects.create_user(username=username, password=password)
         user.save()
 
         return JsonResponse(
             {
+                "status": True,
+                "message": "Akun berhasil dibuat!",
                 "username": user.username,
-                "status": "success",
-                "message": "User created successfully!",
             },
             status=200,
         )
 
-    else:
-        return JsonResponse(
-            {"status": False, "message": "Invalid request method."}, status=400
-        )
+    return JsonResponse(
+        {"status": False, "message": "Invalid request method."}, 
+        status=405
+    )
 
 
 @csrf_exempt
