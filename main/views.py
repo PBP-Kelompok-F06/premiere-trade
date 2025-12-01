@@ -27,7 +27,6 @@ def homepage(request):
     }
     return render(request, 'main/homepage.html', context)
 
-# --- VIEW BARU UNTUK DAFTAR SEMUA PEMAIN PER KLUB ---
 def player_list_by_club(request, club_id):
     """
     Menampilkan daftar semua pemain dari klub tertentu.
@@ -39,7 +38,6 @@ def player_list_by_club(request, club_id):
         'club': club,
         'players': players,
     }   
-    # Kita akan bikin template baru 'player_list.html'
     return render(request, 'main/player_list.html', context)
 
 def show_clubs_json(request):
@@ -72,7 +70,6 @@ def show_players_by_club_json(request, club_id):
                 'position': player.position,
                 'market_value': player.market_value,
                 'thumbnail': player.thumbnail,
-                # Tambahkan field lain jika perlu
             }
         })
     return JsonResponse(data, safe=False)

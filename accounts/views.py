@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .forms import (
@@ -18,6 +18,8 @@ from main.models import Club, Player
 from django.shortcuts import get_object_or_404
 from .models import CustomUser, Profile
 import json
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -449,4 +451,51 @@ def delete_player(request, pk):
     messages.success(request, f"Pemain '{player_name}' berhasil dihapus.")
     return redirect("accounts:superuser_dashboard")
 
+@csrf_exempt
+def get_profile_json(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"status": False, "message": "Not authenticated"}, status=401)
 
+    user = request.user
+
+    # --- LOGIKA PENENTUAN ROLE (TANPA FIELD CUSTOM) ---
+    # Kita gunakan status bawaan Django
+    role = "Member"
+    if user.is_superuser:
+        role = "Super Admin"
+    elif user.is_staff:
+        role = "Admin"
+    
+    data = {
+        "status": True,
+        "username": user.username,
+        "email": user.email,           # Field bawaan Django
+        "first_name": user.first_name, # Field bawaan Django
+        "last_name": user.last_name,   # Field bawaan Django
+        "role": role,                  # Hasil logika di atas
+    }
+    return JsonResponse(data, status=200)
+
+@csrf_exempt
+def edit_profile_flutter(request):
+    if request.method == 'POST' and request.user.is_authenticated:
+        try:
+            data = json.loads(request.body)
+            user = request.user
+            
+            # HANYA update field bawaan Django
+            if 'email' in data:
+                user.email = data['email']
+            
+            if 'first_name' in data:
+                user.first_name = data['first_name']
+                
+            if 'last_name' in data:
+                user.last_name = data['last_name']
+            
+            user.save()
+            return JsonResponse({"status": True, "message": "Profile updated!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+            
+    return JsonResponse({"status": False, "message": "Invalid request"}, status=400)

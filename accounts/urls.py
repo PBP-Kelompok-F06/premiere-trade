@@ -26,4 +26,7 @@ urlpatterns = [
     path('player/add/', views.add_player, name='add_player'),
     path('player/<uuid:pk>/edit/', views.edit_player, name='edit_player'),
     path('player/<uuid:pk>/delete/', views.delete_player, name='delete_player'),
+    
+    path('api/profile/', views.get_profile_json, name='get_profile_json'),
+    path('api/profile/edit/', views.edit_profile_flutter, name='edit_profile_flutter'),
 ]
