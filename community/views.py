@@ -1,43 +1,14 @@
-# community/views.py
-
 import json
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse 
+from django.http import HttpResponseNotAllowed, HttpResponseForbidden, JsonResponse
 from .models import Post, Reply
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-
-# --- TAMBAHKAN IMPORT INI UNTUK TIMEZONE WIB ---
 from django.utils import timezone
 from django.utils.dateformat import format
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 import pytz
-# -----------------------------------------------
-
-# View UTAMA
-@login_required
-def community_index(request):
-    if request.method == "POST":
-        title = request.POST.get('title')
-        description = request.POST.get('description') 
-        image_url = request.POST.get('image_url')
-
-        if title and description:
-            Post.objects.create(
-                author=request.user, 
-                title=title, 
-                description=description,
-                image_url=image_url,          
-            )
-            return redirect('community:community_home') 
-
-    posts = Post.objects.all().order_by('-created_at')
-    # Ambil hanya reply top-level untuk halaman utama
-    for post in posts:
-        post.top_level_replies = post.replies.filter(parent=None).order_by('created_at')
-
-    return render(request, 'community/index.html', {'posts': posts})
-
 
 # --- HELPER FUNCTION: Format tanggal ke WIB ---
 def format_datetime_wib(dt):
@@ -46,13 +17,67 @@ def format_datetime_wib(dt):
     dt_wib = dt.astimezone(wib)
     return format(dt_wib, "d M Y, H:i")
 
+# View UTAMA (Updated for Flutter JSON Support)
+@login_required
+@csrf_exempt
+def community_index(request):
+    if request.method == "POST":
+        # Logic untuk menangani input dari JSON (Flutter) atau Form (Website)
+        try:
+            data = json.loads(request.body)
+            # Input dari Flutter (JSON)
+            title = data.get('title')
+            description = data.get('description')
+            image_url = data.get('image_url')
+            is_json = True
+        except:
+            # Input dari Website (Form Data)
+            title = request.POST.get('title')
+            description = request.POST.get('description')
+            image_url = request.POST.get('image_url')
+            is_json = False
 
-# --- VIEW ADD_REPLY (AJAX untuk top-level reply) ---
+        if title and description:
+            post = Post.objects.create(
+                author=request.user, 
+                title=title, 
+                description=description,
+                image_url=image_url,          
+            )
+            
+            # Jika request JSON (Flutter), kembalikan response JSON
+            if is_json or request.headers.get('Content-Type') == 'application/json':
+                return JsonResponse({
+                    "status": "success", 
+                    "message": "Post berhasil dibuat!",
+                    "id": post.id
+                })
+                
+            return redirect('community:community_home') 
+        else:
+            if is_json or request.headers.get('Content-Type') == 'application/json':
+                return JsonResponse({"status": "error", "message": "Title dan Description harus diisi!"}, status=400)
+
+    posts = Post.objects.all().order_by('-created_at')
+    # Ambil hanya reply top-level untuk halaman utama
+    for post in posts:
+        post.top_level_replies = post.replies.filter(parent=None).order_by('created_at')
+
+    return render(request, 'community/index.html', {'posts': posts})
+
+# --- VIEW ADD_REPLY (Updated for Flutter JSON Support) ---
 @login_required
 @require_POST
+@csrf_exempt 
 def add_reply(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    content = request.POST.get('content') 
+    
+    # Logic Handle input JSON vs Form
+    try:
+        data = json.loads(request.body)
+        content = data.get('content')
+    except:
+        content = request.POST.get('content') 
 
     if not content:
         return JsonResponse({'success': False, 'message': 'Balasan tidak boleh kosong.'}, status=400)
@@ -65,7 +90,6 @@ def add_reply(request, post_id):
             parent=None  # Ini adalah balasan top-level
         )
 
-        # Kembalikan data reply baru dalam format JSON
         return JsonResponse({
             'success': True,
             'message': 'Balasan terkirim!',
@@ -73,24 +97,29 @@ def add_reply(request, post_id):
                 'id': reply.id,
                 'author_username': reply.author.username,
                 'content': reply.content,
-                'created_at': format_datetime_wib(reply.created_at),  # ✅ Format WIB
+                'created_at': format_datetime_wib(reply.created_at),
                 'parent_id': None,
                 'post_id': post.id,
-                # URL untuk membalas reply BARU ini
                 'new_reply_url': reverse('community:add_nested_reply', args=[reply.id])
             }
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-
-# --- VIEW ADD_NESTED_REPLY (AJAX untuk nested reply) ---
+# --- VIEW ADD_NESTED_REPLY (Updated for Flutter JSON Support) ---
 @login_required
 @require_POST
+@csrf_exempt
 def add_nested_reply(request, reply_id):
     parent_reply = get_object_or_404(Reply, id=reply_id)
     post = parent_reply.post
-    content = request.POST.get('content') 
+    
+    # Logic Handle input JSON vs Form
+    try:
+        data = json.loads(request.body)
+        content = data.get('content')
+    except:
+        content = request.POST.get('content') 
 
     if not content:
         return JsonResponse({'success': False, 'message': 'Balasan tidak boleh kosong.'}, status=400)
@@ -103,7 +132,6 @@ def add_nested_reply(request, reply_id):
             parent=parent_reply  # Tautkan ke induknya
         )
 
-        # Kembalikan data reply baru dalam format JSON
         return JsonResponse({
             'success': True,
             'message': 'Balasan terkirim!',
@@ -111,20 +139,19 @@ def add_nested_reply(request, reply_id):
                 'id': reply.id,
                 'author_username': reply.author.username,
                 'content': reply.content,
-                'created_at': format_datetime_wib(reply.created_at),  # ✅ Format WIB
-                'parent_id': parent_reply.id,  # ID induknya
+                'created_at': format_datetime_wib(reply.created_at),
+                'parent_id': parent_reply.id,
                 'post_id': post.id,
-                # URL untuk membalas reply BARU ini
                 'new_reply_url': reverse('community:add_nested_reply', args=[reply.id])
             }
         })
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
 
-
-# --- VIEW EDIT POST (Tetap sama, versi AJAX) ---
+# --- VIEW EDIT POST (Tetap sama, karena sudah JSON aware) ---
 @login_required
 @require_POST
+@csrf_exempt
 def edit_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author != request.user:
@@ -145,14 +172,186 @@ def edit_post(request, post_id):
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=400)
 
-
-# --- VIEW DELETE POST (Tetap sama) ---
+# --- VIEW DELETE POST (Updated JSON response for Flutter) ---
 @login_required
+@csrf_exempt
 def delete_post(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     if post.author != request.user:
         return HttpResponseForbidden("You are not allowed to delete this post.")
+    
     if request.method == "POST":
         post.delete()
+        # Jika dari web, redirect. Jika dari Flutter/JSON, return success.
+        # Kita cek header atau body, tapi simple-nya kita redirect aja buat web
+        # Flutter biasanya handle redirect sebagai sukses, atau bisa kita tambah logic:
+        # if request.headers.get('Content-Type') == 'application/json': ...
         return redirect('community:community_home')
+        
     return HttpResponseNotAllowed(['POST'])
+
+# --- VIEW Show JSON (NEW) ---
+def show_json(request):
+    posts = Post.objects.all().order_by('-created_at')
+    data = []
+    for post in posts:
+        data.append({
+            "id": post.id,
+            "author_username": post.author.username,
+            "title": post.title,
+            "description": post.description,
+            "image_url": post.image_url,
+            "created_at": post.created_at.isoformat() if post.created_at else None,
+        })
+    return JsonResponse(data, safe=False)
+
+# --- VIEW Show JSON by ID (NEW) ---
+def show_json_by_id(request, id):
+    post = get_object_or_404(Post, id=id)
+    data = {
+        "id": post.id,
+        "author_username": post.author.username,
+        "title": post.title,
+        "description": post.description,
+        "image_url": post.image_url,
+        "created_at": post.created_at.isoformat() if post.created_at else None,
+    }
+# --- VIEW ADD POST (Separated for clarity/URL match) ---
+@login_required
+@csrf_exempt
+def add_post(request):
+    if request.method == 'POST':
+        form_data = request.POST
+        title = form_data.get('title')
+        description = form_data.get('description')
+        image_url = form_data.get('image_url')
+
+        if title and description:
+            post = Post.objects.create(
+                author=request.user,
+                title=title,
+                description=description,
+                image_url=image_url,
+            )
+            return redirect('community:community_home')
+        return HttpResponseForbidden("Title and Description are required")
+
+    return render(request, 'community/add_post.html') # Assuming a template exists or just for structure
+
+# --- FLUTTER SPECIFIC VIEWS (Missing in original) ---
+
+@csrf_exempt
+def add_post_flutter(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_post = Post.objects.create(
+                author=request.user,
+                title=data["title"],
+                description=data["description"],
+                image_url=data.get("image_url", ""), # Handle potential missing image
+            )
+            return JsonResponse({"status": "success", "message": "Post added successfully!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+
+@csrf_exempt
+def edit_post_flutter(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Verify ownership if needed, but for now trusting the flutter logic or adding check
+            if post.author != request.user:
+                 return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            post.title = data.get("title", post.title)
+            post.description = data.get("description", post.description)
+            post.image_url = data.get("image_url", post.image_url)
+            post.save()
+            return JsonResponse({"status": "success", "message": "Post updated!"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+
+@csrf_exempt
+def delete_post_flutter(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST': # Flutter might use POST for delete
+        if post.author != request.user:
+             return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+        post.delete()
+        return JsonResponse({"status": "success", "message": "Post deleted!"}, status=200)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+@csrf_exempt
+def add_reply_flutter(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    if request.method == 'POST':
+         try:
+            data = json.loads(request.body)
+            Reply.objects.create(
+                author=request.user, # Requires authenticated session or token
+                post=post,
+                content=data['content'],
+                parent=None
+            )
+            return JsonResponse({"status": "success", "message": "Reply added!"}, status=200)
+         except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+@csrf_exempt
+def add_nested_reply_flutter(request, reply_id):
+    parent = get_object_or_404(Reply, id=reply_id)
+    if request.method == 'POST':
+         try:
+            data = json.loads(request.body)
+            Reply.objects.create(
+                author=request.user,
+                post=parent.post,
+                content=data['content'],
+                parent=parent
+            )
+            return JsonResponse({"status": "success", "message": "Nested reply added!"}, status=200)
+         except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+def show_json_flutter(request):
+    data = Post.objects.all().order_by('-created_at')
+    # Use existing show_json logic or custom serializer
+    return show_json(request)
+
+def show_json_by_id_flutter(request, id):
+    return show_json_by_id(request, id)
+
+def show_replies_json_flutter(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    replies = Reply.objects.filter(post=post, parent=None)
+    data = []
+    for reply in replies:
+         data.append({
+             "id": reply.id,
+             "author": reply.author.username,
+             "content": reply.content,
+             "created_at": reply.created_at.isoformat()
+         })
+    return JsonResponse(data, safe=False)
+
+def show_nested_replies_json_flutter(request, reply_id):
+    reply = get_object_or_404(Reply, id=reply_id)
+    nested = Reply.objects.filter(parent=reply)
+    data = []
+    for r in nested:
+         data.append({
+             "id": r.id,
+             "author": r.author.username,
+             "content": r.content,
+             "created_at": r.created_at.isoformat()
+         })
+    return JsonResponse(data, safe=False)
+
