@@ -331,14 +331,16 @@ def show_json_by_id_flutter(request, id):
 
 def show_replies_json_flutter(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    replies = Reply.objects.filter(post=post, parent=None)
+    # Ubah logic: Kembalikan SEMUA reply (bukan cuma parent=None) supaya Flutter bisa render tree/list flat
+    replies = Reply.objects.filter(post=post).order_by('created_at')
     data = []
     for reply in replies:
          data.append({
              "id": reply.id,
              "author": reply.author.username,
              "content": reply.content,
-             "created_at": reply.created_at.isoformat()
+             "created_at": reply.created_at.isoformat(),
+             "parent_id": reply.parent.id if reply.parent else None  # Tambahkan parent_id
          })
     return JsonResponse(data, safe=False)
 
@@ -351,7 +353,8 @@ def show_nested_replies_json_flutter(request, reply_id):
              "id": r.id,
              "author": r.author.username,
              "content": r.content,
-             "created_at": r.created_at.isoformat()
+             "created_at": r.created_at.isoformat(),
+             "parent_id": r.parent.id if r.parent else None 
          })
     return JsonResponse(data, safe=False)
 
