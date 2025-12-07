@@ -22,7 +22,7 @@ class Player(models.Model):
     nama_pemain = models.CharField(max_length=255, default="")
     position = models.CharField(max_length=50)
     umur = models.IntegerField(default=0)
-    market_value = models.IntegerField(default=0)
+    market_value = models.BigIntegerField(default=0)
     negara = models.CharField(max_length=255, default="")
     jumlah_goal = models.IntegerField(default=0)
     jumlah_asis = models.IntegerField(default=0)

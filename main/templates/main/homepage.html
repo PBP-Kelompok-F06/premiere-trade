@@ -5,33 +5,24 @@
 
 {% block content %}
 
-<!-- 1. HERO SECTION -->
 <div class="hero-section new-hero">
     <div class="hero-content">
         <h1>WELCOME TO PREMIERE TRADE</h1>
     </div>
 </div>
 
-<!-- 2. FEATURED TEAMS SECTION -->
 <div class="teams-section">
     <h2>Featured Teams</h2>
 
-    <!-- Looping data klub unggulan dari view -->
     {% for data in featured_clubs_data %}
     <div class="team-container">
         <div class="team-header">
             <div class="team-info">
-                <!-- 
-                  INI YANG DIBENERIN: 
-                  Pake if/else buat logo
-                -->
                 {% if data.club.logo_url %}
                     <img src="{{ data.club.logo_url }}" alt="{{ data.club.name }} Logo" class="team-logo-header">
                 {% else %}
-                    <!-- Kalo nggak ada logo_url, pake placeholder dari static -->
                     <img src="{% static 'images/placeholder-logo.png' %}" alt="{{ data.club.name }} Logo" class="team-logo-header">
                 {% endif %}
-                <!-- =============================== -->
                 <h3>{{ data.club.name }}</h3>
             </div>
             {% if data.club.id %}
@@ -39,19 +30,13 @@
             {% endif %}
         </div>
         <div class="player-grid">
-            <!-- Looping 4 pemain termahal -->
             {% for player in data.top_players %}
             <div class="player-card">
-                <!-- 
-                  INI JUGA DIBENERIN: 
-                  Pake if/else buat thumbnail pemain
-                -->
                 {% if player.thumbnail %}
                     <img src="{{ player.thumbnail }}" alt="{{ player.nama_pemain }}">
                 {% else %}
                     <img src="{% static 'images/player-placeholder.png' %}" alt="{{ player.nama_pemain }}">
                 {% endif %}
-                <!-- =============================== -->
                 <p class="player-name">{{ player.nama_pemain }}</p>
                 <p class="player-position">{{ player.position }}</p>
             </div>
@@ -60,8 +45,6 @@
             {% endfor %}
         </div>
     </div>
-    {% endfor %} <!-- Akhir loop klub unggulan -->
-
-</div>
+    {% endfor %} </div>
 
 {% endblock %}

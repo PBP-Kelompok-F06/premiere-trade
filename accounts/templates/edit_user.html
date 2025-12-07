@@ -33,17 +33,16 @@
                 {{ form.username }}
               </div>
 
-              <div>
+              <div id="managed-club-wrapper">
                 <label
                   for="{{ form.managed_club.id_for_label }}"
                   class="block text-sm font-medium text-gray-700"
                   >Managed Club</label
                 >
+                {{ form.managed_club }}
                 <p class="text-xs text-gray-500 mb-1">
                   Pilih klub yang dikelola jika user ini adalah Admin Klub.
-                  Kosongkan jika hanya Fan.
                 </p>
-                {{ form.managed_club }}
               </div>
 
               <div class="border-t pt-4">
@@ -114,6 +113,30 @@
             "focus:ring-indigo-500"
           );
         });
+
+      const roleRadiosEdit = document.querySelectorAll(
+        'input[name="{{ form.role.name }}"]'
+      );
+      const managedClubWrapperEdit = document.getElementById(
+        "managed-club-wrapper"
+      );
+
+      function toggleManagedClubFieldEdit() {
+        const adminRadio = document.querySelector(
+          'input[name="{{ form.role.name }}"][value="admin"]'
+        );
+        if (adminRadio && adminRadio.checked) {
+          managedClubWrapperEdit.style.display = "block";
+        } else {
+          managedClubWrapperEdit.style.display = "none";
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", toggleManagedClubFieldEdit);
+
+      roleRadiosEdit.forEach((radio) => {
+        radio.addEventListener("change", toggleManagedClubFieldEdit);
+      });
     </script>
   </body>
 </html>

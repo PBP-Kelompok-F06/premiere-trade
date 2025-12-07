@@ -4,130 +4,177 @@
 {% block title %}Inbox Negosiasi - Premiere Trade{% endblock %}
 
 {% block content %}
-<div class="negotiation-container">
-  <h1>📨 Inbox Negosiasi - {{ club.name }}</h1>
+<div class="negotiation-container mx-[60px] text-[#333] my-12">
+  <h1 class="mb-4 text-3xl font-bold">📨 Inbox Negosiasi - {{ club.name }}</h1>
 
-  <h2>Tawaran Masuk</h2>
-  {% if received_offers %}
-  <table class="inbox-table">
+  <!-- 🔹 TAWARAN MASUK -->
+  <h2 class="mb-3 text-2xl font-semibold">Tawaran Masuk</h2>
+  <table class="inbox-table w-full bg-white border-collapse rounded-lg overflow-hidden">
     <thead>
-      <tr>
-        <th>Dari Klub</th>
-        <th>Pemain</th>
-        <th>Harga Ditawar</th>
-        <th>Status</th>
-        <th>Aksi</th>
+      <tr class="bg-gradient-to-r from-indigo-800 via-purple-700 to-purple-500">
+        <th class="text-white p-[10px]">Dari Klub</th>
+        <th class="text-white p-[10px]">Pemain</th>
+        <th class="text-white p-[10px]">Harga Ditawar</th>
+        <th class="text-white p-[10px]">Status</th>
+        <th class="text-white p-[10px]">Aksi</th>
       </tr>
     </thead>
-    <tbody>
-      {% for nego in received_offers %}
-      <tr>
-        <td>{{ nego.from_club.name }}</td>
-        <td>{{ nego.player.nama_pemain }}</td>
-        <td>Rp{{ nego.offered_price|floatformat:0 }}</td>
-        <td>{{ nego.status|title }}</td>
-        <td>
-          {% if nego.status == 'pending' %}
-          <button class="accept-btn" data-id="{{ nego.id }}">Accept</button>
-          <button class="reject-btn" data-id="{{ nego.id }}">Reject</button>
-          {% else %}
-          <span class="status">{{ nego.status|title }}</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
+    <tbody id="received-body">
+      <tr><td colspan="5" class="text-center p-[10px] text-gray-500 italic">Memuat data...</td></tr>
     </tbody>
   </table>
-  {% else %}
-  <p>Tidak ada tawaran masuk.</p>
-  {% endif %}
 
-  <hr style="margin: 30px 0;">
+  <hr class="my-[70px] border-t border-gray-300">
 
-  <h2>Tawaran Dikirim</h2>
-  {% if sent_offers %}
-  <table class="inbox-table">
+  <!-- 🔹 TAWARAN DIKIRIM -->
+  <h2 class="mb-3 text-2xl font-semibold">Tawaran Dikirim</h2>
+  <table class="inbox-table w-full bg-white border-collapse rounded-lg overflow-hidden">
     <thead>
-      <tr>
-        <th>Kepada Klub</th>
-        <th>Pemain</th>
-        <th>Harga Ditawar</th>
-        <th>Status</th>
+      <tr class="bg-gradient-to-r from-indigo-800 via-purple-700 to-purple-500">
+        <th class="text-white p-[10px]">Kepada Klub</th>
+        <th class="text-white p-[10px]">Pemain</th>
+        <th class="text-white p-[10px]">Harga Ditawar</th>
+        <th class="text-white p-[10px]">Status</th>
       </tr>
     </thead>
-    <tbody>
-      {% for nego in sent_offers %}
-      <tr>
-        <td>{{ nego.to_club.name }}</td>
-        <td>{{ nego.player.nama_pemain }}</td>
-        <td>Rp{{ nego.offered_price|floatformat:0 }}</td>
-        <td>{{ nego.status|title }}</td>
-      </tr>
-      {% endfor %}
+    <tbody id="sent-body">
+      <tr><td colspan="4" class="text-center p-[10px] text-gray-500 italic">Memuat data...</td></tr>
     </tbody>
   </table>
-  {% else %}
-  <p>Belum ada tawaran dikirim.</p>
-  {% endif %}
 </div>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".accept-btn, .reject-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const negoId = btn.dataset.id;
-      const action = btn.classList.contains("accept-btn") ? "accept" : "reject";
+  const csrfToken = "{{ csrf_token }}";
+  const receivedBody = document.getElementById("received-body");
+  const sentBody = document.getElementById("sent-body");
 
-      fetch(`/player_transaction/negotiation/${negoId}/${action}/`, {
+  // 🔹 Fetch data dari endpoint AJAX
+  fetch("{% url 'player_transaction:negotiation_inbox_json' %}", {
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+  .then(res => res.json())
+  .then(data => {
+    // Clear tabel lama
+    receivedBody.innerHTML = "";
+    sentBody.innerHTML = "";
+
+    // Jika error
+    if (data.error) {
+      receivedBody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 p-[10px]">${data.error}</td></tr>`;
+      sentBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 p-[10px]">${data.error}</td></tr>`;
+      return;
+    }
+
+    // Tabel tawaran masuk
+    if (data.received_offers.length === 0) {
+      receivedBody.innerHTML = `<tr><td colspan="5" class="text-center p-[10px] text-gray-600 italic">Tidak ada tawaran masuk.</td></tr>`;
+    } else {
+      data.received_offers.forEach(nego => {
+        const row = document.createElement("tr");
+        row.className = "border-b border-[#ccc] text-center";
+        row.innerHTML = `
+          <td class="p-[10px]">${nego.from_club}</td>
+          <td class="p-[10px]">${nego.player}</td>
+          <td class="p-[10px]">Rp${parseInt(nego.offered_price).toLocaleString("id-ID")}</td>
+          <td class="p-[10px]">${nego.status}</td>
+          <td class="p-[10px]">
+            ${nego.status === "Pending"
+              ? `
+                <button class="accept-btn bg-[#28a745] text-white px-3 py-[6px] rounded-md border-none cursor-pointer hover:bg-[#218838] transition" data-id="${nego.id}">Accept</button>
+                <button class="reject-btn bg-[#dc3545] text-white px-3 py-[6px] rounded-md border-none cursor-pointer hover:bg-[#c82333] transition ml-2" data-id="${nego.id}">Reject</button>
+              `
+              : `<span class="status capitalize">${nego.status}</span>`
+            }
+          </td>
+        `;
+        receivedBody.appendChild(row);
+      });
+    }
+
+    // 📨 Tabel tawaran dikirim
+    if (data.sent_offers.length === 0) {
+      sentBody.innerHTML = `<tr><td colspan="4" class="text-center p-[10px] text-gray-600 italic">Belum ada tawaran dikirim.</td></tr>`;
+    } else {
+      data.sent_offers.forEach(nego => {
+        const row = document.createElement("tr");
+        row.className = "border-b border-[#ccc] text-center";
+        row.innerHTML = `
+          <td class="p-[10px]">${nego.to_club}</td>
+          <td class="p-[10px]">${nego.player}</td>
+          <td class="p-[10px]">Rp${parseInt(nego.offered_price).toLocaleString("id-ID")}</td>
+          <td class="p-[10px] capitalize">${nego.status}</td>
+        `;
+        sentBody.appendChild(row);
+      });
+    }
+
+    // Tambahkan event listener untuk tombol setelah tabel ter-render
+    attachActionHandlers();
+  })
+  .catch(() => {
+    receivedBody.innerHTML = `<tr><td colspan="5" class="text-center text-red-500 p-[10px]">Gagal memuat data.</td></tr>`;
+    sentBody.innerHTML = `<tr><td colspan="4" class="text-center text-red-500 p-[10px]">Gagal memuat data.</td></tr>`;
+  });
+
+  // 🔹 Fungsi untuk handle Accept/Reject
+  function attachActionHandlers() {
+    document.querySelectorAll(".accept-btn, .reject-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const negoId = btn.dataset.id;
+        const action = btn.classList.contains("accept-btn") ? "accept" : "reject";
+
+        fetch(`/player_transaction/negotiation/${negoId}/${action}/`, {
         method: "POST",
         headers: {
-          "X-CSRFToken": "{{ csrf_token }}",
-          "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest",
         },
-      })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message);
-        location.reload();
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                alert(data.message);
+                return;
+            }
+
+            alert(data.message);
+            const row = btn.closest("tr");
+            row.querySelector("td:nth-child(4)").textContent = data.new_status;
+            row.querySelector("td:nth-child(5)").innerHTML = `<span class="status capitalize">${data.new_status}</span>`;
+
+            if (action === "accept") {
+            const playerName = row.children[1].textContent.trim();
+
+            document.querySelectorAll("tr").forEach(r => {
+                if (
+                r !== row &&                                      // bukan baris yang sama
+                r.children[1] && 
+                r.children[1].textContent.trim() === playerName   // nama pemain sama
+                ) {
+                // ambil status saat ini
+                const currentStatus = r.querySelector("td:nth-child(4)").textContent.trim().toLowerCase();
+
+                // hanya ubah kalau statusnya "pending"
+                if (currentStatus === "pending") {
+                    r.querySelector("td:nth-child(4)").textContent = "Cancelled";
+                    r.querySelector("td:nth-child(5)").innerHTML =
+                    `<span class="status text-gray-500 capitalize">Cancelled</span>`;
+                }
+                }
+            });
+            }
+        })
+        .catch(err => {
+        console.error("Fetch error:", err);
+        alert("Terjadi kesalahan, silakan coba lagi.");
+        });
       });
     });
-  });
+  }
 });
 </script>
-
-<style>
-.negotiation-container {
-  margin: 60px;
-  color: #333;
-}
-h1, h2 {
-  margin-bottom: 15px;
-}
-.inbox-table {
-  width: 100%;
-  background: white;
-  border-collapse: collapse;
-  border-radius: 8px;
-  overflow: hidden;
-}
-th {
-  background: #1c2a4a;
-  color: white;
-  padding: 10px;
-}
-td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #ccc;
-}
-.accept-btn, .reject-btn {
-  padding: 6px 12px;
-  border-radius: 5px;
-  border: none;
-  color: white;
-  cursor: pointer;
-}
-.accept-btn { background: #28a745; }
-.reject-btn { background: #dc3545; }
-</style>
 {% endblock %}

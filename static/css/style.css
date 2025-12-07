@@ -91,11 +91,25 @@ a:hover {
 
 /* 3. HERO SECTION BARU (DENGAN GAMBAR BACKGROUND) */
 .hero-section.new-hero {
-    position: relative; padding: 8rem 1.5rem; text-align: center;
-    color: white; background-color: transparent; border-bottom: none;
-    background-image: url('../images/hero-background.png');
-    background-size: cover; background-position: center;
+  position: relative;
+  padding: 8rem 1.5rem;
+  text-align: center;
+  color: white;
+  background-color: transparent;
+  border-bottom: none;
+
+  background-image: url('../images/hero-background.png');
+  background-repeat: no-repeat;
+  background-size: 150%;        /* 🟢 lebih besar dari elemen */
+  background-position: 0 0;
+  animation: moveBackground 30s linear infinite;
 }
+
+@keyframes moveBackground {
+  from { background-position: 0% 0; }
+  to { background-position: 100% 0; }  /* geser ke kanan */
+}
+
 .hero-section.new-hero::before {
     content: ''; position: absolute; top: 0; left: 0;
     width: 100%; height: 100%;
