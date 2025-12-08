@@ -347,29 +347,33 @@ def show_json_flutter(request):
 def show_json_by_id_flutter(request, id):
     return show_json_by_id(request, id)
 
+
+
+# --- 1. Helper Function (WAJIB ADA) ---
 def serialize_reply_tree(reply):
-    """Helper recursive untuk serialize reply beserta child-nya"""
-    return {
+    data = {
         "id": reply.id,
         "author": reply.author.username,
         "content": reply.content,
-        "created_at": reply.created_at.isoformat(),
+        "created_at": reply.created_at.isoformat() if reply.created_at else "",
         "parent_id": reply.parent.id if reply.parent else None,
-        "replies": [serialize_reply_tree(child) for child in reply.child_replies.all().order_by('created_at')]
+        # KUNCI UTAMA: Key harus "replies" agar dibaca Flutter
+        "replies": [] 
     }
+    
+    # Logic Aman: Cek apakah pakai 'replies', 'child_replies', atau 'reply_set'
+    # Supaya tidak error apapun settingan models.py kamu
+    children = getattr(reply, 'replies', getattr(reply, 'child_replies', getattr(reply, 'reply_set', None))).all().order_by('created_at')
+    
+    for child in children:
+        data["replies"].append(serialize_reply_tree(child))
+        
+    return data
 
+# --- 2. Main View ---
 def show_replies_json_flutter(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    # Ambil hanya top-level replies, tapi serialize secara rekursif sampai ke cucu-cucunya
+    # Ambil HANYA reply induk (parent=None)
     replies = Reply.objects.filter(post=post, parent=None).order_by('created_at')
-    data = [serialize_reply_tree(reply) for reply in replies]
+    data = [serialize_reply_tree(r) for r in replies]
     return JsonResponse(data, safe=False)
-
-def show_nested_replies_json_flutter(request, reply_id):
-    # Endpoint ini mungkin jadi redundant kalau pakai tree, 
-    # tapi tetap kita sediakan dengan format tree juga untuk konsistensi
-    reply = get_object_or_404(Reply, id=reply_id)
-    nested = reply.child_replies.all().order_by('created_at')
-    data = [serialize_reply_tree(r) for r in nested]
-    return JsonResponse(data, safe=False)
-
