@@ -377,3 +377,9 @@ def show_replies_json_flutter(request, post_id):
     replies = Reply.objects.filter(post=post, parent=None).order_by('created_at')
     data = [serialize_reply_tree(r) for r in replies]
     return JsonResponse(data, safe=False)
+
+def show_nested_replies_json_flutter(request, reply_id):
+    parent_reply = get_object_or_404(Reply, id=reply_id)
+    children = getattr(parent_reply, 'replies', getattr(parent_reply, 'child_replies', getattr(parent_reply, 'reply_set', None))).all().order_by('created_at')
+    data = [serialize_reply_tree(child) for child in children]
+    return JsonResponse(data, safe=False)
