@@ -289,35 +289,53 @@ def delete_post_flutter(request, post_id):
 
 @csrf_exempt
 def add_reply_flutter(request, post_id):
+    print(f"DEBUG: add_reply_flutter called for post_id {post_id}") # DEBUG
     post = get_object_or_404(Post, id=post_id)
     if request.method == 'POST':
          try:
+            if not request.user.is_authenticated:
+                print("DEBUG: User is NOT authenticated") # DEBUG
+                return JsonResponse({"status": "error", "message": "User not authenticated"}, status=401)
+            
             data = json.loads(request.body)
+            print(f"DEBUG: Received data: {data}") # DEBUG
+            
             Reply.objects.create(
-                author=request.user, # Requires authenticated session or token
+                author=request.user, 
                 post=post,
                 content=data['content'],
                 parent=None
             )
+            print("DEBUG: Reply created successfully") # DEBUG
             return JsonResponse({"status": "success", "message": "Reply added!"}, status=200)
          except Exception as e:
+            print(f"DEBUG: Error in add_reply_flutter: {e}") # DEBUG
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
     return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
 
 @csrf_exempt
 def add_nested_reply_flutter(request, reply_id):
+    print(f"DEBUG: add_nested_reply_flutter called for reply_id {reply_id}") # DEBUG
     parent = get_object_or_404(Reply, id=reply_id)
     if request.method == 'POST':
          try:
+            if not request.user.is_authenticated:
+                 print("DEBUG: User is NOT authenticated") # DEBUG
+                 return JsonResponse({"status": "error", "message": "User not authenticated"}, status=401)
+
             data = json.loads(request.body)
+            print(f"DEBUG: Received data: {data}") # DEBUG
+            
             Reply.objects.create(
                 author=request.user,
                 post=parent.post,
                 content=data['content'],
                 parent=parent
             )
+            print("DEBUG: Nested reply created successfully") # DEBUG
             return JsonResponse({"status": "success", "message": "Nested reply added!"}, status=200)
          except Exception as e:
+            print(f"DEBUG: Error in add_nested_reply_flutter: {e}") # DEBUG
             return JsonResponse({"status": "error", "message": str(e)}, status=500)
     return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
 
@@ -329,29 +347,33 @@ def show_json_flutter(request):
 def show_json_by_id_flutter(request, id):
     return show_json_by_id(request, id)
 
+
+
+# --- 1. Helper Function (WAJIB ADA) ---
+def serialize_reply_tree(reply):
+    data = {
+        "id": reply.id,
+        "author": reply.author.username,
+        "content": reply.content,
+        "created_at": reply.created_at.isoformat() if reply.created_at else "",
+        "parent_id": reply.parent.id if reply.parent else None,
+        # KUNCI UTAMA: Key harus "replies" agar dibaca Flutter
+        "replies": [] 
+    }
+    
+    # Logic Aman: Cek apakah pakai 'replies', 'child_replies', atau 'reply_set'
+    # Supaya tidak error apapun settingan models.py kamu
+    children = getattr(reply, 'replies', getattr(reply, 'child_replies', getattr(reply, 'reply_set', None))).all().order_by('created_at')
+    
+    for child in children:
+        data["replies"].append(serialize_reply_tree(child))
+        
+    return data
+
+# --- 2. Main View ---
 def show_replies_json_flutter(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    replies = Reply.objects.filter(post=post, parent=None)
-    data = []
-    for reply in replies:
-         data.append({
-             "id": reply.id,
-             "author": reply.author.username,
-             "content": reply.content,
-             "created_at": reply.created_at.isoformat()
-         })
+    # Ambil HANYA reply induk (parent=None)
+    replies = Reply.objects.filter(post=post, parent=None).order_by('created_at')
+    data = [serialize_reply_tree(r) for r in replies]
     return JsonResponse(data, safe=False)
-
-def show_nested_replies_json_flutter(request, reply_id):
-    reply = get_object_or_404(Reply, id=reply_id)
-    nested = Reply.objects.filter(parent=reply)
-    data = []
-    for r in nested:
-         data.append({
-             "id": r.id,
-             "author": r.author.username,
-             "content": r.content,
-             "created_at": r.created_at.isoformat()
-         })
-    return JsonResponse(data, safe=False)
-
