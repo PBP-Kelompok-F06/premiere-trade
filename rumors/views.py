@@ -9,6 +9,29 @@ from main.models import Player, Club
 from accounts.models import Profile
 from django.views.decorators.http import require_GET
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
+def get_rumors_json(request):
+    rumors = Rumors.objects.all().order_by('-created_at')
+    data = []
+    for rumor in rumors:
+        data.append({
+            "id": str(rumor.id),
+            "title": rumor.title,
+            "content": rumor.content,
+            "author": rumor.author.username,
+            "pemain": rumor.pemain.nama_pemain,
+            "club_asal": rumor.club_asal.name if rumor.club_asal else "-",
+            "club_tujuan": rumor.club_tujuan.name if rumor.club_tujuan else "-",
+            "status": rumor.status,
+            "created_at": rumor.created_at.strftime("%Y-%m-%d %H:%M"),
+            "views": rumor.rumors_views,
+            "is_author": request.user == rumor.author, #ini helper buat nanti di flutter
+            "is_admin": request.user.is_authenticated and request.user.is_club_admin #ini juga
+        })
+    return JsonResponse(data, safe=False)
 
 
 # ========== Menampilkan semua rumors ==========
@@ -38,7 +61,7 @@ def show_rumors_main(request):
         return render(request, "partials/rumor_list.html", context)
     return render(request, "rumors_main.html", context)
 
-
+    
 # ========== Detail rumor ==========
 def show_rumors_detail(request, id):
     rumor = get_object_or_404(Rumors, pk=id)
@@ -112,7 +135,7 @@ def edit_rumors(request, id):
 
     if request.method == "POST":
         if form.is_valid():
-            # --- Ambil nilai lama dari database (BUKAN dari instance yang akan dipakai form) ---
+            # --- Ambil nilai lama dari database
             old_rumor = Rumors.objects.get(pk=rumor.pk)
             old_data = {
                 "club_asal": str(old_rumor.club_asal.id) if old_rumor.club_asal else None,
