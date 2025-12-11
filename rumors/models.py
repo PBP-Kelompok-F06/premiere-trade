@@ -20,7 +20,7 @@ class Rumors(models.Model):
     content = models.TextField(blank=True)
     rumors_views = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')  # New
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')  
 
     def save(self, *args, **kwargs):
         # Generate title otomatis
