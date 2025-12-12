@@ -80,6 +80,7 @@ def club_saya_view(request):
     return render(request, "club_saya.html")
 
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def jual_pemain_ajax(request, player_id):
@@ -97,6 +98,7 @@ def jual_pemain_ajax(request, player_id):
         'nama': player.nama_pemain,
     })
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def batalkan_jual_pemain_ajax(request, player_id):
@@ -115,6 +117,7 @@ def batalkan_jual_pemain_ajax(request, player_id):
         'message': f"Penjualan {player.nama_pemain} telah dibatalkan."
     })
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def beli_pemain_ajax(request, player_id):
@@ -194,6 +197,7 @@ def negotiation_inbox_json(request):
 
 
 # --- Kirim tawaran (dari halaman pemain dijual) ---
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
@@ -224,6 +228,7 @@ def send_negotiation(request, player_id):
 
 
 # --- Aksi accept/reject ---
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
