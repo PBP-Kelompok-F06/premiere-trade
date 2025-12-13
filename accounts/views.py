@@ -465,6 +465,10 @@ def get_profile_json(request):
         role = "Super Admin"
     elif user.is_staff:
         role = "Admin"
+    elif user.is_club_admin:
+        role = "Admin Club"
+    elif user.is_fan:
+        role = "Fan Account"
     
     data = {
         "status": True,
@@ -473,6 +477,7 @@ def get_profile_json(request):
         "first_name": user.first_name, # Field bawaan Django
         "last_name": user.last_name,   # Field bawaan Django
         "role": role,                  # Hasil logika di atas
+        "is_club_admin": user.is_club_admin,  # Untuk mobile app
     }
     return JsonResponse(data, status=200)
 
