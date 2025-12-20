@@ -20,4 +20,6 @@ urlpatterns = [
     path('<uuid:id>/deny-flutter/', views.deny_rumor_flutter, name='deny_rumor_flutter'),
     path('<uuid:id>/delete-flutter/', views.delete_rumor_flutter, name='delete_rumor_flutter'),
     path('<uuid:id>/edit-flutter/', views.edit_rumor_flutter, name='edit_rumor_flutter'),
+    path('<uuid:id>/revert-flutter/', views.revert_rumor_flutter, name='revert_rumor_flutter'),
+    path('get-user-role/', views.get_user_role, name='get_user_role'),
 ]
