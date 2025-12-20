@@ -13,6 +13,35 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 @csrf_exempt
+def get_user_role(request):
+    is_club_admin = False
+    if request.user.is_authenticated and request.user.is_club_admin:
+        is_club_admin = True
+    return JsonResponse({'is_club_admin': is_club_admin})
+
+@csrf_exempt
+def revert_rumor_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            
+            # Validasi Admin
+            profile = getattr(request.user, "profile", None)
+            if not (request.user.is_club_admin and profile and profile.managed_club in [rumor.club_asal, rumor.club_tujuan]):
+                return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            # Ubah status kembali ke pending
+            rumor.status = "pending"
+            rumor.save()
+            
+            return JsonResponse({"status": "success", "message": "Rumor status reverted to pending!"})
+            
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor not found"}, status=404)
+            
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+@csrf_exempt
 def edit_rumor_flutter(request, id):
     if request.method == 'POST':
         try:
@@ -32,7 +61,7 @@ def edit_rumor_flutter(request, id):
 
             has_changed = False
 
-            # --- Logika Deteksi Perubahan ---
+            # Logika Deteksi Perubahan 
             
             # 1. Cek Content
             if new_content is not None and rumor.content != new_content:
@@ -54,7 +83,7 @@ def edit_rumor_flutter(request, id):
                 rumor.pemain = Player.objects.get(pk=new_pemain_id)
                 has_changed = True
 
-            # --- Reset Status Hanya Jika Ada Perubahan ---
+            # Reset Status Hanya Jika Ada Perubahan 
             if has_changed:
                 if rumor.status in ['verified', 'denied']:
                     rumor.status = 'pending'
@@ -143,8 +172,27 @@ def get_rumors_json(request):
             rumors = rumors.filter(club_tujuan__id=int(club_tujuan_id))
         except ValueError:
             pass
+    
+    user_managed_club_id = None
+    if request.user.is_authenticated and request.user.is_club_admin:
+        profile = getattr(request.user, "profile", None)
+        if profile and profile.managed_club:
+            user_managed_club_id = profile.managed_club.id
+
     data = []
     for rumor in rumors:
+        is_relevant_admin = False
+        
+        # Cek hanya jika user punya managed club
+        if user_managed_club_id:
+            ids_involved = []
+            if rumor.club_asal: ids_involved.append(rumor.club_asal.id)
+            if rumor.club_tujuan: ids_involved.append(rumor.club_tujuan.id)
+            
+            # Jika club admin ada di salah satu (asal/tujuan), maka True
+            if user_managed_club_id in ids_involved:
+                is_relevant_admin = True
+
         data.append({
             "id": str(rumor.id),
             "title": rumor.title,
@@ -166,8 +214,9 @@ def get_rumors_json(request):
             "status": rumor.status,
             "created_at": rumor.created_at.strftime("%Y-%m-%d %H:%M"),
             "views": rumor.rumors_views,
-            "is_author": request.user == rumor.author, #ini helper buat nanti di flutter
-            "is_admin": request.user.is_authenticated and request.user.is_club_admin #ini juga
+            "is_author": request.user == rumor.author,
+
+            "is_admin": is_relevant_admin 
         })
     return JsonResponse(data, safe=False)
 
