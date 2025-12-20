@@ -13,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from accounts.models import Profile, CustomUser
 from main.models import Player, Club
-from player_transaction.models import Negotiation
+from player_transaction.models import Negotiation, Transaction
 
 def club_admin_required(user):
     return user.is_authenticated and user.is_club_admin
@@ -27,6 +27,16 @@ def list_pemain_dijual_view(request):
 def list_pemain_dijual_json(request):
     """Endpoint AJAX: Mengembalikan daftar pemain yang sedang dijual (JSON)"""
     pemain_list = Player.objects.filter(sedang_dijual=True).select_related('current_club')
+    
+    # Cek klub user jika admin club
+    user_club = None
+    if request.user.is_club_admin:
+        try:
+            profile = Profile.objects.get(user=request.user)
+            user_club = profile.managed_club
+        except Profile.DoesNotExist:
+            pass
+    
     data = [
         {
             "id": p.id,
@@ -40,6 +50,7 @@ def list_pemain_dijual_json(request):
             "market_value": p.market_value,
             "thumbnail": p.thumbnail,
             "nama_klub": p.current_club.name if p.current_club else "-",
+            "is_my_club": user_club is not None and p.current_club == user_club,  # True jika pemain dari klub user
         }
         for p in pemain_list
     ]
@@ -49,9 +60,26 @@ def list_pemain_dijual_json(request):
 @login_required(login_url='/accounts/login/')
 def list_pemain_saya(request):
     """Endpoint AJAX: mengembalikan daftar pemain milik klub user login (format JSON)."""
-    profile = get_object_or_404(Profile, user=request.user)
+    # Cek apakah user adalah club admin
+    if not request.user.is_club_admin:
+        return JsonResponse({
+            'error': 'Hanya Admin Club yang dapat mengakses endpoint ini.'
+        }, status=403)
+    
+    try:
+        profile = Profile.objects.get(user=request.user)
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'error': 'Profile tidak ditemukan. Silakan hubungi administrator.'
+        }, status=404)
+    
     klub = profile.managed_club
-
+    
+    if not klub:
+        return JsonResponse({
+            'error': 'Anda belum memiliki klub yang dikelola. Silakan hubungi administrator.'
+        }, status=400)
+    
     # Ambil semua pemain klub yang dikelola user login
     pemain_list = Player.objects.filter(current_club=klub).select_related('current_club')
 
@@ -80,12 +108,54 @@ def club_saya_view(request):
     return render(request, "club_saya.html")
 
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def jual_pemain_ajax(request, player_id):
     """Ubah status pemain jadi sedang dijual (AJAX)"""
-    profile = get_object_or_404(Profile, user=request.user)
-    player = get_object_or_404(Player, id=player_id, current_club=profile.managed_club)
+    try:
+        # Cek apakah user adalah club admin
+        if not request.user.is_club_admin:
+            return JsonResponse({
+                'success': False,
+                'message': 'Hanya Admin Club yang dapat menjual pemain.'
+            }, status=403)
+        
+        # Cek apakah profile ada
+        try:
+            profile = Profile.objects.get(user=request.user)
+        except Profile.DoesNotExist:
+            # Buat profile jika belum ada (untuk admin club)
+            profile = Profile.objects.create(user=request.user)
+            return JsonResponse({
+                'success': False,
+                'message': 'Profile belum dikonfigurasi. Silakan hubungi administrator untuk mengatur klub yang dikelola.'
+            }, status=400)
+        
+        # Cek apakah profile punya managed_club
+        if not profile.managed_club:
+            return JsonResponse({
+                'success': False,
+                'message': 'Anda belum memiliki klub yang dikelola. Silakan hubungi administrator untuk mengatur klub yang dikelola.'
+            }, status=400)
+        
+        # Cek apakah player ada dan milik klub user
+        try:
+            player = Player.objects.get(id=player_id, current_club=profile.managed_club)
+        except Player.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'message': 'Pemain tidak ditemukan atau bukan milik klub Anda.'
+            }, status=404)
+        
+    except Exception as e:
+        import traceback
+        print(f"Error in jual_pemain_ajax: {str(e)}")
+        print(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=500)
 
     player.sedang_dijual = True
     player.save()
@@ -97,12 +167,35 @@ def jual_pemain_ajax(request, player_id):
         'nama': player.nama_pemain,
     })
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def batalkan_jual_pemain_ajax(request, player_id):
     """Batalkan penjualan pemain milik klub sendiri"""
-    profile = get_object_or_404(Profile, user=request.user)
-    player = get_object_or_404(Player, id=player_id, current_club=profile.managed_club)
+    try:
+        profile = Profile.objects.get(user=request.user)
+        if not profile.managed_club:
+            return JsonResponse({
+                'success': False,
+                'message': 'Anda belum memiliki klub yang dikelola.'
+            }, status=400)
+        
+        player = Player.objects.get(id=player_id, current_club=profile.managed_club)
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Profile tidak ditemukan. Silakan hubungi administrator.'
+        }, status=404)
+    except Player.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Pemain tidak ditemukan atau bukan milik klub Anda.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=500)
 
     if not player.sedang_dijual:
         return JsonResponse({'success': False, 'message': 'Pemain ini tidak sedang dijual.'})
@@ -115,16 +208,58 @@ def batalkan_jual_pemain_ajax(request, player_id):
         'message': f"Penjualan {player.nama_pemain} telah dibatalkan."
     })
 
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @require_POST
 def beli_pemain_ajax(request, player_id):
     """Admin club membeli pemain dari transfer market"""
-    profile = get_object_or_404(Profile, user=request.user)
-    pembeli_club = profile.managed_club
-    player = get_object_or_404(Player, id=player_id)
-
-    if player.current_club == pembeli_club:
-        return JsonResponse({'success': False, 'message': 'Tidak bisa membeli pemain klub sendiri.'})
+    # Cek apakah user adalah club admin
+    if not request.user.is_club_admin:
+        return JsonResponse({
+            'success': False,
+            'message': 'Hanya Admin Club yang dapat membeli pemain.'
+        }, status=403)
+    
+    try:
+        profile = Profile.objects.get(user=request.user)
+        if not profile.managed_club:
+            return JsonResponse({
+                'success': False,
+                'message': 'Anda belum memiliki klub yang dikelola.'
+            }, status=400)
+        
+        pembeli_club = profile.managed_club
+        player = Player.objects.get(id=player_id)
+        
+        # Cek apakah pemain sedang dijual
+        if not player.sedang_dijual:
+            return JsonResponse({
+                'success': False,
+                'message': 'Pemain ini tidak sedang dijual di Transfer Market.'
+            }, status=400)
+        
+        # Cek apakah pemain dari klub sendiri (tidak bisa beli pemain sendiri)
+        if player.current_club == pembeli_club:
+            return JsonResponse({
+                'success': False,
+                'message': 'Tidak bisa membeli pemain dari klub sendiri.'
+            }, status=400)
+        
+    except Profile.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Profile tidak ditemukan.'
+        }, status=404)
+    except Player.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': 'Pemain tidak ditemukan.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Terjadi kesalahan: {str(e)}'
+        }, status=500)
 
     player.current_club = pembeli_club
     player.sedang_dijual = False
@@ -170,9 +305,10 @@ def negotiation_inbox_json(request):
                 "id": n.id,
                 "from_club": n.from_club.name,
                 "player": n.player.nama_pemain,
+                "player_id": str(n.player.id),
                 "offered_price": float(n.offered_price),
-                "status": n.get_status_display(),  # biar tampil "Accepted" bukan "accepted"
-                "created_at": n.created_at.strftime("%d %B %Y, %H:%M"),
+                "status": n.status,  # Return status code for mobile compatibility
+                "created_at": n.created_at.isoformat(),  # ISO format for mobile
             }
             for n in received_offers
         ],
@@ -181,9 +317,10 @@ def negotiation_inbox_json(request):
                 "id": n.id,
                 "to_club": n.to_club.name,
                 "player": n.player.nama_pemain,
+                "player_id": str(n.player.id),
                 "offered_price": float(n.offered_price),
-                "status": n.get_status_display(),
-                "created_at": n.created_at.strftime("%d %B %Y, %H:%M"),
+                "status": n.status,  # Return status code for mobile compatibility
+                "created_at": n.created_at.isoformat(),  # ISO format for mobile
             }
             for n in sent_offers
         ]
@@ -194,6 +331,7 @@ def negotiation_inbox_json(request):
 
 
 # --- Kirim tawaran (dari halaman pemain dijual) ---
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
@@ -224,6 +362,7 @@ def send_negotiation(request, player_id):
 
 
 # --- Aksi accept/reject ---
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required(login_url='/accounts/login/')
 @user_passes_test(club_admin_required)
 @require_POST
@@ -338,3 +477,26 @@ def show_json_by_id(request, product_id):
         return JsonResponse(data)
     except Player.DoesNotExist:
         return JsonResponse({'detail': 'Not found'}, status=404)
+
+# --- Transaction History API (untuk mobile) ---
+@login_required(login_url='/accounts/login/')
+def transaction_history_json(request):
+    """Endpoint API: Mengembalikan history transaksi dalam format JSON"""
+    transactions = Transaction.objects.select_related('player', 'seller', 'buyer').order_by('-timestamp')[:50]
+    
+    data = [
+        {
+            'id': str(t.id),
+            'player_id': str(t.player.id),
+            'player_name': t.player.nama_pemain,
+            'seller_id': str(t.seller.id) if t.seller else None,
+            'seller_name': t.seller.username if t.seller else None,
+            'buyer_id': str(t.buyer.id) if t.buyer else None,
+            'buyer_name': t.buyer.username if t.buyer else None,
+            'price': t.price,
+            'timestamp': t.timestamp.isoformat(),
+        }
+        for t in transactions
+    ]
+    
+    return JsonResponse(data, safe=False)

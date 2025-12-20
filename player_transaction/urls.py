@@ -25,4 +25,5 @@ urlpatterns = [
     path('show_json/', views.show_json, name='show_json'),
     path('show_xml_by_id/<uuid:player_id>/', views.show_xml_by_id, name='show_xml_by_id'),
     path('show_json_by_id/<uuid:player_id>/', views.show_json_by_id, name='show_json_by_id'),
+    path('api/transaction_history/', views.transaction_history_json, name='transaction_history_json'),
 ]
