@@ -9,6 +9,205 @@ from main.models import Player, Club
 from accounts.models import Profile
 from django.views.decorators.http import require_GET
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def edit_rumor_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            
+            # Cek Author
+            if rumor.author != request.user:
+                return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            data = json.loads(request.body)
+            
+            # Ambil data baru
+            new_content = data.get('content')
+            new_club_asal_id = data.get('club_asal')
+            new_club_tujuan_id = data.get('club_tujuan')
+            new_pemain_id = data.get('pemain')
+
+            has_changed = False
+
+            # --- Logika Deteksi Perubahan ---
+            
+            # 1. Cek Content
+            if new_content is not None and rumor.content != new_content:
+                rumor.content = new_content
+                has_changed = True
+
+            # 2. Cek Club Asal
+            if new_club_asal_id and str(rumor.club_asal.id) != str(new_club_asal_id):
+                rumor.club_asal = Club.objects.get(pk=new_club_asal_id)
+                has_changed = True
+
+            # 3. Cek Club Tujuan
+            if new_club_tujuan_id and str(rumor.club_tujuan.id) != str(new_club_tujuan_id):
+                rumor.club_tujuan = Club.objects.get(pk=new_club_tujuan_id)
+                has_changed = True
+
+            # 4. Cek Pemain
+            if new_pemain_id and str(rumor.pemain.id) != str(new_pemain_id):
+                rumor.pemain = Player.objects.get(pk=new_pemain_id)
+                has_changed = True
+
+            # --- Reset Status Hanya Jika Ada Perubahan ---
+            if has_changed:
+                if rumor.status in ['verified', 'denied']:
+                    rumor.status = 'pending'
+                rumor.save()
+                return JsonResponse({"status": "success", "message": "Rumor berhasil diupdate!"}, status=200)
+            else:
+                # Tidak ada perubahan, tidak perlu save
+                return JsonResponse({"status": "success", "message": "Tidak ada perubahan data."}, status=200)
+
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor tidak ditemukan"}, status=404)
+        except Club.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Klub tidak ditemukan"}, status=404)
+        except Player.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Pemain tidak ditemukan"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
+
+@csrf_exempt
+def verify_rumor_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            profile = getattr(request.user, "profile", None)
+            if not (request.user.is_club_admin and profile and profile.managed_club in [rumor.club_asal, rumor.club_tujuan]):
+                return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            rumor.status = "verified"
+            rumor.save()
+            return JsonResponse({"status": "success", "message": "Rumor verified!"})
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor not found"}, status=404)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+@csrf_exempt
+def deny_rumor_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            # Validasi Admin
+            profile = getattr(request.user, "profile", None)
+            if not (request.user.is_club_admin and profile and profile.managed_club in [rumor.club_asal, rumor.club_tujuan]):
+                return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            rumor.status = "denied"
+            rumor.save()
+            return JsonResponse({"status": "success", "message": "Rumor denied!"})
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor not found"}, status=404)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+@csrf_exempt
+def delete_rumor_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            # Validasi Author
+            if rumor.author != request.user:
+                return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+
+            rumor.delete()
+            return JsonResponse({"status": "success", "message": "Rumor deleted!"})
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor not found"}, status=404)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+def get_rumors_json(request):
+    rumors = Rumors.objects.all().order_by('-created_at')
+    nama = request.GET.get("nama", "").strip()
+    club_asal_id = request.GET.get("asal")
+    club_tujuan_id = request.GET.get("tujuan")
+
+    if nama:
+        rumors = rumors.filter(pemain__nama_pemain__icontains=nama)
+    
+    if club_asal_id and club_asal_id != "null" and club_asal_id != "":
+        try:
+            rumors = rumors.filter(club_asal__id=int(club_asal_id))
+        except ValueError:
+            pass
+
+    if club_tujuan_id and club_tujuan_id != "null" and club_tujuan_id != "":
+        try:
+            rumors = rumors.filter(club_tujuan__id=int(club_tujuan_id))
+        except ValueError:
+            pass
+    data = []
+    for rumor in rumors:
+        data.append({
+            "id": str(rumor.id),
+            "title": rumor.title,
+            "content": rumor.content,
+            "author": rumor.author.username,
+            "pemain_nama": rumor.pemain.nama_pemain,
+            "pemain_id": str(rumor.pemain.id),
+            "pemain_thumbnail": rumor.pemain.thumbnail if rumor.pemain.thumbnail else "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+            "pemain_value": rumor.pemain.market_value,
+            "pemain_umur": rumor.pemain.umur,
+            "pemain_posisi": rumor.pemain.position,
+            "pemain_negara": rumor.pemain.negara,
+            "club_asal_nama": rumor.club_asal.name if rumor.club_asal else "-",
+            "club_asal_id": str(rumor.club_asal.id) if rumor.club_asal else None,
+            "club_asal_logo": rumor.club_asal.logo_url if rumor.club_asal and rumor.club_asal.logo_url else "",
+            "club_tujuan_nama": rumor.club_tujuan.name if rumor.club_tujuan else "-",
+            "club_tujuan_id": str(rumor.club_tujuan.id) if rumor.club_tujuan else None,
+            "club_tujuan_logo": rumor.club_tujuan.logo_url if rumor.club_tujuan and rumor.club_tujuan.logo_url else "",
+            "status": rumor.status,
+            "created_at": rumor.created_at.strftime("%Y-%m-%d %H:%M"),
+            "views": rumor.rumors_views,
+            "is_author": request.user == rumor.author, #ini helper buat nanti di flutter
+            "is_admin": request.user.is_authenticated and request.user.is_club_admin #ini juga
+        })
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def create_rumor_flutter(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+
+            content = data.get('content')
+            club_asal_id = data.get('club_asal')
+            club_tujuan_id = data.get('club_tujuan')
+            pemain_id = data.get('pemain')
+            if not all([content, club_asal_id, club_tujuan_id, pemain_id]):
+                return JsonResponse({"status": "error", "message": "Data tidak lengkap"}, status=400)
+            
+            user = request.user
+            club_asal = Club.objects.get(pk=club_asal_id)
+            club_tujuan = Club.objects.get(pk=club_tujuan_id)
+            pemain = Player.objects.get(pk=pemain_id)
+
+            new_rumor = Rumors.objects.create(
+                author=user,
+                content=content,
+                club_asal=club_asal,
+                club_tujuan=club_tujuan,
+                pemain=pemain,
+                status="pending"
+            )
+
+            return JsonResponse({"status": "success", "message": "Rumor berhasil dibuat!"}, status=200)
+        
+        except Club.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Klub tidak ditemukan"}, status=404)
+        except Player.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Pemain tidak ditemukan"}, status=404)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+        
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=401)
 
 
 # ========== Menampilkan semua rumors ==========
@@ -38,7 +237,7 @@ def show_rumors_main(request):
         return render(request, "partials/rumor_list.html", context)
     return render(request, "rumors_main.html", context)
 
-
+    
 # ========== Detail rumor ==========
 def show_rumors_detail(request, id):
     rumor = get_object_or_404(Rumors, pk=id)
@@ -112,7 +311,7 @@ def edit_rumors(request, id):
 
     if request.method == "POST":
         if form.is_valid():
-            # --- Ambil nilai lama dari database (BUKAN dari instance yang akan dipakai form) ---
+            # --- Ambil nilai lama dari database
             old_rumor = Rumors.objects.get(pk=rumor.pk)
             old_data = {
                 "club_asal": str(old_rumor.club_asal.id) if old_rumor.club_asal else None,

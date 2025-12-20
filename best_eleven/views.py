@@ -92,6 +92,7 @@ def get_players_by_club_api(request):
         return JsonResponse({'error': 'Gagal memuat daftar pemain.'}, status=500)
 
 # save_formation_api sudah pakai require_http_methods(["POST"]), tidak perlu diubah
+@csrf_exempt  # Exempt CSRF for Flutter/mobile API calls
 @login_required
 @require_POST # Alternatif lebih singkat untuk @require_http_methods(["POST"])
 def save_formation_api(request):

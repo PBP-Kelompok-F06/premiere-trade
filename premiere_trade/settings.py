@@ -41,6 +41,29 @@ ALLOWED_HOSTS = [
 
 CSRF_TRUSTED_ORIGINS = ["https://walyulahdi-maulana-premieretrade.pbp.cs.ui.ac.id"]
 
+# Add localhost origins for development (handles dynamic ports)
+if not PRODUCTION:
+    # Add common localhost ports
+    localhost_origins = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+    # Add wide range of ports for development (covers Flutter, React, etc.)
+    # Common web dev ports: 3000-9999
+    for port in range(3000, 10000):
+        localhost_origins.extend([
+            f"http://localhost:{port}",
+            f"http://127.0.0.1:{port}",
+        ])
+    # Ephemeral ports: 49152-65535 (but limit to reasonable range for performance)
+    # Flutter and other tools often use ports in 40000-60000 range
+    for port in range(40000, 60001):
+        localhost_origins.extend([
+            f"http://localhost:{port}",
+            f"http://127.0.0.1:{port}",
+        ])
+    CSRF_TRUSTED_ORIGINS.extend(localhost_origins)
+
 
 # Application definition
 
