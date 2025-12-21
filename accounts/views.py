@@ -686,6 +686,26 @@ def admin_delete_club(request, pk):
 
 # --- MANAGE PLAYERS (CRUD) ---
 @csrf_exempt
+def admin_get_players(request):
+    """API untuk mengambil semua list pemain"""
+    if not request.user.is_superuser: # Opsional: cek auth superuser
+        return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
+
+    players = []
+    # Ambil semua player, select_related club biar query efisien
+    for p in Player.objects.select_related('current_club').all():
+        players.append({
+            'id': str(p.id), # UUID harus di-convert ke string
+            'nama_pemain': p.nama_pemain,
+            'position': p.position,
+            'club_name': p.current_club.name,
+            'thumbnail': p.thumbnail,
+            'market_value': p.market_value
+        })
+    
+    return JsonResponse({'status': True, 'data': players})
+
+@csrf_exempt
 def admin_create_player(request):
     if request.method == "POST" and _is_superuser_check(request.user):
         data = json.loads(request.body)

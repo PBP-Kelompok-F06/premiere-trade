@@ -35,6 +35,7 @@ urlpatterns = [
     path("api/admin/clubs/", views.admin_get_clubs),
     path("api/admin/clubs/create/", views.admin_create_club),
     path("api/admin/clubs/<int:pk>/delete/", views.admin_delete_club),
+    path('api/admin/players/', views.admin_get_players, name='admin_get_players'),
     path("api/admin/players/create/", views.admin_create_player),
     path("api/admin/players/<uuid:pk>/delete/", views.admin_delete_player),
 ]
