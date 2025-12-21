@@ -1,5 +1,11 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    update_session_auth_hash,
+    get_user_model,
+)
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.http import JsonResponse
@@ -451,56 +457,113 @@ def delete_player(request, pk):
     messages.success(request, f"Pemain '{player_name}' berhasil dihapus.")
     return redirect("accounts:superuser_dashboard")
 
+
 @csrf_exempt
 def get_profile_json(request):
+    """Mengambil data profil (Username & Role)"""
     if not request.user.is_authenticated:
-        return JsonResponse({"status": False, "message": "Not authenticated"}, status=401)
+        return JsonResponse(
+            {"status": False, "message": "Not authenticated"}, status=401
+        )
 
     user = request.user
 
-    # --- LOGIKA PENENTUAN ROLE (TANPA FIELD CUSTOM) ---
-    # Kita gunakan status bawaan Django
-    role = "Member"
-    if user.is_superuser:
+    # Logic Role sederhana
+    role = "Fan"
+    if _is_superuser_check(user):
         role = "Super Admin"
-    elif user.is_staff:
-        role = "Admin"
     elif user.is_club_admin:
-        role = "Admin Club"
-    elif user.is_fan:
-        role = "Fan Account"
-    
+        role = "Club Admin"
+    elif user.is_superuser:
+        role = "Super User"
+
+    # Cek managed club (jika ada)
+    managed_club_name = "-"
+    if hasattr(user, "profile") and user.profile.managed_club:
+        managed_club_name = user.profile.managed_club.name
+
     data = {
         "status": True,
         "username": user.username,
-        "email": user.email,           # Field bawaan Django
-        "first_name": user.first_name, # Field bawaan Django
-        "last_name": user.last_name,   # Field bawaan Django
-        "role": role,                  # Hasil logika di atas
-        "is_club_admin": user.is_club_admin,  # Untuk mobile app
+        "role": role,
+        "managed_club": managed_club_name,
     }
     return JsonResponse(data, status=200)
 
+
 @csrf_exempt
 def edit_profile_flutter(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == "POST" and request.user.is_authenticated:
         try:
             data = json.loads(request.body)
             user = request.user
-            
-            # HANYA update field bawaan Django
-            if 'email' in data:
-                user.email = data['email']
-            
-            if 'first_name' in data:
-                user.first_name = data['first_name']
-                
-            if 'last_name' in data:
-                user.last_name = data['last_name']
-            
+            message = []
+
+            # 1. UPDATE USERNAME
+            new_username = data.get("username")
+            if new_username and new_username != user.username:
+                if User.objects.filter(username=new_username).exists():
+                    return JsonResponse(
+                        {"status": False, "message": "Username sudah digunakan."},
+                        status=400,
+                    )
+                user.username = new_username
+                message.append("Username berhasil diubah.")
+
+            # 2. UPDATE PASSWORD (Opsional)
+            old_password = data.get("old_password")
+            new_password = data.get("new_password")
+            confirm_password = data.get("confirm_password")
+
+            if new_password:  # Jika user ingin ganti password
+                if not old_password:
+                    return JsonResponse(
+                        {
+                            "status": False,
+                            "message": "Masukkan password lama untuk mengganti password.",
+                        },
+                        status=400,
+                    )
+
+                if not user.check_password(old_password):
+                    return JsonResponse(
+                        {"status": False, "message": "Password lama salah."}, status=400
+                    )
+
+                if new_password != confirm_password:
+                    return JsonResponse(
+                        {
+                            "status": False,
+                            "message": "Konfirmasi password baru tidak cocok.",
+                        },
+                        status=400,
+                    )
+
+                user.set_password(new_password)
+                update_session_auth_hash(request, user)  # Agar tidak logout otomatis
+                message.append("Password berhasil diubah.")
+
             user.save()
-            return JsonResponse({"status": True, "message": "Profile updated!"}, status=200)
+
+            final_message = "Profil diperbarui!" if not message else " ".join(message)
+            return JsonResponse({"status": True, "message": final_message}, status=200)
+
         except Exception as e:
             return JsonResponse({"status": False, "message": str(e)}, status=500)
-            
+
+    return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+def delete_account_flutter(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        try:
+            user = request.user
+            user.delete()
+            return JsonResponse(
+                {"status": True, "message": "Akun berhasil dihapus."}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+
     return JsonResponse({"status": False, "message": "Invalid request"}, status=400)

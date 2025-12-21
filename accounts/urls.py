@@ -29,4 +29,5 @@ urlpatterns = [
     
     path('api/profile/', views.get_profile_json, name='get_profile_json'),
     path('api/profile/edit/', views.edit_profile_flutter, name='edit_profile_flutter'),
+    path('api/profile/delete/', views.delete_account_flutter, name='delete_account_flutter'),
 ]
