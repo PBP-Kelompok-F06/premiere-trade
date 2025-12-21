@@ -1,5 +1,11 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash, get_user_model
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    update_session_auth_hash,
+    get_user_model,
+)
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.http import JsonResponse
@@ -451,56 +457,285 @@ def delete_player(request, pk):
     messages.success(request, f"Pemain '{player_name}' berhasil dihapus.")
     return redirect("accounts:superuser_dashboard")
 
+
 @csrf_exempt
 def get_profile_json(request):
+    """Mengambil data profil (Username & Role)"""
     if not request.user.is_authenticated:
-        return JsonResponse({"status": False, "message": "Not authenticated"}, status=401)
+        return JsonResponse(
+            {"status": False, "message": "Not authenticated"}, status=401
+        )
 
     user = request.user
 
-    # --- LOGIKA PENENTUAN ROLE (TANPA FIELD CUSTOM) ---
-    # Kita gunakan status bawaan Django
-    role = "Member"
-    if user.is_superuser:
+    # Logic Role sederhana
+    role = "Fan"
+    if _is_superuser_check(user):
         role = "Super Admin"
-    elif user.is_staff:
-        role = "Admin"
     elif user.is_club_admin:
-        role = "Admin Club"
-    elif user.is_fan:
-        role = "Fan Account"
-    
+        role = "Club Admin"
+    elif user.is_superuser:
+        role = "Super User"
+
+    # Cek managed club (jika ada)
+    managed_club_name = "-"
+    if hasattr(user, "profile") and user.profile.managed_club:
+        managed_club_name = user.profile.managed_club.name
+
     data = {
         "status": True,
         "username": user.username,
-        "email": user.email,           # Field bawaan Django
-        "first_name": user.first_name, # Field bawaan Django
-        "last_name": user.last_name,   # Field bawaan Django
-        "role": role,                  # Hasil logika di atas
-        "is_club_admin": user.is_club_admin,  # Untuk mobile app
+        "role": role,
+        "managed_club": managed_club_name,
     }
     return JsonResponse(data, status=200)
 
+
 @csrf_exempt
 def edit_profile_flutter(request):
-    if request.method == 'POST' and request.user.is_authenticated:
+    if request.method == "POST" and request.user.is_authenticated:
         try:
             data = json.loads(request.body)
             user = request.user
-            
-            # HANYA update field bawaan Django
-            if 'email' in data:
-                user.email = data['email']
-            
-            if 'first_name' in data:
-                user.first_name = data['first_name']
-                
-            if 'last_name' in data:
-                user.last_name = data['last_name']
-            
+            message = []
+
+            # 1. UPDATE USERNAME
+            new_username = data.get("username")
+            if new_username and new_username != user.username:
+                if User.objects.filter(username=new_username).exists():
+                    return JsonResponse(
+                        {"status": False, "message": "Username sudah digunakan."},
+                        status=400,
+                    )
+                user.username = new_username
+                message.append("Username berhasil diubah.")
+
+            # 2. UPDATE PASSWORD (Opsional)
+            old_password = data.get("old_password")
+            new_password = data.get("new_password")
+            confirm_password = data.get("confirm_password")
+
+            if new_password:  # Jika user ingin ganti password
+                if not old_password:
+                    return JsonResponse(
+                        {
+                            "status": False,
+                            "message": "Masukkan password lama untuk mengganti password.",
+                        },
+                        status=400,
+                    )
+
+                if not user.check_password(old_password):
+                    return JsonResponse(
+                        {"status": False, "message": "Password lama salah."}, status=400
+                    )
+
+                if new_password != confirm_password:
+                    return JsonResponse(
+                        {
+                            "status": False,
+                            "message": "Konfirmasi password baru tidak cocok.",
+                        },
+                        status=400,
+                    )
+
+                user.set_password(new_password)
+                update_session_auth_hash(request, user)  # Agar tidak logout otomatis
+                message.append("Password berhasil diubah.")
+
             user.save()
-            return JsonResponse({"status": True, "message": "Profile updated!"}, status=200)
+
+            final_message = "Profil diperbarui!" if not message else " ".join(message)
+            return JsonResponse({"status": True, "message": final_message}, status=200)
+
         except Exception as e:
             return JsonResponse({"status": False, "message": str(e)}, status=500)
-            
+
     return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+def delete_account_flutter(request):
+    if request.method == "POST" and request.user.is_authenticated:
+        try:
+            user = request.user
+            user.delete()
+            return JsonResponse(
+                {"status": True, "message": "Akun berhasil dihapus."}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+
+    return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+def admin_get_stats(request):
+    if not _is_superuser_check(request.user):
+        return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
+
+    return JsonResponse(
+        {
+            "status": True,
+            "user_count": User.objects.count(),
+            "club_count": Club.objects.count(),
+            "player_count": Player.objects.count(),
+        }
+    )
+
+
+# --- MANAGE USERS (CRUD) ---
+@csrf_exempt
+def admin_get_users(request):
+    if not _is_superuser_check(request.user):
+        return JsonResponse({"status": False}, status=403)
+
+    users = []
+    for u in User.objects.all():
+        role = "Fan"
+        if _is_superuser_check(u):
+            role = "Super Admin"
+        elif u.is_club_admin:
+            role = "Club Admin"
+
+        # Cek Managed Club via Profile
+        managed_club = "-"
+        if hasattr(u, "profile") and u.profile.managed_club:
+            managed_club = u.profile.managed_club.name
+
+        users.append(
+            {
+                "id": u.id,
+                "username": u.username,
+                "role": role,
+                "managed_club": managed_club,
+            }
+        )
+    return JsonResponse({"status": True, "data": users})
+
+
+@csrf_exempt
+def admin_create_user(request):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        data = json.loads(request.body)
+        try:
+            # 1. Buat User (Sesuai CustomUser)
+            user = User.objects.create_user(
+                username=data["username"],
+                password=data["password"],
+                is_club_admin=(data["role"] == "admin"),
+                is_fan=(data["role"] == "fan"),
+            )
+
+            # 2. Jika Admin Club, buat Profile & Assign Club
+            if data["role"] == "admin" and data.get("club_id"):
+                club = Club.objects.get(pk=data["club_id"])
+                Profile.objects.create(user=user, managed_club=club)
+            else:
+                # Buat profile kosong agar konsisten (opsional)
+                Profile.objects.create(user=user)
+
+            return JsonResponse({"status": True, "message": "User created"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_user(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        try:
+            User.objects.get(pk=pk).delete()
+            return JsonResponse({"status": True, "message": "User deleted"}, status=200)
+        except:
+            return JsonResponse({"status": False, "message": "Failed"}, status=400)
+    return JsonResponse({"status": False}, status=400)
+
+
+# --- MANAGE CLUBS (CRUD) ---
+@csrf_exempt
+def admin_get_clubs(request):
+    # Public read allowed, but usually for dropdowns
+    clubs = list(Club.objects.values("id", "name", "country", "logo_url"))
+    return JsonResponse({"status": True, "data": clubs})
+
+
+@csrf_exempt
+def admin_create_club(request):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        data = json.loads(request.body)
+        try:
+            Club.objects.create(
+                name=data["name"],
+                country=data["country"],
+                logo_url=data.get("logo_url", ""),
+            )
+            return JsonResponse({"status": True, "message": "Club created"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_club(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        Club.objects.get(pk=pk).delete()
+        return JsonResponse({"status": True, "message": "Deleted"}, status=200)
+    return JsonResponse({"status": False}, status=400)
+
+
+# --- MANAGE PLAYERS (CRUD) ---
+@csrf_exempt
+def admin_get_players(request):
+    """API untuk mengambil semua list pemain"""
+    if not request.user.is_superuser: # Opsional: cek auth superuser
+        return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
+
+    players = []
+    # Ambil semua player, select_related club biar query efisien
+    for p in Player.objects.select_related('current_club').all():
+        players.append({
+            'id': str(p.id), # UUID harus di-convert ke string
+            'nama_pemain': p.nama_pemain,
+            'position': p.position,
+            'club_name': p.current_club.name,
+            'thumbnail': p.thumbnail,
+            'market_value': p.market_value
+        })
+    
+    return JsonResponse({'status': True, 'data': players})
+
+@csrf_exempt
+def admin_create_player(request):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        data = json.loads(request.body)
+        try:
+            club = Club.objects.get(pk=data["club_id"])
+            Player.objects.create(
+                current_club=club,
+                nama_pemain=data["nama_pemain"],
+                position=data["position"],
+                umur=int(data["umur"]),
+                market_value=int(data["market_value"]),
+                negara=data["negara"],
+                jumlah_goal=int(data.get("jumlah_goal", 0)),
+                jumlah_asis=int(data.get("jumlah_asis", 0)),
+                jumlah_match=int(data.get("jumlah_match", 0)),
+                thumbnail=data.get("thumbnail", ""),
+                sedang_dijual=data.get("sedang_dijual", False),
+            )
+            return JsonResponse(
+                {"status": True, "message": "Player created"}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_player(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        # Player ID is UUID
+        Player.objects.get(pk=pk).delete()
+        return JsonResponse({"status": True, "message": "Deleted"}, status=200)
+    return JsonResponse({"status": False}, status=400)
