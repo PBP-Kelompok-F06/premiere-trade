@@ -571,7 +571,7 @@ def delete_account_flutter(request):
 
 @csrf_exempt
 def admin_get_stats(request):
-    if _is_superuser_check(request.user):
+    if not _is_superuser_check(request.user):
         return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
 
     return JsonResponse(
