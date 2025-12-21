@@ -575,7 +575,9 @@ def admin_get_stats(request):
     if not _is_superuser_check(request.user):
         return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
     
-    user_count = User.objects.filter(Q(is_fan=True) | Q(is_club_admin=True)).count()
+    user_count = User.objects.filter(
+        Q(is_fan=True) ^ Q(is_club_admin=True)
+    ).exclude(is_superuser=True).count()
     
     club_count = Club.objects.exclude(name__iexact='admin').count()
     
@@ -588,8 +590,6 @@ def admin_get_stats(request):
         'player_count': player_count,
     })
 
-
-# --- MANAGE USERS (CRUD) ---
 @csrf_exempt
 def admin_get_users(request):
     if not _is_superuser_check(request.user):
@@ -597,15 +597,15 @@ def admin_get_users(request):
     
     users = []
     
-    filtered_users = User.objects.filter(Q(is_fan=True) | Q(is_club_admin=True))
+    filtered_users = User.objects.filter(
+        Q(is_fan=True) ^ Q(is_club_admin=True)
+    ).exclude(is_superuser=True)
 
     for u in filtered_users:
-        # Tentukan Role string untuk UI
         role = "Fan"
         if u.is_club_admin: 
             role = "Club Admin"
         
-        # Cek Managed Club
         managed_club = "-"
         if hasattr(u, 'profile') and u.profile.managed_club:
             managed_club = u.profile.managed_club.name
@@ -624,15 +624,12 @@ def admin_create_user(request):
     if request.method == "POST" and _is_superuser_check(request.user):
         data = json.loads(request.body)
         try:
-            # 1. Buat User (Sesuai CustomUser)
             user = User.objects.create_user(
                 username=data["username"],
                 password=data["password"],
                 is_club_admin=(data["role"] == "admin"),
                 is_fan=(data["role"] == "fan"),
             )
-
-            # 2. Jika Admin Club, buat Profile & Assign Club
             if data["role"] == "admin" and data.get("club_id"):
                 club = Club.objects.get(pk=data["club_id"])
                 Profile.objects.create(user=user, managed_club=club)
