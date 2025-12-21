@@ -573,50 +573,57 @@ def delete_account_flutter(request):
 @csrf_exempt
 def admin_get_stats(request):
     if not _is_superuser_check(request.user):
-        return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
-    
-    user_count = User.objects.filter(
-        Q(is_fan=True) ^ Q(is_club_admin=True)
-    ).exclude(is_superuser=True).count()
-    
-    club_count = Club.objects.exclude(name__iexact='admin').count()
-    
+        return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
+
+    user_count = (
+        User.objects.filter(Q(is_fan=True) ^ Q(is_club_admin=True))
+        .exclude(is_superuser=True)
+        .count()
+    )
+
+    club_count = Club.objects.exclude(name__iexact="admin").count()
+
     player_count = Player.objects.count()
-    
-    return JsonResponse({
-        'status': True,
-        'user_count': user_count,
-        'club_count': club_count,
-        'player_count': player_count,
-    })
+
+    return JsonResponse(
+        {
+            "status": True,
+            "user_count": user_count,
+            "club_count": club_count,
+            "player_count": player_count,
+        }
+    )
+
 
 @csrf_exempt
 def admin_get_users(request):
     if not _is_superuser_check(request.user):
-        return JsonResponse({'status': False}, status=403)
-    
+        return JsonResponse({"status": False}, status=403)
+
     users = []
-    
+
     filtered_users = User.objects.filter(
         Q(is_fan=True) ^ Q(is_club_admin=True)
     ).exclude(is_superuser=True)
 
     for u in filtered_users:
         role = "Fan"
-        if u.is_club_admin: 
+        if u.is_club_admin:
             role = "Club Admin"
-        
+
         managed_club = "-"
-        if hasattr(u, 'profile') and u.profile.managed_club:
+        if hasattr(u, "profile") and u.profile.managed_club:
             managed_club = u.profile.managed_club.name
-            
-        users.append({
-            'id': u.id,
-            'username': u.username,
-            'role': role,
-            'managed_club': managed_club
-        })
-    return JsonResponse({'status': True, 'data': users})
+
+        users.append(
+            {
+                "id": u.id,
+                "username": u.username,
+                "role": role,
+                "managed_club": managed_club,
+            }
+        )
+    return JsonResponse({"status": True, "data": users})
 
 
 @csrf_exempt
@@ -658,11 +665,11 @@ def admin_delete_user(request, pk):
 @csrf_exempt
 def admin_get_clubs(request):
     clubs = list(
-        Club.objects
-        .exclude(name__iexact='admin')
-        .values('id', 'name', 'country', 'logo_url')
+        Club.objects.exclude(name__iexact="admin").values(
+            "id", "name", "country", "logo_url"
+        )
     )
-    return JsonResponse({'status': True, 'data': clubs})
+    return JsonResponse({"status": True, "data": clubs})
 
 
 @csrf_exempt
@@ -693,21 +700,24 @@ def admin_delete_club(request, pk):
 @csrf_exempt
 def admin_get_players(request):
     if not _is_superuser_check(request.user):
-        return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
+        return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
 
     players = []
     # Ambil semua player, select_related club biar query efisien
-    for p in Player.objects.select_related('current_club').all():
-        players.append({
-            'id': str(p.id), # UUID harus di-convert ke string
-            'nama_pemain': p.nama_pemain,
-            'position': p.position,
-            'club_name': p.current_club.name,
-            'thumbnail': p.thumbnail,
-            'market_value': p.market_value
-        })
-    
-    return JsonResponse({'status': True, 'data': players})
+    for p in Player.objects.select_related("current_club").all():
+        players.append(
+            {
+                "id": str(p.id),  # UUID harus di-convert ke string
+                "nama_pemain": p.nama_pemain,
+                "position": p.position,
+                "club_name": p.current_club.name,
+                "thumbnail": p.thumbnail,
+                "market_value": p.market_value,
+            }
+        )
+
+    return JsonResponse({"status": True, "data": players})
+
 
 @csrf_exempt
 def admin_create_player(request):
@@ -742,4 +752,90 @@ def admin_delete_player(request, pk):
         # Player ID is UUID
         Player.objects.get(pk=pk).delete()
         return JsonResponse({"status": True, "message": "Deleted"}, status=200)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_edit_user(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        try:
+            data = json.loads(request.body)
+            user = User.objects.get(pk=pk)
+
+            user.username = data.get("username", user.username)
+
+            role = data.get("role")
+            if role == "admin":
+                user.is_club_admin = True
+                user.is_fan = False
+            elif role == "fan":
+                user.is_club_admin = False
+                user.is_fan = True
+
+            new_password = data.get("password")
+            if new_password and new_password.strip() != "":
+                user.set_password(new_password)
+
+            user.save()
+
+            # Update Managed Club (Jika Admin)
+            if user.is_club_admin:
+                club_id = data.get("club_id")
+                # Pastikan Profile ada
+                profile, created = Profile.objects.get_or_create(user=user)
+                if club_id:
+                    profile.managed_club = Club.objects.get(pk=club_id)
+                else:
+                    profile.managed_club = None
+                profile.save()
+
+            return JsonResponse({"status": True, "message": "User updated"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_edit_club(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        try:
+            data = json.loads(request.body)
+            club = Club.objects.get(pk=pk)
+            club.name = data.get("name", club.name)
+            club.country = data.get("country", club.country)
+            club.logo_url = data.get("logo_url", club.logo_url)
+            club.save()
+            return JsonResponse({"status": True, "message": "Club updated"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_edit_player(request, pk):
+    if request.method == "POST" and _is_superuser_check(request.user):
+        try:
+            data = json.loads(request.body)
+            player = Player.objects.get(pk=pk)  
+
+            if data.get("club_id"):
+                player.current_club = Club.objects.get(pk=data["club_id"])
+
+            # Update fields
+            player.nama_pemain = data.get("nama_pemain", player.nama_pemain)
+            player.position = data.get("position", player.position)
+            player.umur = int(data.get("umur", player.umur))
+            player.market_value = int(data.get("market_value", player.market_value))
+            player.negara = data.get("negara", player.negara)
+            player.jumlah_goal = int(data.get("jumlah_goal", player.jumlah_goal))
+            player.jumlah_asis = int(data.get("jumlah_asis", player.jumlah_asis))
+            player.jumlah_match = int(data.get("jumlah_match", player.jumlah_match))
+            player.thumbnail = data.get("thumbnail", player.thumbnail)
+
+            player.save()
+            return JsonResponse(
+                {"status": True, "message": "Player updated"}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
     return JsonResponse({"status": False}, status=400)
