@@ -23,6 +23,7 @@ from django.contrib import messages
 from main.models import Club, Player
 from django.shortcuts import get_object_or_404
 from .models import CustomUser, Profile
+from django.db.models import Q
 import json
 
 User = get_user_model()
@@ -572,46 +573,50 @@ def delete_account_flutter(request):
 @csrf_exempt
 def admin_get_stats(request):
     if not _is_superuser_check(request.user):
-        return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
-
-    return JsonResponse(
-        {
-            "status": True,
-            "user_count": User.objects.count(),
-            "club_count": Club.objects.count(),
-            "player_count": Player.objects.count(),
-        }
-    )
+        return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
+    
+    user_count = User.objects.filter(Q(is_fan=True) | Q(is_club_admin=True)).count()
+    
+    club_count = Club.objects.exclude(name__iexact='admin').count()
+    
+    player_count = Player.objects.count()
+    
+    return JsonResponse({
+        'status': True,
+        'user_count': user_count,
+        'club_count': club_count,
+        'player_count': player_count,
+    })
 
 
 # --- MANAGE USERS (CRUD) ---
 @csrf_exempt
 def admin_get_users(request):
     if not _is_superuser_check(request.user):
-        return JsonResponse({"status": False}, status=403)
-
+        return JsonResponse({'status': False}, status=403)
+    
     users = []
-    for u in User.objects.all():
+    
+    filtered_users = User.objects.filter(Q(is_fan=True) | Q(is_club_admin=True))
+
+    for u in filtered_users:
+        # Tentukan Role string untuk UI
         role = "Fan"
-        if _is_superuser_check(u):
-            role = "Super Admin"
-        elif u.is_club_admin:
+        if u.is_club_admin: 
             role = "Club Admin"
-
-        # Cek Managed Club via Profile
+        
+        # Cek Managed Club
         managed_club = "-"
-        if hasattr(u, "profile") and u.profile.managed_club:
+        if hasattr(u, 'profile') and u.profile.managed_club:
             managed_club = u.profile.managed_club.name
-
-        users.append(
-            {
-                "id": u.id,
-                "username": u.username,
-                "role": role,
-                "managed_club": managed_club,
-            }
-        )
-    return JsonResponse({"status": True, "data": users})
+            
+        users.append({
+            'id': u.id,
+            'username': u.username,
+            'role': role,
+            'managed_club': managed_club
+        })
+    return JsonResponse({'status': True, 'data': users})
 
 
 @csrf_exempt
@@ -655,9 +660,12 @@ def admin_delete_user(request, pk):
 # --- MANAGE CLUBS (CRUD) ---
 @csrf_exempt
 def admin_get_clubs(request):
-    # Public read allowed, but usually for dropdowns
-    clubs = list(Club.objects.values("id", "name", "country", "logo_url"))
-    return JsonResponse({"status": True, "data": clubs})
+    clubs = list(
+        Club.objects
+        .exclude(name__iexact='admin')
+        .values('id', 'name', 'country', 'logo_url')
+    )
+    return JsonResponse({'status': True, 'data': clubs})
 
 
 @csrf_exempt
