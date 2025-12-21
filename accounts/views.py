@@ -587,13 +587,13 @@ def admin_get_stats(request):
 # --- MANAGE USERS (CRUD) ---
 @csrf_exempt
 def admin_get_users(request):
-    if not request.user.is_superuser:
+    if not _is_superuser_check(request.user):
         return JsonResponse({"status": False}, status=403)
 
     users = []
     for u in User.objects.all():
         role = "Fan"
-        if u.is_superuser:
+        if _is_superuser_check(u):
             role = "Super Admin"
         elif u.is_club_admin:
             role = "Club Admin"
@@ -616,7 +616,7 @@ def admin_get_users(request):
 
 @csrf_exempt
 def admin_create_user(request):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         data = json.loads(request.body)
         try:
             # 1. Buat User (Sesuai CustomUser)
@@ -643,7 +643,7 @@ def admin_create_user(request):
 
 @csrf_exempt
 def admin_delete_user(request, pk):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         try:
             User.objects.get(pk=pk).delete()
             return JsonResponse({"status": True, "message": "User deleted"}, status=200)
@@ -662,7 +662,7 @@ def admin_get_clubs(request):
 
 @csrf_exempt
 def admin_create_club(request):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         data = json.loads(request.body)
         try:
             Club.objects.create(
@@ -678,7 +678,7 @@ def admin_create_club(request):
 
 @csrf_exempt
 def admin_delete_club(request, pk):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         Club.objects.get(pk=pk).delete()
         return JsonResponse({"status": True, "message": "Deleted"}, status=200)
     return JsonResponse({"status": False}, status=400)
@@ -687,7 +687,7 @@ def admin_delete_club(request, pk):
 # --- MANAGE PLAYERS (CRUD) ---
 @csrf_exempt
 def admin_create_player(request):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         data = json.loads(request.body)
         try:
             club = Club.objects.get(pk=data["club_id"])
@@ -714,7 +714,7 @@ def admin_create_player(request):
 
 @csrf_exempt
 def admin_delete_player(request, pk):
-    if request.method == "POST" and request.user.is_superuser:
+    if request.method == "POST" and _is_superuser_check(request.user):
         # Player ID is UUID
         Player.objects.get(pk=pk).delete()
         return JsonResponse({"status": True, "message": "Deleted"}, status=200)
