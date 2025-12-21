@@ -687,8 +687,7 @@ def admin_delete_club(request, pk):
 # --- MANAGE PLAYERS (CRUD) ---
 @csrf_exempt
 def admin_get_players(request):
-    """API untuk mengambil semua list pemain"""
-    if not request.user.is_superuser: # Opsional: cek auth superuser
+    if not _is_superuser_check(request.user):
         return JsonResponse({'status': False, 'message': 'Forbidden'}, status=403)
 
     players = []
