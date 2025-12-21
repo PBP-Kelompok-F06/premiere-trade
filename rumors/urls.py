@@ -22,4 +22,5 @@ urlpatterns = [
     path('<uuid:id>/edit-flutter/', views.edit_rumor_flutter, name='edit_rumor_flutter'),
     path('<uuid:id>/revert-flutter/', views.revert_rumor_flutter, name='revert_rumor_flutter'),
     path('get-user-role/', views.get_user_role, name='get_user_role'),
+    path('<uuid:id>/increment-view-flutter/', views.increment_rumor_view_flutter, name='increment_view_flutter'),
 ]

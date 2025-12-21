@@ -13,6 +13,17 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 @csrf_exempt
+def increment_rumor_view_flutter(request, id):
+    if request.method == 'POST':
+        try:
+            rumor = Rumors.objects.get(pk=id)
+            rumor.increment_views()
+            return JsonResponse({"status": "success", "message": "Views incremented", "total_views": rumor.rumors_views})
+        except Rumors.DoesNotExist:
+            return JsonResponse({"status": "error", "message": "Rumor not found"}, status=404)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+@csrf_exempt
 def get_user_role(request):
     is_club_admin = False
     if request.user.is_authenticated and request.user.is_club_admin:
@@ -88,7 +99,7 @@ def edit_rumor_flutter(request, id):
                 if rumor.status in ['verified', 'denied']:
                     rumor.status = 'pending'
                 rumor.save()
-                return JsonResponse({"status": "success", "message": "Rumor berhasil diupdate!"}, status=200)
+                return JsonResponse({"status": "success", "message": "Rumor berhasil diperbarui!"}, status=200)
             else:
                 # Tidak ada perubahan, tidak perlu save
                 return JsonResponse({"status": "success", "message": "Tidak ada perubahan data."}, status=200)
@@ -212,7 +223,7 @@ def get_rumors_json(request):
             "club_tujuan_id": str(rumor.club_tujuan.id) if rumor.club_tujuan else None,
             "club_tujuan_logo": rumor.club_tujuan.logo_url if rumor.club_tujuan and rumor.club_tujuan.logo_url else "",
             "status": rumor.status,
-            "created_at": rumor.created_at.strftime("%Y-%m-%d %H:%M"),
+            "created_at": rumor.created_at.isoformat(),
             "views": rumor.rumors_views,
             "is_author": request.user == rumor.author,
 
