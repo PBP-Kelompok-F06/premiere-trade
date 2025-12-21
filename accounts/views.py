@@ -567,3 +567,155 @@ def delete_account_flutter(request):
             return JsonResponse({"status": False, "message": str(e)}, status=500)
 
     return JsonResponse({"status": False, "message": "Invalid request"}, status=400)
+
+
+@csrf_exempt
+def admin_get_stats(request):
+    if not request.user.is_superuser:
+        return JsonResponse({"status": False, "message": "Forbidden"}, status=403)
+
+    return JsonResponse(
+        {
+            "status": True,
+            "user_count": User.objects.count(),
+            "club_count": Club.objects.count(),
+            "player_count": Player.objects.count(),
+        }
+    )
+
+
+# --- MANAGE USERS (CRUD) ---
+@csrf_exempt
+def admin_get_users(request):
+    if not request.user.is_superuser:
+        return JsonResponse({"status": False}, status=403)
+
+    users = []
+    for u in User.objects.all():
+        role = "Fan"
+        if u.is_superuser:
+            role = "Super Admin"
+        elif u.is_club_admin:
+            role = "Club Admin"
+
+        # Cek Managed Club via Profile
+        managed_club = "-"
+        if hasattr(u, "profile") and u.profile.managed_club:
+            managed_club = u.profile.managed_club.name
+
+        users.append(
+            {
+                "id": u.id,
+                "username": u.username,
+                "role": role,
+                "managed_club": managed_club,
+            }
+        )
+    return JsonResponse({"status": True, "data": users})
+
+
+@csrf_exempt
+def admin_create_user(request):
+    if request.method == "POST" and request.user.is_superuser:
+        data = json.loads(request.body)
+        try:
+            # 1. Buat User (Sesuai CustomUser)
+            user = User.objects.create_user(
+                username=data["username"],
+                password=data["password"],
+                is_club_admin=(data["role"] == "admin"),
+                is_fan=(data["role"] == "fan"),
+            )
+
+            # 2. Jika Admin Club, buat Profile & Assign Club
+            if data["role"] == "admin" and data.get("club_id"):
+                club = Club.objects.get(pk=data["club_id"])
+                Profile.objects.create(user=user, managed_club=club)
+            else:
+                # Buat profile kosong agar konsisten (opsional)
+                Profile.objects.create(user=user)
+
+            return JsonResponse({"status": True, "message": "User created"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_user(request, pk):
+    if request.method == "POST" and request.user.is_superuser:
+        try:
+            User.objects.get(pk=pk).delete()
+            return JsonResponse({"status": True, "message": "User deleted"}, status=200)
+        except:
+            return JsonResponse({"status": False, "message": "Failed"}, status=400)
+    return JsonResponse({"status": False}, status=400)
+
+
+# --- MANAGE CLUBS (CRUD) ---
+@csrf_exempt
+def admin_get_clubs(request):
+    # Public read allowed, but usually for dropdowns
+    clubs = list(Club.objects.values("id", "name", "country", "logo_url"))
+    return JsonResponse({"status": True, "data": clubs})
+
+
+@csrf_exempt
+def admin_create_club(request):
+    if request.method == "POST" and request.user.is_superuser:
+        data = json.loads(request.body)
+        try:
+            Club.objects.create(
+                name=data["name"],
+                country=data["country"],
+                logo_url=data.get("logo_url", ""),
+            )
+            return JsonResponse({"status": True, "message": "Club created"}, status=200)
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_club(request, pk):
+    if request.method == "POST" and request.user.is_superuser:
+        Club.objects.get(pk=pk).delete()
+        return JsonResponse({"status": True, "message": "Deleted"}, status=200)
+    return JsonResponse({"status": False}, status=400)
+
+
+# --- MANAGE PLAYERS (CRUD) ---
+@csrf_exempt
+def admin_create_player(request):
+    if request.method == "POST" and request.user.is_superuser:
+        data = json.loads(request.body)
+        try:
+            club = Club.objects.get(pk=data["club_id"])
+            Player.objects.create(
+                current_club=club,
+                nama_pemain=data["nama_pemain"],
+                position=data["position"],
+                umur=int(data["umur"]),
+                market_value=int(data["market_value"]),
+                negara=data["negara"],
+                jumlah_goal=int(data.get("jumlah_goal", 0)),
+                jumlah_asis=int(data.get("jumlah_asis", 0)),
+                jumlah_match=int(data.get("jumlah_match", 0)),
+                thumbnail=data.get("thumbnail", ""),
+                sedang_dijual=data.get("sedang_dijual", False),
+            )
+            return JsonResponse(
+                {"status": True, "message": "Player created"}, status=200
+            )
+        except Exception as e:
+            return JsonResponse({"status": False, "message": str(e)}, status=500)
+    return JsonResponse({"status": False}, status=400)
+
+
+@csrf_exempt
+def admin_delete_player(request, pk):
+    if request.method == "POST" and request.user.is_superuser:
+        # Player ID is UUID
+        Player.objects.get(pk=pk).delete()
+        return JsonResponse({"status": True, "message": "Deleted"}, status=200)
+    return JsonResponse({"status": False}, status=400)
